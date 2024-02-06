@@ -11,7 +11,7 @@ use crate::error::ErrorCode;
 use crate::state::*;
 
 #[derive(Accounts)]
-pub struct InitializeProposal<'info> {
+pub struct CreateProposal<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
     #[account(zero, signer)]
@@ -152,13 +152,13 @@ pub struct InitializeProposal<'info> {
 }
 
 pub fn handler(
-    ctx: Context<InitializeProposal>,
+    ctx: Context<CreateProposal>,
     description_url: String,
     initial_pass_market_price_units: f32, // human-readable price (i.e. units)
     initial_fail_market_price_units: f32, // human-readable price (i.e. units)
     quote_liquidity_atoms_per_amm: u64,
 ) -> Result<()> {
-    let InitializeProposal {
+    let CreateProposal {
         proposer,
         proposal,
         proposal_instructions,
@@ -188,6 +188,7 @@ pub fn handler(
     let clock = Clock::get()?;
 
     proposal.number = dao.proposal_count;
+    proposal_vault.number = proposal.number;
     dao.proposal_count += 1;
 
     let slots_passed = clock.slot - dao.last_proposal_slot;
@@ -229,11 +230,15 @@ pub fn handler(
     // ==== pass market amm ====
     pass_market_amm.conditional_base_mint = conditional_on_pass_meta_mint.key();
     pass_market_amm.conditional_quote_mint = conditional_on_pass_usdc_mint.key();
+    pass_market_amm.conditional_base_mint_decimals = meta_mint.decimals;
+    pass_market_amm.conditional_quote_mint_decimals = usdc_mint.decimals;
     pass_market_amm.ltwap_slot_updated = clock.slot;
 
     // ==== pass market amm ====
     fail_market_amm.conditional_base_mint = conditional_on_fail_meta_mint.key();
     fail_market_amm.conditional_quote_mint = conditional_on_fail_usdc_mint.key();
+    fail_market_amm.conditional_base_mint_decimals = meta_mint.decimals;
+    fail_market_amm.conditional_quote_mint_decimals = usdc_mint.decimals;
     fail_market_amm.ltwap_slot_updated = clock.slot;
 
     // ==== deposit initial liquidity ====

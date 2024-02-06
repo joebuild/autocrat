@@ -3,14 +3,12 @@ use anchor_lang::solana_program::{native_token::LAMPORTS_PER_SOL, pubkey};
 
 pub use amm::*;
 pub use amm_position::*;
-pub use conditional_vault::*;
 pub use dao::*;
 pub use proposal::*;
 pub use proposal_vault::*;
 
 pub mod amm;
 pub mod amm_position;
-pub mod conditional_vault;
 pub mod dao;
 pub mod proposal;
 pub mod proposal_vault;

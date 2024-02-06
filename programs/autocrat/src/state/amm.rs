@@ -3,6 +3,7 @@ use std::ops::{Div, Mul};
 use anchor_lang::prelude::*;
 use num_traits::ToPrimitive;
 
+use crate::error::ErrorCode;
 use crate::{utils::*, AddLiquidity, RemoveLiquidity, Swap, BPS_SCALE};
 
 #[account]
@@ -12,6 +13,9 @@ pub struct Amm {
 
     pub conditional_base_amount: u64,
     pub conditional_quote_amount: u64,
+
+    pub conditional_base_mint_decimals: u8,
+    pub conditional_quote_mint_decimals: u8,
 
     pub total_ownership: u64,
     pub num_current_lps: u64,
@@ -61,16 +65,16 @@ impl Amm {
         Ok(self.ltwap_latest)
     }
 
-    pub fn get_base_liquidity_units(&self, decimals: u8) -> Result<f64> {
-        let base_decimal_scale = get_decimal_scale_f64(decimals)?;
+    pub fn get_base_liquidity_units(&self) -> Result<f64> {
+        let base_decimal_scale = get_decimal_scale_f64(self.conditional_base_mint_decimals)?;
         Ok(
             self.conditional_base_amount.to_f64().unwrap()
                 .div(base_decimal_scale)
         )
     }
 
-    pub fn get_quote_liquidity_units(&self, decimals: u8) -> Result<f64> {
-        let quote_decimal_scale = get_decimal_scale_f64(decimals)?;
+    pub fn get_quote_liquidity_units(&self) -> Result<f64> {
+        let quote_decimal_scale = get_decimal_scale_f64(self.conditional_quote_mint_decimals)?;
         Ok(
             self.conditional_quote_amount.to_f64().unwrap()
                 .div(quote_decimal_scale))
@@ -104,19 +108,19 @@ impl Amm {
         let k = conditional_base_amount_start.checked_mul(conditional_quote_amount_start).unwrap();
 
         let input_amount_minus_fee = input_amount
-                .checked_mul(BPS_SCALE.checked_sub(dao.amm_swap_fee_bps)?)?
-                .checked_div(BPS_SCALE)? as u128;
+                .checked_mul(BPS_SCALE.checked_sub(dao.amm_swap_fee_bps).unwrap()).unwrap()
+                .checked_div(BPS_SCALE).unwrap() as u128;
         
         let output_amount = if is_quote_to_base {
-            let temp_conditional_quote_amount = conditional_quote_amount_start.checked_add(input_amount_minus_fee)?;
-            let temp_conditional_base_amount = k.checked_div(temp_conditional_quote_amount)?;
+            let temp_conditional_quote_amount = conditional_quote_amount_start.checked_add(input_amount_minus_fee).unwrap();
+            let temp_conditional_base_amount = k.checked_div(temp_conditional_quote_amount).unwrap();
             
             let output_amount_base = conditional_base_amount_start
-                .checked_sub(temp_conditional_base_amount)?
-                .to_u64()?;
+                .checked_sub(temp_conditional_base_amount).unwrap()
+                .to_u64().unwrap();
 
-            self.conditional_quote_amount = self.conditional_quote_amount.checked_add(input_amount)?;
-            self.conditional_base_amount = self.conditional_base_amount.checked_sub(output_amount_base)?;
+            self.conditional_quote_amount = self.conditional_quote_amount.checked_add(input_amount).unwrap();
+            self.conditional_base_amount = self.conditional_base_amount.checked_sub(output_amount_base).unwrap();
 
             // send user quote tokens to vault
             token_transfer(
@@ -139,15 +143,15 @@ impl Amm {
 
             output_amount_base
         } else {
-            let temp_conditional_base_amount = conditional_base_amount_start.checked_add(input_amount_minus_fee)?;
-            let temp_conditional_quote_amount = k.checked_div(temp_conditional_base_amount)?;
+            let temp_conditional_base_amount = conditional_base_amount_start.checked_add(input_amount_minus_fee).unwrap();
+            let temp_conditional_quote_amount = k.checked_div(temp_conditional_base_amount).unwrap();
             
             let output_amount_quote = conditional_quote_amount_start
-                .checked_sub(temp_conditional_quote_amount)?
-                .to_u64()?;
+                .checked_sub(temp_conditional_quote_amount).unwrap()
+                .to_u64().unwrap();
 
-            self.conditional_base_amount = self.conditional_base_amount.checked_add(input_amount)?;
-            self.conditional_quote_amount = self.conditional_quote_amount.checked_sub(output_amount_quote)?;
+            self.conditional_base_amount = self.conditional_base_amount.checked_add(input_amount).unwrap();
+            self.conditional_quote_amount = self.conditional_quote_amount.checked_sub(output_amount_quote).unwrap();
 
             // send user base tokens to vault
             token_transfer(
@@ -174,7 +178,7 @@ impl Amm {
         Ok(output_amount)
     }
 
-    pub fn add_liquidity(&self, &ctx: Context<AddLiquidity>, max_base_amount: u64, max_quote_amount: u64, can_ltwap_be_updated: bool) -> Result<()> {
+    pub fn add_liquidity(&self, ctx: &Context<AddLiquidity>, max_base_amount: u64, max_quote_amount: u64, can_ltwap_be_updated: bool) -> Result<()> {
         let AddLiquidity {
             user,
             dao,
@@ -199,23 +203,23 @@ impl Amm {
         }
 
         if amm_position.ownership == 0u64 {
-            amm.num_current_lps = amm.num_current_lps.checked_add(1)?;
+            amm.num_current_lps = amm.num_current_lps.checked_add(1).unwrap();
         }
 
         let mut temp_base_amount = max_base_amount as u128;
 
         let mut temp_quote_amount = temp_base_amount
-            .checked_mul(self.conditional_quote_amount as u128)?
-            .checked_div(self.conditional_base_amount as u128)?;
+            .checked_mul(self.conditional_quote_amount as u128).unwrap()
+            .checked_div(self.conditional_base_amount as u128).unwrap();
 
         // if the temp_quote_amount calculation with max_base_amount led to a value higher than max_quote_amount,
         // then use the max_quote_amount and calculate in the other direction
         if temp_quote_amount > max_quote_amount as u128 {
             temp_quote_amount = max_quote_amount as u128;
 
-            temp_base_amount = self.temp_quote_amount
-                .checked_mul(self.conditional_base_amount as u128)?
-                .checked_div(self.conditional_quote_amount as u128)?;
+            temp_base_amount = temp_quote_amount
+                .checked_mul(self.conditional_base_amount as u128).unwrap()
+                .checked_div(self.conditional_quote_amount as u128).unwrap();
 
             if temp_base_amount > max_base_amount as u128 {
                 return err!(ErrorCode::AddLiquidityCalculationError);
@@ -223,12 +227,12 @@ impl Amm {
         }
 
         let additional_ownership = temp_base_amount
-            .checked_mul(amm.total_ownership as u128)?
-            .checked_div(self.conditional_base_amount as u128)?
-            .to_u64()?;
+            .checked_mul(amm.total_ownership as u128).unwrap()
+            .checked_div(self.conditional_base_amount as u128).unwrap()
+            .to_u64().unwrap();
 
-        amm_position.ownership = amm_position.ownership.checked_add(additional_ownership)?;
-        amm.total_ownership = amm.total_ownership.checked_add(additional_ownership)?;
+        amm_position.ownership = amm_position.ownership.checked_add(additional_ownership).unwrap();
+        amm.total_ownership = amm.total_ownership.checked_add(additional_ownership).unwrap();
 
         // send user base tokens to vault
         token_transfer(
@@ -251,7 +255,7 @@ impl Amm {
         Ok(())
     }
 
-    pub fn remove_liquidity(&self, &ctx: Context<RemoveLiquidity>, remove_bps: u64, can_ltwap_be_updated: bool) -> Result<()> {
+    pub fn remove_liquidity(&self, ctx: &Context<RemoveLiquidity>, remove_bps: u64, can_ltwap_be_updated: bool) -> Result<()> {
         let RemoveLiquidity {
             user,
             dao,
@@ -281,30 +285,30 @@ impl Amm {
         }
 
         if amm_position.ownership > 0 && remove_bps == BPS_SCALE {
-            amm.num_current_lps = amm.num_current_lps.checked_sub(1)?;
+            amm.num_current_lps = amm.num_current_lps.checked_sub(1).unwrap();
         }
         
         let base_to_withdraw = (self.conditional_base_amount as u128)
-            .checked_mul(amm_position.ownership as u128)?
-            .checked_mul(remove_bps as u128)?
-            .checked_div(BPS_SCALE as u128)?
-            .checked_div(amm.total_ownership as u128)?
-            .to_u64()?;
+            .checked_mul(amm_position.ownership as u128).unwrap()
+            .checked_mul(remove_bps as u128).unwrap()
+            .checked_div(BPS_SCALE as u128).unwrap()
+            .checked_div(amm.total_ownership as u128).unwrap()
+            .to_u64().unwrap();
 
         let quote_to_withdraw = (self.conditional_quote_amount as u128)
-            .checked_mul(amm_position.ownership as u128)?
-            .checked_mul(remove_bps as u128)?
-            .checked_div(BPS_SCALE as u128)?
-            .checked_div(amm.total_ownership as u128)?
-            .to_u64()?;
+            .checked_mul(amm_position.ownership as u128).unwrap()
+            .checked_mul(remove_bps as u128).unwrap()
+            .checked_div(BPS_SCALE as u128).unwrap()
+            .checked_div(amm.total_ownership as u128).unwrap()
+            .to_u64().unwrap();
 
         let less_ownership = (amm_position.ownership as u128)
-            .checked_mul(remove_bps as u128)?
-            .checked_div(BPS_SCALE as u128)?
-            .to_u64()?;
+            .checked_mul(remove_bps as u128).unwrap()
+            .checked_div(BPS_SCALE as u128).unwrap()
+            .to_u64().unwrap();
 
-        amm_position.ownership = if remove_bps == BPS_SCALE { 0 } else { amm_position.ownership.checked_sub(less_ownership)? };
-        amm.total_ownership = amm.total_ownership.checked_sub(less_ownership)?;
+        amm_position.ownership = if remove_bps == BPS_SCALE { 0 } else { amm_position.ownership.checked_sub(less_ownership).unwrap() };
+        amm.total_ownership = amm.total_ownership.checked_sub(less_ownership).unwrap();
 
         // send vault base tokens to user
         token_transfer_signed(

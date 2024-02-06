@@ -1,8 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
-use anchor_spl::token::Transfer;
 
-use crate::error::ErrorCode;
 use crate::state::*;
 
 #[derive(Accounts)]

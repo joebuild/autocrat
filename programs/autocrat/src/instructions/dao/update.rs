@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program;
 
-use crate::error::ErrorCode;
 use crate::state::*;
 
 #[derive(Accounts)]

@@ -12,6 +12,8 @@ pub enum ErrorCode {
     InvalidSettlementAuthority,
     #[msg("Proposal is too young to be executed or rejected")]
     ProposalTooYoung,
+    #[msg("Proposal is still pending")]
+    ProposalStillPending,
     #[msg("Markets too young for proposal to be finalized")]
     MarketsTooYoung,
     #[msg("The market dictates that this proposal cannot pass")]

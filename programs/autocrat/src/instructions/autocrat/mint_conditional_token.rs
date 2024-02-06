@@ -1,133 +1,207 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program;
+use anchor_spl::associated_token;
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token;
 use anchor_spl::token::*;
 use anchor_spl::token::Transfer;
 
 use crate::error::ErrorCode;
 use crate::state::*;
+use crate::utils::token::*;
+use crate::generate_vault_seeds;
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
 pub struct MintConditionalTokens<'info> {
-    pub authority: Signer<'info>,
-    #[account(
-        has_one = conditional_on_finalize_token_mint @ ErrorCode::InvalidConditionalTokenMint,
-        has_one = conditional_on_revert_token_mint @ ErrorCode::InvalidConditionalTokenMint,
-    )]
-    pub vault: Account<'info, ConditionalVault>,
     #[account(mut)]
-    pub conditional_on_finalize_token_mint: Account<'info, Mint>,
+    pub user: Signer<'info>,
+    #[account(
+        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        bump
+    )]
+    pub dao: Box<Account<'info, Dao>>,
+    #[account(
+        zero,
+        has_one = conditional_on_pass_meta_mint,
+        has_one = conditional_on_pass_usdc_mint,
+        has_one = conditional_on_fail_meta_mint,
+        has_one = conditional_on_fail_usdc_mint,
+        constraint = proposal_vault.number == proposal.number,
+    )]
+    pub proposal: Account<'info, Proposal>,
+    #[account(
+        seeds = [
+            b"proposal_vault",
+            proposal.number.to_le_bytes().as_ref(),
+        ],
+        bump
+    )]
+    pub proposal_vault: Account<'info, ProposalVault>,
+    #[account(
+        constraint = meta_mint.key() == dao.meta_mint.key()
+    )]
+    pub meta_mint: Account<'info, Mint>,
+    #[account(
+        constraint = usdc_mint.key() == dao.usdc_mint.key()
+    )]
+    pub usdc_mint: Account<'info, Mint>,
     #[account(mut)]
-    pub conditional_on_revert_token_mint: Account<'info, Mint>,
+    pub conditional_on_pass_meta_mint: Account<'info, Mint>,
+    #[account(mut)]
+    pub conditional_on_pass_usdc_mint: Account<'info, Mint>,
+    #[account(mut)]
+    pub conditional_on_fail_meta_mint: Account<'info, Mint>,
+    #[account(mut)]
+    pub conditional_on_fail_usdc_mint: Account<'info, Mint>,
+    #[account(
+        init_if_needed,
+        payer = user,
+        associated_token::mint = meta_mint,
+        associated_token::authority = user,
+    )]
+    pub meta_user_ata: Account<'info, TokenAccount>,
+    #[account(
+        init_if_needed,
+        payer = user,
+        associated_token::mint = usdc_mint,
+        associated_token::authority = user,
+    )]
+    pub usdc_user_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
-        constraint = vault_underlying_token_account.key() == vault.underlying_token_account @  ErrorCode::InvalidVaultUnderlyingTokenAccount
+        associated_token::mint = conditional_on_pass_meta_mint,
+        associated_token::authority = user,
     )]
-    pub vault_underlying_token_account: Account<'info, TokenAccount>,
+    pub conditional_on_pass_meta_user_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
-        token::authority = authority,
-        token::mint = vault.underlying_token_mint,
-        constraint = user_underlying_token_account.amount >= amount @ ErrorCode::InsufficientUnderlyingTokens
+        associated_token::mint = conditional_on_pass_usdc_mint,
+        associated_token::authority = user,
     )]
-    pub user_underlying_token_account: Account<'info, TokenAccount>,
+    pub conditional_on_pass_usdc_user_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
-        token::authority = authority,
-        token::mint = conditional_on_finalize_token_mint
+        associated_token::mint = conditional_on_fail_meta_mint,
+        associated_token::authority = user,
     )]
-    pub user_conditional_on_finalize_token_account: Account<'info, TokenAccount>,
+    pub conditional_on_fail_meta_user_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
-        token::authority = authority,
-        token::mint = conditional_on_revert_token_mint
+        associated_token::mint = conditional_on_fail_usdc_mint,
+        associated_token::authority = user,
     )]
-    pub user_conditional_on_revert_token_account: Account<'info, TokenAccount>,
+    pub conditional_on_fail_usdc_user_ata: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        associated_token::mint = meta_mint.key(),
+        associated_token::authority = proposal_vault,
+    )]
+    pub meta_vault_ata: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        associated_token::mint = usdc_mint.key(),
+        associated_token::authority = proposal_vault,
+    )]
+    pub usdc_vault_ata: Account<'info, TokenAccount>,
+    #[account(address = associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: Program<'info, System>,
 }
 
-pub fn handle(ctx: Context<MintConditionalTokens>, amount: u64) -> Result<()> {
-    let accs = &ctx.accounts;
+pub fn handle(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amount: u64) -> Result<()> {
+    let MintConditionalTokens {
+        user,
+        dao,
+        proposal,
+        proposal_vault,
+        meta_mint,
+        usdc_mint,
+        conditional_on_pass_meta_mint,
+        conditional_on_pass_usdc_mint,
+        conditional_on_fail_meta_mint,
+        conditional_on_fail_usdc_mint,
+        meta_user_ata,
+        usdc_user_ata,
+        conditional_on_pass_meta_user_ata,
+        conditional_on_pass_usdc_user_ata,
+        conditional_on_fail_meta_user_ata,
+        conditional_on_fail_usdc_user_ata,
+        meta_vault_ata,
+        usdc_vault_ata,
+        associated_token_program,
+        token_program,
+        rent: _,
+        system_program: _,
+    } = ctx.accounts;
 
-    let pre_user_conditional_on_finalize_balance = accs.user_conditional_on_finalize_token_account.amount;
-    let pre_user_conditional_on_revert_balance = accs.user_conditional_on_revert_token_account.amount;
-    let pre_vault_underlying_balance = accs.vault_underlying_token_account.amount;
-    let pre_finalize_mint_supply = accs.conditional_on_finalize_token_mint.supply;
-    let pre_revert_mint_supply = accs.conditional_on_revert_token_mint.supply;
-
-    let vault = &accs.vault;
-
-    let seeds = generate_vault_seeds!(vault);
+    let seeds = generate_vault_seeds!(proposal.number, ctx.bumps.proposal_vault);
     let signer = &[&seeds[..]];
 
-    transfer(
-        CpiContext::new(
-            accs.token_program.to_account_info(),
-            Transfer {
-                from: accs.user_underlying_token_account.to_account_info(),
-                to: accs.vault_underlying_token_account.to_account_info(),
-                authority: accs.authority.to_account_info(),
-            },
-        ),
-        amount,
-    )?;
+    if meta_amount > 0 {
+        // transfer user meta to vault
+        token_transfer_signed(
+            meta_amount,
+            token_program,
+            meta_user_ata,
+            meta_vault_ata,
+            proposal_vault,
+            seeds,
+        );
 
-    mint_to(
-        CpiContext::new_with_signer(
-            accs.token_program.to_account_info(),
-            MintTo {
-                mint: accs.conditional_on_finalize_token_mint.to_account_info(),
-                to: accs
-                    .user_conditional_on_finalize_token_account
-                    .to_account_info(),
-                authority: accs.vault.to_account_info(),
-            },
-            signer,
-        ),
-        amount,
-    )?;
+        // mint conditional on-pass meta to user
+        token_mint_signed(
+            meta_amount,
+            token_program,
+            conditional_on_pass_meta_mint,
+            conditional_on_pass_meta_user_ata,
+            proposal_vault,
+            seeds,
+        );
 
-    mint_to(
-        CpiContext::new_with_signer(
-            accs.token_program.to_account_info(),
-            MintTo {
-                mint: accs.conditional_on_revert_token_mint.to_account_info(),
-                to: accs
-                    .user_conditional_on_revert_token_account
-                    .to_account_info(),
-                authority: accs.vault.to_account_info(),
-            },
-            signer,
-        ),
-        amount,
-    )?;
+        // mint conditional on-fail meta to user
+        token_mint_signed(
+            meta_amount,
+            token_program,
+            conditional_on_fail_meta_mint,
+            conditional_on_fail_meta_user_ata,
+            proposal_vault,
+            seeds,
+        );
+    }
 
-    ctx.accounts
-        .user_conditional_on_finalize_token_account
-        .reload()?;
-    ctx.accounts
-        .user_conditional_on_revert_token_account
-        .reload()?;
-    ctx.accounts.vault_underlying_token_account.reload()?;
-    ctx.accounts.conditional_on_finalize_token_mint.reload()?;
-    ctx.accounts.conditional_on_revert_token_mint.reload()?;
+    if usdc_amount > 0 {
+        // transfer user usdc to vault
+        token_transfer_signed(
+            usdc_amount,
+            token_program,
+            usdc_user_ata,
+            usdc_vault_ata,
+            proposal_vault,
+            seeds,
+        );
 
-    let post_user_conditional_on_finalize_balance = ctx
-        .accounts
-        .user_conditional_on_finalize_token_account
-        .amount;
-    let post_user_conditional_on_revert_balance =
-        ctx.accounts.user_conditional_on_revert_token_account.amount;
-    let post_vault_underlying_balance = ctx.accounts.vault_underlying_token_account.amount;
-    let post_finalize_mint_supply = ctx.accounts.conditional_on_finalize_token_mint.supply;
-    let post_revert_mint_supply = ctx.accounts.conditional_on_revert_token_mint.supply;
+        // mint conditional on-pass usdc to user
+        token_mint_signed(
+            usdc_amount,
+            token_program,
+            conditional_on_pass_usdc_mint,
+            conditional_on_pass_usdc_user_ata,
+            proposal_vault,
+            seeds,
+        );
 
-    // Only the paranoid survive ;)
-    assert_eq!(post_vault_underlying_balance, pre_vault_underlying_balance + amount);
-    assert_eq!(post_user_conditional_on_finalize_balance, pre_user_conditional_on_finalize_balance + amount);
-    assert_eq!(post_user_conditional_on_revert_balance, pre_user_conditional_on_revert_balance + amount);
-    assert_eq!(post_finalize_mint_supply, pre_finalize_mint_supply + amount);
-    assert_eq!(post_revert_mint_supply, pre_revert_mint_supply + amount);
+        // mint conditional on-fail usdc to user
+        token_mint_signed(
+            meta_amount,
+            token_program,
+            conditional_on_fail_usdc_mint,
+            conditional_on_fail_usdc_user_ata,
+            proposal_vault,
+            seeds,
+        );
+    }
 
     Ok(())
 }

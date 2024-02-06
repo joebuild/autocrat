@@ -1,12 +1,10 @@
 #[macro_export]
 macro_rules! generate_vault_seeds {
-    ($vault:expr) => {{
+    ($proposal_number:expr, $bump:expr) => {{
         &[
-            b"conditional_vault",
-            $vault.settlement_authority.as_ref(),
-            $vault.underlying_token_mint.as_ref(),
-            &$vault.nonce.to_le_bytes(),
-            &[$vault.pda_bump],
+            b"proposal_vault",
+            $proposal_number.to_le_bytes().as_ref(),
+            &[$bump],
         ]
     }};
 }
