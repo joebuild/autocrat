@@ -13,7 +13,6 @@ pub struct Proposal {
     pub pass_market_amm: Pubkey,
     pub fail_market_amm: Pubkey,
 
-    pub vault_pda: Pubkey,
     pub conditional_on_pass_meta_mint: Pubkey,
     pub conditional_on_pass_usdc_mint: Pubkey,
     pub conditional_on_fail_meta_mint: Pubkey,
@@ -22,8 +21,9 @@ pub struct Proposal {
 
 #[account]
 pub struct ProposalInstructions {
-    pub number: u32,
+    pub proposal_number: u32,
     pub proposer: Pubkey,
+    pub proposal_submitted: bool,
     pub instructions: Vec<ProposalInstruction>,
 }
 

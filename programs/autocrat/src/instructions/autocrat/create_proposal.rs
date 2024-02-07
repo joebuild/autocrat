@@ -14,11 +14,21 @@ use crate::state::*;
 pub struct CreateProposal<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
-    #[account(zero, signer)]
+    #[account(
+        init,
+        payer = proposer,
+        space = 8 + std::mem::size_of::<Proposal>(),
+        seeds = [
+            b"proposal",
+            dao.proposal_count.to_le_bytes().as_ref(),
+        ],
+        bump
+    )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
+        mut,
         constraint = proposal_instructions.proposer == proposer.key(),
-        constraint = proposal_instructions.number == dao.proposal_count @ ErrorCode::NonConsecutiveProposalNumber
+        constraint = proposal_instructions.proposal_number == dao.proposal_count @ ErrorCode::NonConsecutiveProposalNumber
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     #[account(
@@ -57,17 +67,6 @@ pub struct CreateProposal<'info> {
     )]
     pub fail_market_amm: Box<Account<'info, Amm>>,
     #[account(
-        init,
-        payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalVault>(),
-        seeds = [
-            b"proposal_vault",
-            dao.proposal_count.to_le_bytes().as_ref(),
-        ],
-        bump
-    )]
-    pub proposal_vault: Account<'info, ProposalVault>,
-    #[account(
         constraint = meta_mint.key() == dao.meta_mint.key()
     )]
     pub meta_mint: Account<'info, Mint>,
@@ -78,28 +77,28 @@ pub struct CreateProposal<'info> {
     #[account(
         init,
         payer = proposer,
-        mint::authority = proposal_vault,
+        mint::authority = proposal,
         mint::decimals = meta_mint.decimals
     )]
     pub conditional_on_pass_meta_mint: Account<'info, Mint>,
     #[account(
         init,
         payer = proposer,
-        mint::authority = proposal_vault,
+        mint::authority = proposal,
         mint::decimals = usdc_mint.decimals
     )]
     pub conditional_on_pass_usdc_mint: Account<'info, Mint>,
     #[account(
         init,
         payer = proposer,
-        mint::authority = proposal_vault,
+        mint::authority = proposal,
         mint::decimals = meta_mint.decimals
     )]
     pub conditional_on_fail_meta_mint: Account<'info, Mint>,
     #[account(
         init,
         payer = proposer,
-        mint::authority = proposal_vault,
+        mint::authority = proposal,
         mint::decimals = usdc_mint.decimals
     )]
     pub conditional_on_fail_usdc_mint: Account<'info, Mint>,
@@ -119,28 +118,28 @@ pub struct CreateProposal<'info> {
         init,
         payer = proposer,
         associated_token::mint = conditional_on_pass_meta_mint,
-        associated_token::authority = proposal_vault,
+        associated_token::authority = proposal,
     )]
     pub conditional_on_pass_meta_vault_ata: Account<'info, TokenAccount>,
     #[account(
         init,
         payer = proposer,
         associated_token::mint = conditional_on_pass_usdc_mint,
-        associated_token::authority = proposal_vault,
+        associated_token::authority = proposal,
     )]
     pub conditional_on_pass_usdc_vault_ata: Account<'info, TokenAccount>,
     #[account(
         init,
         payer = proposer,
         associated_token::mint = conditional_on_fail_meta_mint,
-        associated_token::authority = proposal_vault,
+        associated_token::authority = proposal,
     )]
     pub conditional_on_fail_meta_vault_ata: Account<'info, TokenAccount>,
     #[account(
         init,
         payer = proposer,
         associated_token::mint = conditional_on_fail_usdc_mint,
-        associated_token::authority = proposal_vault,
+        associated_token::authority = proposal,
     )]
     pub conditional_on_fail_usdc_vault_ata: Account<'info, TokenAccount>,
     #[account(address = associated_token::ID)]
@@ -166,7 +165,6 @@ pub fn handler(
         dao_treasury,
         pass_market_amm,
         fail_market_amm,
-        proposal_vault,
         meta_mint,
         usdc_mint,
         conditional_on_pass_meta_mint,
@@ -180,17 +178,17 @@ pub fn handler(
         conditional_on_fail_meta_vault_ata,
         conditional_on_fail_usdc_vault_ata,
         associated_token_program: _,
-        token_program,
+        token_program: _,
         rent: _,
         system_program: _,
     } = ctx.accounts;
 
-    let clock = Clock::get()?;
+    proposal_instructions.proposal_submitted = true;
 
     proposal.number = dao.proposal_count;
-    proposal_vault.number = proposal.number;
     dao.proposal_count += 1;
 
+    let clock = Clock::get()?;
     let slots_passed = clock.slot - dao.last_proposal_slot;
     let burn_amount = dao.base_burn_lamports.saturating_sub(
         dao.burn_decay_per_slot_lamports.saturating_mul(slots_passed),
@@ -219,8 +217,6 @@ pub fn handler(
 
     proposal.pass_market_amm = pass_market_amm.key();
     proposal.fail_market_amm = fail_market_amm.key();
-
-    proposal.vault_pda = proposal_vault.key();
 
     proposal.conditional_on_pass_meta_mint = conditional_on_pass_meta_mint.key();
     proposal.conditional_on_pass_usdc_mint = conditional_on_pass_usdc_mint.key();

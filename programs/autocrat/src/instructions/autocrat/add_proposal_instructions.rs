@@ -4,7 +4,7 @@ use crate::state::*;
 
 #[derive(Accounts)]
 #[instruction(instructions: Vec<ProposalInstructions>)]
-pub struct CreateProposalInstructions<'info> {
+pub struct AddProposalInstructions<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
     #[account(
@@ -13,9 +13,11 @@ pub struct CreateProposalInstructions<'info> {
     )]
     pub dao: Box<Account<'info, Dao>>,
     #[account(
-        init,
-        payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalInstructions>() + std::mem::size_of_val(&*instructions)
+        mut,
+        constraint = proposal_instructions.proposer == proposer.key(),
+        realloc = proposal_instructions.to_account_info().data_len() + std::mem::size_of_val(&*instructions),
+        realloc::payer = proposer,
+        realloc::zero = false,
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     pub rent: Sysvar<'info, Rent>,
@@ -23,10 +25,10 @@ pub struct CreateProposalInstructions<'info> {
 }
 
 pub fn handler(
-    ctx: Context<CreateProposalInstructions>,
+    ctx: Context<AddProposalInstructions>,
     instructions: Vec<ProposalInstruction>
 ) -> Result<()> {
-    let CreateProposalInstructions {
+    let AddProposalInstructions {
         proposer,
         dao,
         proposal_instructions,
@@ -34,9 +36,9 @@ pub fn handler(
         system_program: _,
     } = ctx.accounts;
 
-    proposal_instructions.proposal_number = dao.proposal_count;
-    proposal_instructions.proposer = proposer.key();
-    proposal_instructions.instructions = instructions;
+    assert!(!proposal_instructions.proposal_submitted);
+
+    proposal_instructions.instructions.extend(instructions.into_iter());
 
     Ok(())
 }

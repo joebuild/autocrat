@@ -19,7 +19,7 @@ pub struct FinalizeProposal<'info> {
     pub proposal: Account<'info, Proposal>,
     #[account(
         mut,
-        constraint = instructions.number == proposal.number,
+        constraint = instructions.proposal_number == proposal.number,
         constraint = instructions.proposer == proposal.proposer
     )]
     pub instructions: Account<'info, ProposalInstructions>,
@@ -50,19 +50,20 @@ pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
     let clock = Clock::get()?;
 
     require!(
-            clock.slot >= proposal.slot_enqueued + dao.slots_per_proposal,
-            ErrorCode::ProposalTooYoung
-        );
+        clock.slot >= proposal.slot_enqueued + dao.slots_per_proposal,
+        ErrorCode::ProposalTooYoung
+    );
 
     require!(
-            proposal.state == ProposalState::Pending,
-            ErrorCode::ProposalAlreadyFinalized
-        );
+        proposal.state == ProposalState::Pending,
+        ErrorCode::ProposalAlreadyFinalized
+    );
 
     assert_ne!(pass_market_amm.ltwap_latest, 0f64);
     assert_ne!(fail_market_amm.ltwap_latest, 0f64);
 
-    let treasury_seeds = &[dao.key().as_ref(), &[dao.treasury_pda_bump]];
+    let dao_pubkey = dao.key();
+    let treasury_seeds = &[dao_pubkey.as_ref(), &[dao.treasury_pda_bump]];
     let signer = &[&treasury_seeds[..]];
 
     // f64 which is 1.05, or whatever (1.0 + %_to_pass) is

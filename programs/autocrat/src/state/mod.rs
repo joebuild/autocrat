@@ -5,13 +5,11 @@ pub use amm::*;
 pub use amm_position::*;
 pub use dao::*;
 pub use proposal::*;
-pub use proposal_vault::*;
 
 pub mod amm;
 pub mod amm_position;
 pub mod dao;
 pub mod proposal;
-pub mod proposal_vault;
 
 pub const SLOTS_PER_10_SECS: u64 = 25;
 pub const PROPOSAL_DURATION_IN_SLOTS: u64 = 5 * 24 * 60 * 6 * SLOTS_PER_10_SECS;

@@ -3,7 +3,6 @@ use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::*;
-use anchor_spl::token::Transfer;
 
 use crate::error::ErrorCode;
 use crate::state::*;
@@ -25,17 +24,13 @@ pub struct RedeemConditionalTokens<'info> {
         has_one = conditional_on_pass_usdc_mint,
         has_one = conditional_on_fail_meta_mint,
         has_one = conditional_on_fail_usdc_mint,
-        constraint = proposal_vault.number == proposal.number,
-    )]
-    pub proposal: Account<'info, Proposal>,
-    #[account(
         seeds = [
-            b"proposal_vault",
+            b"proposal",
             proposal.number.to_le_bytes().as_ref(),
         ],
         bump
     )]
-    pub proposal_vault: Account<'info, ProposalVault>,
+    pub proposal: Account<'info, Proposal>,
     #[account(
         constraint = meta_mint.key() == dao.meta_mint.key()
     )]
@@ -93,39 +88,15 @@ pub struct RedeemConditionalTokens<'info> {
     #[account(
         mut,
         associated_token::mint = meta_mint.key(),
-        associated_token::authority = proposal_vault,
+        associated_token::authority = proposal,
     )]
     pub meta_vault_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = usdc_mint.key(),
-        associated_token::authority = proposal_vault,
+        associated_token::authority = proposal,
     )]
     pub usdc_vault_ata: Account<'info, TokenAccount>,
-    #[account(
-        mut,
-        associated_token::mint = conditional_on_pass_meta_mint,
-        associated_token::authority = proposal_vault,
-    )]
-    pub conditional_on_pass_meta_vault_ata: Account<'info, TokenAccount>,
-    #[account(
-        mut,
-        associated_token::mint = conditional_on_pass_usdc_mint,
-        associated_token::authority = proposal_vault,
-    )]
-    pub conditional_on_pass_usdc_vault_ata: Account<'info, TokenAccount>,
-    #[account(
-        mut,
-        associated_token::mint = conditional_on_fail_meta_mint,
-        associated_token::authority = proposal_vault,
-    )]
-    pub conditional_on_fail_meta_vault_ata: Account<'info, TokenAccount>,
-    #[account(
-        mut,
-        associated_token::mint = conditional_on_fail_usdc_mint,
-        associated_token::authority = proposal_vault,
-    )]
-    pub conditional_on_fail_usdc_vault_ata: Account<'info, TokenAccount>,
     #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
@@ -139,11 +110,10 @@ pub fn handle(
 ) -> Result<()> {
     let RedeemConditionalTokens {
         user,
-        dao,
+        dao: _,
         proposal,
-        proposal_vault,
-        meta_mint,
-        usdc_mint,
+        meta_mint: _,
+        usdc_mint: _,
         conditional_on_pass_meta_mint,
         conditional_on_pass_usdc_mint,
         conditional_on_fail_meta_mint,
@@ -156,11 +126,7 @@ pub fn handle(
         conditional_on_fail_usdc_user_ata,
         meta_vault_ata,
         usdc_vault_ata,
-        conditional_on_pass_meta_vault_ata,
-        conditional_on_pass_usdc_vault_ata,
-        conditional_on_fail_meta_vault_ata,
-        conditional_on_fail_usdc_vault_ata,
-        associated_token_program,
+        associated_token_program: _,
         token_program,
         rent: _,
         system_program: _,
@@ -178,8 +144,8 @@ pub fn handle(
         ErrorCode::ProposalStillPending
     );
 
-    let seeds = generate_vault_seeds!(proposal.number, ctx.bumps.proposal_vault);
-    let signer = &[&seeds[..]];
+    let proposal_number_bytes = proposal.number.to_le_bytes();
+    let seeds = generate_vault_seeds!(proposal_number_bytes, ctx.bumps.proposal);
 
     token_burn(
         c_pass_meta_user_balance,
@@ -187,7 +153,7 @@ pub fn handle(
         conditional_on_pass_meta_mint,
         conditional_on_pass_meta_user_ata,
         user,
-    );
+    )?;
 
     token_burn(
         c_pass_usdc_user_balance,
@@ -195,7 +161,7 @@ pub fn handle(
         conditional_on_pass_usdc_mint,
         conditional_on_pass_usdc_user_ata,
         user,
-    );
+    )?;
 
     token_burn(
         c_fail_meta_user_balance,
@@ -203,7 +169,7 @@ pub fn handle(
         conditional_on_fail_meta_mint,
         conditional_on_fail_meta_user_ata,
         user,
-    );
+    )?;
 
     token_burn(
         c_fail_usdc_user_balance,
@@ -211,7 +177,7 @@ pub fn handle(
         conditional_on_fail_usdc_mint,
         conditional_on_fail_usdc_user_ata,
         user,
-    );
+    )?;
 
     if proposal_state == ProposalState::Passed {
         token_transfer_signed(
@@ -219,36 +185,36 @@ pub fn handle(
             token_program,
             meta_vault_ata,
             meta_user_ata,
-            proposal_vault,
+            proposal,
             seeds,
-        );
+        )?;
 
         token_transfer_signed(
             c_pass_usdc_user_balance,
             token_program,
             usdc_vault_ata,
             usdc_user_ata,
-            proposal_vault,
+            proposal,
             seeds,
-        );
+        )?;
     } else {
         token_transfer_signed(
             c_fail_meta_user_balance,
             token_program,
             meta_vault_ata,
             meta_user_ata,
-            proposal_vault,
+            proposal,
             seeds,
-        );
+        )?;
 
         token_transfer_signed(
             c_pass_usdc_user_balance,
             token_program,
             usdc_vault_ata,
             usdc_user_ata,
-            proposal_vault,
+            proposal,
             seeds,
-        );
+        )?;
     }
 
     Ok(())
