@@ -4,7 +4,7 @@ use anchor_spl::token::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-pub struct InitializeDAO<'info> {
+pub struct InitializeDao<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(
@@ -20,15 +20,12 @@ pub struct InitializeDAO<'info> {
     pub dao: Account<'info, Dao>,
     #[account(mint::decimals = 9)]
     pub meta_mint: Account<'info, Mint>,
-    #[account(
-        mint::decimals = 6,
-        constraint = usdc_mint.key() == USDC_MINT
-    )]
+    #[account(mint::decimals = 6)]
     pub usdc_mint: Account<'info, Mint>,
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitializeDAO>) -> Result<()> {
+pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
     let dao = &mut ctx.accounts.dao;
 
     let (treasury_pubkey, treasury_bump) = Pubkey::find_program_address(&[dao.key().as_ref()], ctx.program_id);

@@ -67,7 +67,7 @@ pub struct RemoveLiquidity<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle(
+pub fn handler(
     ctx: Context<RemoveLiquidity>,
     remove_bps: u64,
     is_pass_market: bool,

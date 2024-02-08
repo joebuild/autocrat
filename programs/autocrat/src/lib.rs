@@ -20,7 +20,7 @@ pub mod instructions;
 pub mod state;
 pub mod utils;
 
-// use crate::error::*;
+use crate::error::*;
 use crate::instructions::*;
 use crate::state::*;
 use crate::utils::*;
@@ -31,24 +31,48 @@ declare_id!("66629qDqH5vJuz4ZgaL1HVpeAC9kJXnzamMpvMJfr3kE");
 pub mod autocrat {
     use super::*;
 
-    pub fn initialize_dao(ctx: Context<InitializeDAO>) -> Result<()> {
+    // ==== dao
+    pub fn initialize_dao(ctx: Context<InitializeDao>) -> Result<()> {
         instructions::dao::initialize::handler(ctx)
     }
 
-    // pub fn update_dao(ctx: Context<UpdateDAO>, dao_params: UpdateDaoParams) -> Result<()> {
-    //     update_dao::handler(ctx, dao_params)
-    // }
+    pub fn update_dao(ctx: Context<UpdateDao>, dao_params: UpdateDaoParams) -> Result<()> {
+        instructions::dao::update::handler(ctx, dao_params)
+    }
 
-    // pub fn initialize_proposal(ctx: Context<InitializeProposal>, description_url: string, instruction: ProposalInstruction) -> Result<()> {
-    //     initialize_proposal::handler(ctx, description_url, instruction)
-    // }
+    // ==== autocrat
+    pub fn create_proposal_instructions(ctx: Context<CreateProposalInstructions>, instructions: Vec<ProposalInstruction>) -> Result<()> {
+        instructions::autocrat::create_proposal_instructions::handler(ctx, instructions)
+    }
 
-    // pub fn mint_conditional_tokens(ctx: Context<MintConditionalTokens>) -> Result<()> {
-    //     mint_conditional_tokens::handler(ctx)
-    // }
+    pub fn add_proposal_instructions(ctx: Context<AddProposalInstructions>, instructions: Vec<ProposalInstruction>) -> Result<()> {
+        instructions::autocrat::add_proposal_instructions::handler(ctx, instructions)
+    }
 
-    // pub fn redeem_conditional_for_underlying(ctx: Context<MintConditionalTokens>) -> Result<()> {
-    //     redeem_conditional_tokens::handler(ctx)
-    // }
+    pub fn mint_conditional_tokens(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amount: u64) -> Result<()> {
+        instructions::autocrat::mint_conditional_tokens::handler(ctx, meta_amount, usdc_amount)
+    }
+
+    pub fn redeem_conditional_tokens(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
+        instructions::autocrat::redeem_conditional_tokens::handler(ctx)
+    }
+
+    pub fn finalize_proposal(ctx: Context<FinalizeProposal>) -> Result<()> {
+        instructions::autocrat::finalize_proposal::handler(ctx)
+    }
+
+    // ==== amm
+    pub fn add_liquidity(ctx: Context<AddLiquidity>, max_base_amount: u64, max_quote_amount: u64, is_pass_market: bool) -> Result<()> {
+        instructions::amm::add_liquidity::handler(ctx, max_base_amount, max_quote_amount, is_pass_market)
+    }
+
+    pub fn remove_liquidity(ctx: Context<RemoveLiquidity>, remove_bps: u64, is_pass_market: bool) -> Result<()> {
+        instructions::amm::remove_liquidity::handler(ctx, remove_bps, is_pass_market)
+    }
+
+    pub fn swap(ctx: Context<Swap>, is_quote_to_base: bool, input_amount: u64, output_amount_min: u64, is_pass_market: bool) -> Result<()> {
+        instructions::amm::swap::handler(ctx, is_quote_to_base, input_amount, output_amount_min, is_pass_market)
+    }
+
 
 }

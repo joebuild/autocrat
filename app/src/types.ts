@@ -1,3 +1,4 @@
 import {Autocrat as AutocratIDLType} from '../../target/types/autocrat';
-import {IdlAccounts} from "@coral-xyz/anchor";
+import type {IdlAccounts, IdlTypes} from "@coral-xyz/anchor";
 
+export type UpdateDaoParams = IdlTypes<AutocratIDLType>['UpdateDaoParams'];

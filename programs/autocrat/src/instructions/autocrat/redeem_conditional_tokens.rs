@@ -30,15 +30,15 @@ pub struct RedeemConditionalTokens<'info> {
         ],
         bump
     )]
-    pub proposal: Account<'info, Proposal>,
+    pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         constraint = meta_mint.key() == dao.meta_mint.key()
     )]
-    pub meta_mint: Account<'info, Mint>,
+    pub meta_mint: Box<Account<'info, Mint>>,
     #[account(
         constraint = usdc_mint.key() == dao.usdc_mint.key()
     )]
-    pub usdc_mint: Account<'info, Mint>,
+    pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
     pub conditional_on_pass_meta_mint: Account<'info, Mint>,
     #[account(mut)]
@@ -101,11 +101,10 @@ pub struct RedeemConditionalTokens<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
-    pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle(
+pub fn handler(
     ctx: Context<RedeemConditionalTokens>,
 ) -> Result<()> {
     let RedeemConditionalTokens {
@@ -128,7 +127,6 @@ pub fn handle(
         usdc_vault_ata,
         associated_token_program: _,
         token_program,
-        rent: _,
         system_program: _,
     } = ctx.accounts;
 
@@ -185,7 +183,7 @@ pub fn handle(
             token_program,
             meta_vault_ata,
             meta_user_ata,
-            proposal,
+            proposal.as_ref(),
             seeds,
         )?;
 
@@ -194,7 +192,7 @@ pub fn handle(
             token_program,
             usdc_vault_ata,
             usdc_user_ata,
-            proposal,
+            proposal.as_ref(),
             seeds,
         )?;
     } else {
@@ -203,7 +201,7 @@ pub fn handle(
             token_program,
             meta_vault_ata,
             meta_user_ata,
-            proposal,
+            proposal.as_ref(),
             seeds,
         )?;
 
@@ -212,7 +210,7 @@ pub fn handle(
             token_program,
             usdc_vault_ata,
             usdc_user_ata,
-            proposal,
+            proposal.as_ref(),
             seeds,
         )?;
     }

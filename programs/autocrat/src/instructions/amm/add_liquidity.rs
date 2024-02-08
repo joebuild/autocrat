@@ -69,7 +69,7 @@ pub struct AddLiquidity<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle(
+pub fn handler(
     ctx: Context<AddLiquidity>,
     max_base_amount: u64,
     max_quote_amount: u64,

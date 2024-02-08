@@ -12,7 +12,8 @@ import {
     TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import {AutocratClient} from "../AutocratClient";
-import { AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID, DAO, DAO_TREASURY, META_MINT, USDC_MINT } from "../constants";
+import { AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID, META_MINT, USDC_MINT } from "../constants";
+import { getDaoAddr, getDaoTreasuryAddr } from "./pda";
 
 export async function createLookupTable(
     client: AutocratClient,
@@ -60,8 +61,8 @@ export async function createLookupTable(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         SYSVAR_RENT_PUBKEY,
         AUTOCRAT_PROGRAM_ID,
-        DAO,
-        DAO_TREASURY,
+        getDaoAddr(AUTOCRAT_PROGRAM_ID)[0],
+        getDaoTreasuryAddr(AUTOCRAT_PROGRAM_ID)[0],
         META_MINT,
         USDC_MINT
     ])

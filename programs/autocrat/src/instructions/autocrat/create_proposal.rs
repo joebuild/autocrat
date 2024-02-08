@@ -146,7 +146,6 @@ pub struct CreateProposal<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
-    pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 }
 
@@ -179,7 +178,6 @@ pub fn handler(
         conditional_on_fail_usdc_vault_ata,
         associated_token_program: _,
         token_program: _,
-        rent: _,
         system_program: _,
     } = ctx.accounts;
 

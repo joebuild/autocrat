@@ -5,12 +5,17 @@ use crate::state::*;
 #[derive(Accounts)]
 pub struct UpdateDao<'info> {
     #[account(
+        mut,
+        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        bump
+    )]
+    pub dao: Account<'info, Dao>,
+    #[account(
+        signer,
         seeds = [dao.key().as_ref()],
         bump = dao.treasury_pda_bump,
     )]
     pub dao_treasury: Signer<'info>,
-    #[account(mut)]
-    pub dao: Account<'info, Dao>,
 }
 
 #[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]

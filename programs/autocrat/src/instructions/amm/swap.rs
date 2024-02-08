@@ -61,7 +61,7 @@ pub struct Swap<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle(
+pub fn handler(
     ctx: Context<Swap>,
     is_quote_to_base: bool,
     input_amount: u64,

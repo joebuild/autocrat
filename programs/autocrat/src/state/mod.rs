@@ -28,5 +28,3 @@ pub const AMM_SWAP_FEE_BPS_MIN: u64 = 100; // 1%
 pub const AMM_SWAP_FEE_BPS_MAX: u64 = 1000; // 10%
 
 pub const BPS_SCALE: u64 = 100 * 100;
-
-pub const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");

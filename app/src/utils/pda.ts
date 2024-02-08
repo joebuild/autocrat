@@ -7,7 +7,17 @@ export const getDaoAddr = (
     programId: PublicKey,
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [encode("WWCACOTMICMIBMHAFTTWYGHMB")],
+        [utils.bytes.utf8.encode("WWCACOTMICMIBMHAFTTWYGHMB")],
+        programId,
+    );
+};
+
+export const getDaoTreasuryAddr = (
+    programId: PublicKey,
+): [PublicKey, number] => {
+    let [dao] = getDaoAddr(programId)
+    return PublicKey.findProgramAddressSync(
+        [dao.toBuffer()],
         programId,
     );
 };
@@ -17,7 +27,7 @@ export const getProposalAddr = (
     proposalNumber: number
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [encode("proposal"), numToBytes32LE(proposalNumber)],
+        [utils.bytes.utf8.encode("proposal"), numToBytes32LE(proposalNumber)],
         programId,
     );
 };
@@ -27,7 +37,7 @@ export const getPassMarketAmmAddr = (
     proposalNumber: number
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [encode("pass_market_amm"), numToBytes32LE(proposalNumber)],
+        [utils.bytes.utf8.encode("pass_market_amm"), numToBytes32LE(proposalNumber)],
         programId,
     );
 };
@@ -37,12 +47,10 @@ export const getFailMarketAmmAddr = (
     proposalNumber: number
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [encode("fail_market_amm"), numToBytes32LE(proposalNumber)],
+        [utils.bytes.utf8.encode("fail_market_amm"), numToBytes32LE(proposalNumber)],
         programId,
     );
 };
-
-export const encode = (x: string) => Buffer.from(utils.bytes.utf8.encode(x))
 
 export const getATA = (mint: PublicKey, owner: PublicKey) => {
     return PublicKey.findProgramAddressSync(

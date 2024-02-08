@@ -11,16 +11,11 @@ import {
 import {Autocrat as AutocratIDLType} from '../../target/types/autocrat';
 // @ts-ignore
 import * as IDL from '../../target/idl/autocrat.json';
-// import {
-//     getTxAccounts,
-//     initializeMarketPair,
-//     TxAccounts,
-//     refreshMarketOrderIx,
-//     removeMarketPair, OrdersAndParams
-// } from "./rpc";
+import * as ixs from "./instructions";
 import BN from "bn.js";
 import {addComputeUnits} from "./utils";
 import { AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
+import { UpdateDaoParams } from "./types";
 
 export class AutocratClient {
     public readonly provider: AnchorProvider;
@@ -55,6 +50,26 @@ export class AutocratClient {
         )
     }
 
+    async initializeDao(
+        metaMint?: PublicKey,
+        usdcMint?: PublicKey
+    ) {
+        return ixs.initializeDaoHandler(
+            this,
+            metaMint,
+            usdcMint
+        )    
+    }
+
+    // this won't ever be called directly (must be called via a proposal), but is here anyway for completeness / testing
+    async updateDao(
+        updateDaoParams: UpdateDaoParams
+    ) {
+        return ixs.updateDaoHandler(
+            this,
+            updateDaoParams
+        )    
+    }
     
 }
 
