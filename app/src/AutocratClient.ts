@@ -15,7 +15,7 @@ import * as ixs from "./instructions";
 import BN from "bn.js";
 import {addComputeUnits} from "./utils";
 import { AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
-import { UpdateDaoParams } from "./types";
+import { ProposalInstruction, UpdateDaoParams } from "./types";
 
 export class AutocratClient {
     public readonly provider: AnchorProvider;
@@ -70,6 +70,15 @@ export class AutocratClient {
             updateDaoParams
         )    
     }
-    
+
+    async createProposalInstructions(
+        instructions: ProposalInstruction[]
+    ) {
+        return ixs.createProposalInstructionsHandler(
+            this,
+            instructions
+        )    
+    }
+
 }
 

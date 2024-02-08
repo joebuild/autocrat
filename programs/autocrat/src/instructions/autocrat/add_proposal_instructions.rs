@@ -18,6 +18,11 @@ pub struct AddProposalInstructions<'info> {
         realloc = proposal_instructions.to_account_info().data_len() + std::mem::size_of_val(&*instructions),
         realloc::payer = proposer,
         realloc::zero = false,
+        seeds = [
+            b"proposal_instructions",
+            dao.proposal_count.to_le_bytes().as_ref(),
+        ],
+        bump
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     pub rent: Sysvar<'info, Rent>,

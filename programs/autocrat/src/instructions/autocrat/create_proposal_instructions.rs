@@ -15,7 +15,12 @@ pub struct CreateProposalInstructions<'info> {
     #[account(
         init,
         payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalInstructions>() + std::mem::size_of_val(&*instructions)
+        space = 8 + std::mem::size_of::<ProposalInstructions>() + std::mem::size_of_val(&*instructions),
+        seeds = [
+            b"proposal_instructions",
+            dao.proposal_count.to_le_bytes().as_ref(),
+        ],
+        bump
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     pub rent: Sysvar<'info, Rent>,
