@@ -23,9 +23,10 @@ import { assert } from "chai";
 
 import { Autocrat } from "../target/types/autocrat";
 import { AutocratClient } from "../app/src/AutocratClient";
-import { getDaoAddr, getDaoTreasuryAddr, getProposalInstructionsAddr, sleep } from "../app/src/utils";
-import { PublicKey } from "@solana/web3.js";
+import { getATA, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr, getProposalInstructionsAddr, sleep } from "../app/src/utils";
+import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { ProposalInstruction } from "../app/src/types";
+import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 const AutocratIDL: Autocrat = require("../target/idl/autocrat.json");
 
 describe("autocrat_v1", async function () {
@@ -40,7 +41,9 @@ describe("autocrat_v1", async function () {
     META,
     USDC,
     treasuryMetaAccount,
-    treasuryUsdcAccount;
+    treasuryUsdcAccount,
+    userMetaAccount,
+    userUsdcAccount;
 
   before(async function () {
     context = await startAnchor(
@@ -97,6 +100,18 @@ describe("autocrat_v1", async function () {
         USDC,
         daoTreasury
       );
+      userMetaAccount = await createAssociatedTokenAccount(
+        banksClient,
+        payer,
+        META,
+        payer.publicKey
+      );
+      userUsdcAccount = await createAssociatedTokenAccount(
+        banksClient,
+        payer,
+        USDC,
+        payer.publicKey
+      );
     });
   });
 
@@ -150,6 +165,83 @@ describe("autocrat_v1", async function () {
 
       assert.equal(instructionsAcc.proposalNumber, dao.proposalCount);
       assert.equal(instructionsAcc.proposer.toBase58(), autocratClient.provider.publicKey.toBase58());
+    });
+  });
+
+  describe("#add_proposal_instructions", async function () {
+    it("adds a proposal instruction to a proposal instruction account", async function () {
+
+      const memoText = "Proposal #4 hereby passes! (Twice!)";
+
+      const memoInstruction = {
+        programId: new PublicKey(MEMO_PROGRAM_ID),
+        data: Buffer.from(memoText),
+        accounts: [],
+      };
+
+      dao = await autocratClient.program.account.dao.fetch(getDaoAddr(autocratClient.program.programId)[0])
+
+      let ixh = await autocratClient.addProposalInstructions([memoInstruction, memoInstruction]);
+      await ixh.bankrun(banksClient);
+
+      let [instructionsAddr] = getProposalInstructionsAddr(autocratClient.program.programId, dao.proposalCount);
+      const instructionsAcc = await autocratClient.program.account.proposalInstructions.fetch(instructionsAddr);
+
+      assert.equal(instructionsAcc.instructions.length, 3);
+    });
+  });
+
+  describe("#create_proposal_part_one", async function () {
+    it("creates a proposal (part one), using the already created proposal instructions", async function () {
+
+      let descriptionUrl = "https://metadao.futarchy/proposal-4"
+
+      dao = await autocratClient.program.account.dao.fetch(getDaoAddr(autocratClient.program.programId)[0])
+      let proposalNumber = dao.proposalCount
+
+      let ixh = await autocratClient.createProposalPartOne(
+        descriptionUrl,
+      );
+      await ixh.bankrun(banksClient);
+
+      let [proposalAddr] = getProposalAddr(autocratClient.program.programId, proposalNumber);
+      const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
+
+      assert.equal(proposalAcc.descriptionUrl, descriptionUrl);
+    });
+  });
+
+  describe("#create_proposal_part_two", async function () {
+    it("finish creating a proposal (part two), and deposit liquidity into amms", async function () {
+
+      let initialPassMarketPriceUnits = 35.5
+      let initialFailMarketPriceUnits = 24.2
+      let quoteLiquidityAtomsPerAmm = new BN(1000 * 10 ** 6)
+
+      let ixh = await autocratClient.createProposalPartTwo(
+        initialPassMarketPriceUnits,
+        initialFailMarketPriceUnits,
+        quoteLiquidityAtomsPerAmm
+      );
+
+      await ixh
+        .setComputeUnits(400_000)
+        .bankrun(banksClient);
+
+      dao = await autocratClient.program.account.dao.fetch(getDaoAddr(autocratClient.program.programId)[0])
+      let proposalNumber = dao.proposalCount - 1
+
+      let proposalAddr = getProposalAddr(autocratClient.program.programId, proposalNumber)[0]
+      const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
+      assert.isAbove(proposalAcc.slotEnqueued.toNumber(), 0)
+
+      let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
+      const passMarketAmmAcc = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
+      assert.isAbove(passMarketAmmAcc.ltwapSlotUpdated.toNumber(), 0)
+
+      let [failMarketAmmAddr] = getFailMarketAmmAddr(autocratClient.program.programId, proposalNumber);
+      const failMarketAmmAcc = await autocratClient.program.account.amm.fetch(failMarketAmmAddr);
+      assert.isAbove(failMarketAmmAcc.ltwapSlotUpdated.toNumber(), 0)
     });
   });
 });

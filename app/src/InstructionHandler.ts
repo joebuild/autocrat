@@ -9,13 +9,20 @@ import {
 } from "@solana/web3.js";
 import { BanksClient } from "solana-bankrun";
 import { AutocratClient } from "./AutocratClient";
+import { addComputeUnits, addPriorityFee } from "./utils";
 
 export type SignerOrKeypair = Signer | Keypair
 
 export class InstructionHandler {
     public instructions: TransactionInstruction[];
-    public signers: SignerOrKeypair[];
+    public signers: Set<SignerOrKeypair>;
     public client: AutocratClient;
+
+    public computeUnits = 200_000;
+    public microLamportsPerComputeUnit = 0;
+
+    public preInstructions: TransactionInstruction[];
+    public postInstructions: TransactionInstruction[];
 
     constructor(
         instructions: TransactionInstruction[],
@@ -23,11 +30,55 @@ export class InstructionHandler {
         client: AutocratClient,
     ) {
         this.instructions = instructions
-        this.signers = signers
+
+        this.signers = new Set()
+        signers.forEach(s => this.signers.add(s))
+
         this.client = client
+
+        this.preInstructions = []
+        this.postInstructions = []
+    }
+
+    addPreInstructions(instructions: TransactionInstruction[], signers: SignerOrKeypair[] = []): InstructionHandler {
+        this.preInstructions = [
+            ...instructions,
+            ...this.preInstructions
+        ]
+        signers.forEach(s => this.signers.add(s))
+        return this
+    }
+
+    addPostInstructions(instructions: TransactionInstruction[], signers: SignerOrKeypair[] = []): InstructionHandler {
+        this.postInstructions = [
+            ...instructions,
+            ...this.postInstructions
+        ]
+        signers.forEach(s => this.signers.add(s))
+        return this
     }
 
     async getVersionedTransaction(blockhash: Blockhash){
+        this.instructions = [
+            ...this.preInstructions,
+            ...this.instructions,
+            ...this.postInstructions,
+        ]
+
+        if (this.microLamportsPerComputeUnit != 0){
+            this.instructions = [
+                addPriorityFee(this.microLamportsPerComputeUnit),
+                ...this.instructions
+            ]
+        }
+        
+        if (this.computeUnits != 200_000){
+            this.instructions = [
+                addComputeUnits(this.computeUnits),
+                ...this.instructions
+            ]
+        }
+
         const message = new TransactionMessage({
             payerKey: this.client.provider.wallet.publicKey,
             recentBlockhash: blockhash,
@@ -36,11 +87,23 @@ export class InstructionHandler {
 
         let tx = new VersionedTransaction(message)
         tx = await this.client.provider.wallet.signTransaction(tx)
-        if (this.signers.length){
-            tx.sign(this.signers)
+
+        let signersArray = Array.from(this.signers)
+        if (this.signers.size){
+            tx.sign(signersArray)
         }
 
         return tx
+    }
+
+    setComputeUnits(computeUnits: number): InstructionHandler {
+        this.computeUnits = computeUnits
+        return this
+    }
+
+    setPriorityFee(microLamportsPerComputeUnit: number): InstructionHandler {
+        this.microLamportsPerComputeUnit = microLamportsPerComputeUnit
+        return this
     }
 
     async bankrun(banksClient: BanksClient){

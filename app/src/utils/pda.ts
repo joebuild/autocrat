@@ -62,6 +62,46 @@ export const getFailMarketAmmAddr = (
     );
 };
 
+export const getConditionalOnPassMetaMintAddr = (
+    programId: PublicKey,
+    proposalNumber: number
+): [PublicKey, number] => {
+    return PublicKey.findProgramAddressSync(
+        [utils.bytes.utf8.encode("conditional_on_pass_meta"), numToBytes32LE(proposalNumber)],
+        programId,
+    );
+};
+
+export const getConditionalOnPassUsdcMintAddr = (
+    programId: PublicKey,
+    proposalNumber: number
+): [PublicKey, number] => {
+    return PublicKey.findProgramAddressSync(
+        [utils.bytes.utf8.encode("conditional_on_pass_usdc"), numToBytes32LE(proposalNumber)],
+        programId,
+    );
+};
+
+export const getConditionalOnFailMetaMintAddr = (
+    programId: PublicKey,
+    proposalNumber: number
+): [PublicKey, number] => {
+    return PublicKey.findProgramAddressSync(
+        [utils.bytes.utf8.encode("conditional_on_fail_meta"), numToBytes32LE(proposalNumber)],
+        programId,
+    );
+};
+
+export const getConditionalOnFailUsdcMintAddr = (
+    programId: PublicKey,
+    proposalNumber: number
+): [PublicKey, number] => {
+    return PublicKey.findProgramAddressSync(
+        [utils.bytes.utf8.encode("conditional_on_fail_usdc"), numToBytes32LE(proposalNumber)],
+        programId,
+    );
+};
+
 export const getATA = (mint: PublicKey, owner: PublicKey) => {
     return PublicKey.findProgramAddressSync(
         [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],

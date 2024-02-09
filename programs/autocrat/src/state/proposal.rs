@@ -10,6 +10,12 @@ pub struct Proposal {
     pub state: ProposalState,
     pub instructions: Pubkey,
 
+    pub part_one_complete: bool,
+    pub part_two_complete: bool,
+
+    pub meta_mint: Pubkey,
+    pub usdc_mint: Pubkey,
+
     pub pass_market_amm: Pubkey,
     pub fail_market_amm: Pubkey,
 
@@ -23,7 +29,7 @@ pub struct Proposal {
 pub struct ProposalInstructions {
     pub proposal_number: u32,
     pub proposer: Pubkey,
-    pub proposal_submitted: bool,
+    pub proposal_instructions_frozen: bool,
     pub instructions: Vec<ProposalInstruction>,
 }
 

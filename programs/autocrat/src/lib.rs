@@ -49,6 +49,14 @@ pub mod autocrat {
         instructions::autocrat::add_proposal_instructions::handler(ctx, instructions)
     }
 
+    pub fn create_proposal_part_one(ctx: Context<CreateProposalPartOne>, description_url: String) -> Result<()> {
+        instructions::autocrat::create_proposal_part_one::handler(ctx, description_url)
+    }
+
+    pub fn create_proposal_part_two(ctx: Context<CreateProposalPartTwo>, initial_pass_market_price_units: f32, initial_fail_market_price_units: f32, quote_liquidity_atoms_per_amm: u64) -> Result<()> {
+        instructions::autocrat::create_proposal_part_two::handler(ctx, initial_pass_market_price_units, initial_fail_market_price_units, quote_liquidity_atoms_per_amm)
+    }
+
     pub fn mint_conditional_tokens(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amount: u64) -> Result<()> {
         instructions::autocrat::mint_conditional_tokens::handler(ctx, meta_amount, usdc_amount)
     }

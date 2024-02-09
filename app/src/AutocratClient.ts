@@ -80,5 +80,36 @@ export class AutocratClient {
         )    
     }
 
+    async addProposalInstructions(
+        instructions: ProposalInstruction[]
+    ) {
+        return ixs.addProposalInstructionsHandler(
+            this,
+            instructions
+        )    
+    }
+
+    async createProposalPartOne(
+        descriptionUrl: string,
+    ) {
+        return ixs.createProposalPartOneHandler(
+            this,
+            descriptionUrl,
+        )    
+    }
+
+    async createProposalPartTwo(
+        initialPassMarketPriceUnits: number,
+        initialFailMarketPriceUnits: number,
+        quoteLiquidityAtomsPerAmm: BN,
+    ) {
+        return ixs.createProposalPartTwoHandler(
+            this,
+            initialPassMarketPriceUnits,
+            initialFailMarketPriceUnits,
+            quoteLiquidityAtomsPerAmm,
+        )    
+    }
+
 }
 

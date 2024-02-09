@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
 
 use crate::state::*;
+use crate::utils::get_instructions_size;
 
 #[derive(Accounts)]
-#[instruction(instructions: Vec<ProposalInstructions>)]
+#[instruction(instructions: Vec<ProposalInstruction>)]
 pub struct CreateProposalInstructions<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
@@ -15,7 +16,7 @@ pub struct CreateProposalInstructions<'info> {
     #[account(
         init,
         payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalInstructions>() + std::mem::size_of_val(&*instructions),
+        space = 8 + std::mem::size_of::<ProposalInstructions>() + get_instructions_size(&instructions),
         seeds = [
             b"proposal_instructions",
             dao.proposal_count.to_le_bytes().as_ref(),

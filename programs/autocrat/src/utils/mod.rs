@@ -7,6 +7,8 @@ pub use token::*;
 pub mod seeds;
 pub mod token;
 
+use crate::state::*;
+
 pub fn get_decimal_scale_f64(decimals: u8) -> Result<f64> {
     match decimals {
         0u8 => Ok(1f64),
@@ -30,4 +32,14 @@ pub fn get_decimal_scale_f64(decimals: u8) -> Result<f64> {
             err!(ErrorCode::DecimalScaleError)
         }
     }
+}
+
+// yeah.. not so sure about this
+pub fn get_instructions_size(instructions: &Vec<ProposalInstruction>) -> usize {
+    instructions.iter().fold(0, |acc, x| {
+        acc + 
+        &x.accounts.capacity() * 32 +   // 32 per account
+        x.data.capacity() * 2 +         // 2 per u8, easy 'buffer' multiple
+        32                              // 32 for program id
+    })
 }

@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
 
 use crate::state::*;
+use crate::utils::get_instructions_size;
 
 #[derive(Accounts)]
-#[instruction(instructions: Vec<ProposalInstructions>)]
+#[instruction(instructions: Vec<ProposalInstruction>)]
 pub struct AddProposalInstructions<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
@@ -15,7 +16,7 @@ pub struct AddProposalInstructions<'info> {
     #[account(
         mut,
         constraint = proposal_instructions.proposer == proposer.key(),
-        realloc = proposal_instructions.to_account_info().data_len() + std::mem::size_of_val(&*instructions),
+        realloc = proposal_instructions.to_account_info().data_len() + get_instructions_size(&instructions),
         realloc::payer = proposer,
         realloc::zero = false,
         seeds = [
@@ -41,7 +42,7 @@ pub fn handler(
         system_program: _,
     } = ctx.accounts;
 
-    assert!(!proposal_instructions.proposal_submitted);
+    assert!(!proposal_instructions.proposal_instructions_frozen);
 
     proposal_instructions.instructions.extend(instructions.into_iter());
 

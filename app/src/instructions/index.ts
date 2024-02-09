@@ -1,3 +1,6 @@
+export * from './addProposalInstructions'
+export * from './createProposalPartOne'
+export * from './createProposalPartTwo'
 export * from './createProposalInstructions'
 export * from './initializeDao'
 export * from './updateDao'
