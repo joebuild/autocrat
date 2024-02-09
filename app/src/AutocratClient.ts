@@ -58,7 +58,7 @@ export class AutocratClient {
             this,
             metaMint,
             usdcMint
-        )    
+        )
     }
 
     // this won't ever be called directly (must be called via a proposal), but is here anyway for completeness / testing
@@ -68,7 +68,7 @@ export class AutocratClient {
         return ixs.updateDaoHandler(
             this,
             updateDaoParams
-        )    
+        )
     }
 
     async createProposalInstructions(
@@ -77,7 +77,7 @@ export class AutocratClient {
         return ixs.createProposalInstructionsHandler(
             this,
             instructions
-        )    
+        )
     }
 
     async addProposalInstructions(
@@ -86,7 +86,7 @@ export class AutocratClient {
         return ixs.addProposalInstructionsHandler(
             this,
             instructions
-        )    
+        )
     }
 
     async createProposalPartOne(
@@ -95,7 +95,7 @@ export class AutocratClient {
         return ixs.createProposalPartOneHandler(
             this,
             descriptionUrl,
-        )    
+        )
     }
 
     async createProposalPartTwo(
@@ -108,7 +108,38 @@ export class AutocratClient {
             initialPassMarketPriceUnits,
             initialFailMarketPriceUnits,
             quoteLiquidityAtomsPerAmm,
-        )    
+        )
+    }
+
+    async mintConditionalTokens(
+        metaAmount: BN,
+        usdcAmount: BN,
+        proposalNumber: number
+    ) {
+        return ixs.mintConditionalTokensHandler(
+            this,
+            metaAmount,
+            usdcAmount,
+            proposalNumber,
+        )
+    }
+
+    async redeemConditionalTokens(
+        proposalNumber: number
+    ) {
+        return ixs.redeemConditionalTokensHandler(
+            this,
+            proposalNumber,
+        )
+    }
+
+    async finalizeProposal(
+        proposalNumber: number
+    ) {
+        return ixs.finalizeProposalHandler(
+            this,
+            proposalNumber,
+        )
     }
 
 }

@@ -99,6 +99,18 @@ pub struct CreateProposalPartTwo<'info> {
     pub usdc_proposer_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
+        associated_token::mint = meta_mint,
+        associated_token::authority = proposal,
+    )]
+    pub meta_vault_ata: Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
+        associated_token::mint = usdc_mint,
+        associated_token::authority = proposal,
+    )]
+    pub usdc_vault_ata: Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
         associated_token::mint = conditional_on_pass_meta_mint,
         associated_token::authority = proposal,
     )]
@@ -137,7 +149,6 @@ pub fn handler(
     let CreateProposalPartTwo {
         proposer,
         proposal,
-        // dao,
         pass_market_amm,
         fail_market_amm,
         meta_mint,
@@ -148,6 +159,8 @@ pub fn handler(
         conditional_on_fail_usdc_mint,
         meta_proposer_ata,
         usdc_proposer_ata,
+        meta_vault_ata,
+        usdc_vault_ata,
         conditional_on_pass_meta_vault_ata,
         conditional_on_pass_usdc_vault_ata,
         conditional_on_fail_meta_vault_ata,
@@ -166,14 +179,6 @@ pub fn handler(
 
     pass_market_amm.ltwap_slot_updated = clock.slot;
     fail_market_amm.ltwap_slot_updated = clock.slot;
-
-    // assert_eq!(proposal.meta_mint, meta_proposer_ata.mint);
-    // assert_eq!(proposal.usdc_mint, usdc_proposer_ata.mint);
-
-    // assert_eq!(proposal.conditional_on_pass_meta_mint, conditional_on_pass_meta_vault_ata.mint);
-    // assert_eq!(proposal.conditional_on_pass_usdc_mint, conditional_on_pass_usdc_vault_ata.mint);
-    // assert_eq!(proposal.conditional_on_fail_meta_mint, conditional_on_fail_meta_vault_ata.mint);
-    // assert_eq!(proposal.conditional_on_fail_usdc_mint, conditional_on_fail_usdc_vault_ata.mint);
 
     // ==== deposit initial liquidity ====
     // TODO

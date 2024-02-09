@@ -40,12 +40,31 @@ export const createProposalPartTwoHandler = async (
             conditionalOnFailUsdcMint,
             metaProposerAta: getATA(dao.metaMint, client.provider.publicKey)[0],
             usdcProposerAta: getATA(dao.usdcMint, client.provider.publicKey)[0],
+            metaVaultAta: getATA(dao.metaMint, proposalAddr)[0],
+            usdcVaultAta: getATA(dao.usdcMint, proposalAddr)[0],
             conditionalOnPassMetaVaultAta: getATA(conditionalOnPassMetaMint, proposalAddr)[0],
             conditionalOnPassUsdcVaultAta: getATA(conditionalOnPassUsdcMint, proposalAddr)[0],
             conditionalOnFailMetaVaultAta: getATA(conditionalOnFailMetaMint, proposalAddr)[0],
             conditionalOnFailUsdcVaultAta: getATA(conditionalOnFailUsdcMint, proposalAddr)[0],
         })
         .instruction()
+
+    let metaVaultATA = getATA(dao.metaMint, proposalAddr)[0]
+    let usdcVaultATA = getATA(dao.usdcMint, proposalAddr)[0]
+
+    let metaAtaIx = createAssociatedTokenAccountInstruction(
+        client.provider.publicKey,
+        metaVaultATA,
+        proposalAddr,
+        dao.metaMint,
+    )
+
+    let usdcAtaIx = createAssociatedTokenAccountInstruction(
+        client.provider.publicKey,
+        usdcVaultATA,
+        proposalAddr,
+        dao.usdcMint,
+    )
 
     let conditionalOnPassMetaVaultATA = getATA(conditionalOnPassMetaMint, proposalAddr)[0]
     let conditionalOnPassUsdcVaultATA = getATA(conditionalOnPassUsdcMint, proposalAddr)[0]
@@ -78,7 +97,7 @@ export const createProposalPartTwoHandler = async (
         conditionalOnFailUsdcVaultATA,
         proposalAddr,
         conditionalOnFailUsdcMint,
-    )    
-        
-    return new InstructionHandler([passMetaAtaIx, passUsdcAtaIx, failMetaAtaIx, failUsdcAtaIx, ix], [], client)
+    )
+   
+    return new InstructionHandler([metaAtaIx, usdcAtaIx, passMetaAtaIx, passUsdcAtaIx, failMetaAtaIx, failUsdcAtaIx, ix], [], client)
 };
