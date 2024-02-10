@@ -21,6 +21,8 @@ pub struct Amm {
     pub total_ownership: u64,
     pub num_current_lps: u64,
 
+    // IMO we should just keep it as simple as possible and just do normal TWAP
+
     // ltwap stands for: liquidity time weighted average price
     pub ltwap_liquidity_duration_aggregator: f64,          // running sum of: current_liquidity * slots_since_last_update
     pub ltwap_liquidity_duration_price_aggregator: f64,    // running sum of: current_liquidity * slots_since_last_update * price

@@ -16,10 +16,10 @@ pub struct CreateProposalInstructions<'info> {
     #[account(
         init,
         payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalInstructions>() + get_instructions_size(&instructions),
+        space = 8 + ProposalInstructions::SERIALIZED_LEN + get_instructions_size(&instructions),
         seeds = [
             b"proposal_instructions",
-            dao.proposal_count.to_le_bytes().as_ref(),
+            dao.proposal_count.to_le_bytes().as_ref(), // then someone can create bad `ProposalInstructions` and brick the Meta-DAO, I think this can't be a PDA
         ],
         bump
     )]

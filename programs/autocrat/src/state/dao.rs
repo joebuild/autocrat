@@ -16,6 +16,9 @@ pub struct Dao {
     // fail price in order for the proposal to pass
     pub pass_threshold_bps: u64,
 
+    // Proph3t: I don't think we need the burn logic anymore because of AMM
+    // liquidity
+
     // for anti-spam, proposers need to burn some SOL. the amount that they need
     // to burn is inversely proportional to the amount of time that has passed
     // since the last proposal.
@@ -24,6 +27,8 @@ pub struct Dao {
     pub burn_decay_per_slot_lamports: u64,
 
     pub slots_per_proposal: u64,
+
+    // what's an atom? maybe a comment would be good
 
     // atomic amount of quote liquidity to be deposited per market by the proposer
     pub amm_initial_quote_liquidity_atoms: u64,

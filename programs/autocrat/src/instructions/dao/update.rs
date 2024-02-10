@@ -2,6 +2,8 @@ use anchor_lang::prelude::*;
 
 use crate::state::*;
 
+// I think we should make these no longer static to allow for futarchy as a service.
+// maybe too much to shove into this?
 #[derive(Accounts)]
 pub struct UpdateDao<'info> {
     #[account(

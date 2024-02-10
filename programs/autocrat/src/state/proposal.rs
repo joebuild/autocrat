@@ -1,6 +1,14 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::instruction::Instruction;
 
+// feels more idiomatic to put this up here
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
+pub enum ProposalState {
+    Pending,
+    Passed,
+    Failed,
+}
+
 #[account]
 pub struct Proposal {
     pub number: u32,
@@ -25,6 +33,8 @@ pub struct Proposal {
     pub conditional_on_fail_usdc_mint: Pubkey,
 }
 
+// Proph3t: you could save space if you used indexes for the accounts and stored all the accounts
+// in here. idk, might not be worth it tho as it adds complexity which creates attack surface area.
 #[account]
 pub struct ProposalInstructions {
     pub proposal_number: u32,
@@ -33,11 +43,8 @@ pub struct ProposalInstructions {
     pub instructions: Vec<ProposalInstruction>,
 }
 
-#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
-pub enum ProposalState {
-    Pending,
-    Passed,
-    Failed,
+impl ProposalInstructions {
+    pub const SERIALIZED_LEN: usize = 4 + 32 + 1 + 4;
 }
 
 #[derive(Clone, AnchorSerialize, AnchorDeserialize)]

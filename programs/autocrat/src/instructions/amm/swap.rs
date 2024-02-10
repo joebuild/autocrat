@@ -126,6 +126,7 @@ pub fn handler(
 
     let k = conditional_base_amount_start.checked_mul(conditional_quote_amount_start).unwrap();
 
+    // I like this style of checked math
     let input_amount_minus_fee = input_amount
             .checked_mul(BPS_SCALE.checked_sub(dao.amm_swap_fee_bps).unwrap()).unwrap()
             .checked_div(BPS_SCALE).unwrap() as u128;

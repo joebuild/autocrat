@@ -66,6 +66,8 @@ pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
     let treasury_seeds = &[dao_pubkey.as_ref(), &[dao.treasury_pda_bump]];
     let signer = &[&treasury_seeds[..]];
 
+    // floats feel especially scary here, I think we should stick to integers
+
     // f64 which is 1.05, or whatever (1.0 + %_to_pass) is
     let threshold_scale = BPS_SCALE
         .checked_add(dao.pass_threshold_bps).unwrap()
