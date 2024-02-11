@@ -33,7 +33,13 @@ pub struct RemoveLiquidity<'info> {
     pub amm: Account<'info, Amm>,
     #[account(
         mut,
+        has_one = user,
         has_one = amm,
+        seeds = [
+            amm.key().as_ref(),
+            user.key().as_ref(),
+        ],
+        bump
     )]
     pub amm_position: Account<'info, AmmPosition>,
     pub conditional_base_mint: Account<'info, Mint>,

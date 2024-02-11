@@ -1,7 +1,7 @@
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import {AutocratClient} from "../AutocratClient";
 import {InstructionHandler} from "../InstructionHandler";
-import { getATA, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr, getProposalInstructionsAddr } from '../utils';
+import { getATA, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../utils';
 import BN from "bn.js";
 
 export const createProposalPartTwoHandler = async (

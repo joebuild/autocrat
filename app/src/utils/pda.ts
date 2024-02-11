@@ -32,16 +32,6 @@ export const getProposalAddr = (
     );
 };
 
-export const getProposalInstructionsAddr = (
-    programId: PublicKey,
-    proposalNumber: number
-): [PublicKey, number] => {
-    return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("proposal_instructions"), numToBytes32LE(proposalNumber)],
-        programId,
-    );
-};
-
 export const getPassMarketAmmAddr = (
     programId: PublicKey,
     proposalNumber: number
@@ -58,6 +48,17 @@ export const getFailMarketAmmAddr = (
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
         [utils.bytes.utf8.encode("fail_market_amm"), numToBytes32LE(proposalNumber)],
+        programId,
+    );
+};
+
+export const getAmmPositionAddr = (
+    programId: PublicKey,
+    amm: PublicKey,
+    user: PublicKey
+): [PublicKey, number] => {
+    return PublicKey.findProgramAddressSync(
+        [amm.toBuffer(), user.toBuffer()],
         programId,
     );
 };

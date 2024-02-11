@@ -29,11 +29,6 @@ pub struct CreateProposalPartOne<'info> {
         mut,
         constraint = proposal_instructions.proposer == proposer.key(),
         constraint = proposal_instructions.proposal_number == dao.proposal_count @ ErrorCode::NonConsecutiveProposalNumber,
-        seeds = [
-            b"proposal_instructions",
-            dao.proposal_count.to_le_bytes().as_ref(),
-        ],
-        bump
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     #[account(

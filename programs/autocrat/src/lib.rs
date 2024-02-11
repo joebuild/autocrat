@@ -70,6 +70,10 @@ pub mod autocrat {
     }
 
     // ==== amm
+    pub fn create_position(ctx: Context<CreatePosition>) -> Result<()> {
+        instructions::amm::create_position::handler(ctx)
+    }
+
     pub fn add_liquidity(ctx: Context<AddLiquidity>, max_base_amount: u64, max_quote_amount: u64, is_pass_market: bool) -> Result<()> {
         instructions::amm::add_liquidity::handler(ctx, max_base_amount, max_quote_amount, is_pass_market)
     }
@@ -81,6 +85,5 @@ pub mod autocrat {
     pub fn swap(ctx: Context<Swap>, is_quote_to_base: bool, input_amount: u64, output_amount_min: u64, is_pass_market: bool) -> Result<()> {
         instructions::amm::swap::handler(ctx, is_quote_to_base, input_amount, output_amount_min, is_pass_market)
     }
-
 
 }

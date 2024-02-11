@@ -72,29 +72,35 @@ export class AutocratClient {
     }
 
     async createProposalInstructions(
-        instructions: ProposalInstruction[]
+        instructions: ProposalInstruction[],
+        proposalInstructionsKeypair: Keypair,
     ) {
         return ixs.createProposalInstructionsHandler(
             this,
-            instructions
+            instructions,
+            proposalInstructionsKeypair
         )
     }
 
     async addProposalInstructions(
-        instructions: ProposalInstruction[]
+        instructions: ProposalInstruction[],
+        proposalInstructionsAddr: PublicKey,
     ) {
         return ixs.addProposalInstructionsHandler(
             this,
-            instructions
+            instructions,
+            proposalInstructionsAddr
         )
     }
 
     async createProposalPartOne(
         descriptionUrl: string,
+        proposalInstructionsAddr: PublicKey,
     ) {
         return ixs.createProposalPartOneHandler(
             this,
             descriptionUrl,
+            proposalInstructionsAddr
         )
     }
 
@@ -139,6 +145,60 @@ export class AutocratClient {
         return ixs.finalizeProposalHandler(
             this,
             proposalNumber,
+        )
+    }
+
+    async createAmmPosition(
+        amm: PublicKey
+    ) {
+        return ixs.createAmmPositionHandler(
+            this,
+            amm
+        )
+    }
+
+    async addLiquidity(
+        maxBaseAmount: BN,
+        maxQuoteAmount: BN,
+        isPassMarket: boolean,
+        proposalNumber: number
+    ) {
+        return ixs.addLiquidityHandler(
+            this,
+            maxBaseAmount,
+            maxQuoteAmount,
+            isPassMarket,
+            proposalNumber
+        )
+    }
+    
+    async removeLiquidity(
+        removeBps: BN,
+        isPassMarket: boolean,
+        proposalNumber: number
+    ) {
+        return ixs.removeLiquidityHandler(
+            this,
+            removeBps,
+            isPassMarket,
+            proposalNumber
+        )
+    }
+
+    async swap(
+        isQuoteToBase: boolean,
+        inputAmount: BN,
+        minOutputAmount: BN,
+        isPassMarket: boolean,
+        proposalNumber: number
+    ) {
+        return ixs.swapHandler(
+            this,
+            isQuoteToBase,
+            inputAmount,
+            minOutputAmount,
+            isPassMarket,
+            proposalNumber
         )
     }
 

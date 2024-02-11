@@ -1,20 +1,20 @@
 import {AutocratClient} from "../AutocratClient";
 import {InstructionHandler} from "../InstructionHandler";
-import { getDaoAddr, getDaoTreasuryAddr, getProposalInstructionsAddr } from '../utils';
+import { getDaoAddr, getDaoTreasuryAddr } from '../utils';
 import { ProposalInstruction, UpdateDaoParams } from '../types';
+import { PublicKey } from "@solana/web3.js";
 
 export const addProposalInstructionsHandler = async (
     client: AutocratClient,
-    instructions: ProposalInstruction[]
+    instructions: ProposalInstruction[],
+    proposalInstructionsAddr: PublicKey,
 ): Promise<InstructionHandler> => {
-    let dao = await client.program.account.dao.fetch(getDaoAddr(client.program.programId)[0])
-
     let ix = await client.program.methods
         .addProposalInstructions(instructions)
         .accounts({
             proposer: client.provider.publicKey,
             dao: getDaoAddr(client.program.programId)[0],
-            proposalInstructions: getProposalInstructionsAddr(client.program.programId, dao.proposalCount)[0],
+            proposalInstructions: proposalInstructionsAddr,
         })
         .instruction()
         
