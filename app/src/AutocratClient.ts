@@ -1,4 +1,4 @@
-import {AnchorProvider, Program} from "@coral-xyz/anchor";
+import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import {
     AddressLookupTableAccount,
     Keypair,
@@ -8,12 +8,12 @@ import {
     TransactionMessage,
     VersionedTransaction
 } from "@solana/web3.js";
-import {Autocrat as AutocratIDLType} from '../../target/types/autocrat';
+import { Autocrat as AutocratIDLType } from '../../target/types/autocrat';
 // @ts-ignore
 import * as IDL from '../../target/idl/autocrat.json';
 import * as ixs from "./instructions";
 import BN from "bn.js";
-import {addComputeUnits} from "./utils";
+import { addComputeUnits } from "./utils";
 import { AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
 import { ProposalInstruction, UpdateDaoParams } from "./types";
 
@@ -105,15 +105,15 @@ export class AutocratClient {
     }
 
     async createProposalPartTwo(
-        initialPassMarketPriceUnits: number,
-        initialFailMarketPriceUnits: number,
-        quoteLiquidityAtomsPerAmm: BN,
+        initialPassMarketPriceQuoteUnitsPerBaseUnitBps: BN,
+        initialFailMarketPriceQuoteUnitsPerBaseUnitBps: BN,
+        quoteLiquidityAmountPerAmm: BN,
     ) {
         return ixs.createProposalPartTwoHandler(
             this,
-            initialPassMarketPriceUnits,
-            initialFailMarketPriceUnits,
-            quoteLiquidityAtomsPerAmm,
+            initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
+            initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
+            quoteLiquidityAmountPerAmm,
         )
     }
 
@@ -171,7 +171,7 @@ export class AutocratClient {
             proposalNumber
         )
     }
-    
+
     async removeLiquidity(
         removeBps: BN,
         isPassMarket: boolean,

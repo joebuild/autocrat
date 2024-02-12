@@ -6,9 +6,9 @@ use anchor_spl::token::*;
 use num_traits::ToPrimitive;
 
 use crate::error::ErrorCode;
+use crate::generate_vault_seeds;
 use crate::state::*;
 use crate::{utils::*, BPS_SCALE};
-use crate::generate_vault_seeds;
 
 #[derive(Accounts)]
 pub struct AddLiquidity<'info> {
@@ -95,17 +95,14 @@ pub fn handler(
         vault_ata_conditional_quote,
         token_program,
         associated_token_program: _,
-        system_program: _
+        system_program: _,
     } = ctx.accounts;
 
     assert!(max_base_amount > 0);
     assert!(max_quote_amount > 0);
 
     if is_pass_market {
-        assert_eq!(
-            proposal.pass_market_amm,
-            amm.key()
-        );
+        assert_eq!(proposal.pass_market_amm, amm.key());
         assert_eq!(
             proposal.conditional_on_pass_meta_mint,
             conditional_base_mint.key()
@@ -115,10 +112,7 @@ pub fn handler(
             conditional_quote_mint.key()
         );
     } else {
-        assert_eq!(
-            proposal.fail_market_amm,
-            amm.key()
-        );
+        assert_eq!(proposal.fail_market_amm, amm.key());
         assert_eq!(
             proposal.conditional_on_fail_meta_mint,
             conditional_base_mint.key()
@@ -130,7 +124,11 @@ pub fn handler(
     }
 
     let clock = Clock::get()?;
-    let can_ltwap_be_updated = clock.slot < proposal.slot_enqueued.checked_add(dao.slots_per_proposal).unwrap();
+    let can_ltwap_be_updated = clock.slot
+        < proposal
+            .slot_enqueued
+            .checked_add(dao.slots_per_proposal)
+            .unwrap();
 
     if can_ltwap_be_updated {
         amm.update_ltwap()?;
@@ -140,33 +138,61 @@ pub fn handler(
         amm.num_current_lps = amm.num_current_lps.checked_add(1).unwrap();
     }
 
-    let mut temp_base_amount = max_base_amount as u128;
+    let mut temp_base_amount = 0u128;
+    let mut temp_quote_amount = 0u128;
 
-    let mut temp_quote_amount = temp_base_amount
-        .checked_mul(amm.conditional_quote_amount as u128).unwrap()
-        .checked_div(amm.conditional_base_amount as u128).unwrap();
-
-    // if the temp_quote_amount calculation with max_base_amount led to a value higher than max_quote_amount,
-    // then use the max_quote_amount and calculate in the other direction
-    if temp_quote_amount > max_quote_amount as u128 {
+    // if there is no liquidity in the amm, then initialize with new ownership values
+    if amm.conditional_base_amount == 0 && amm.conditional_quote_amount == 0 {
+        temp_base_amount = max_base_amount as u128;
         temp_quote_amount = max_quote_amount as u128;
 
-        temp_base_amount = temp_quote_amount
-            .checked_mul(amm.conditional_base_amount as u128).unwrap()
-            .checked_div(amm.conditional_quote_amount as u128).unwrap();
+        // use the higher number for ownership, to reduce rounding errors
+        let max_base_or_quote_amount = std::cmp::max(temp_base_amount, temp_quote_amount);
 
-        if temp_base_amount > max_base_amount as u128 {
-            return err!(ErrorCode::AddLiquidityCalculationError);
+        amm_position.ownership = max_base_or_quote_amount.to_u64().unwrap();
+        amm.total_ownership = max_base_or_quote_amount.to_u64().unwrap();
+    } else {
+        temp_base_amount = max_base_amount as u128;
+
+        temp_quote_amount = temp_base_amount
+            .checked_mul(amm.conditional_quote_amount as u128)
+            .unwrap()
+            .checked_div(amm.conditional_base_amount as u128)
+            .unwrap();
+
+        // if the temp_quote_amount calculation with max_base_amount led to a value higher than max_quote_amount,
+        // then use the max_quote_amount and calculate in the other direction
+        if temp_quote_amount > max_quote_amount as u128 {
+            temp_quote_amount = max_quote_amount as u128;
+
+            temp_base_amount = temp_quote_amount
+                .checked_mul(amm.conditional_base_amount as u128)
+                .unwrap()
+                .checked_div(amm.conditional_quote_amount as u128)
+                .unwrap();
+
+            if temp_base_amount > max_base_amount as u128 {
+                return err!(ErrorCode::AddLiquidityCalculationError);
+            }
         }
+
+        let additional_ownership = temp_base_amount
+            .checked_mul(amm.total_ownership as u128)
+            .unwrap()
+            .checked_div(amm.conditional_base_amount as u128)
+            .unwrap()
+            .to_u64()
+            .unwrap();
+
+        amm_position.ownership = amm_position
+            .ownership
+            .checked_add(additional_ownership)
+            .unwrap();
+        amm.total_ownership = amm
+            .total_ownership
+            .checked_add(additional_ownership)
+            .unwrap();
     }
-
-    let additional_ownership = temp_base_amount
-        .checked_mul(amm.total_ownership as u128).unwrap()
-        .checked_div(amm.conditional_base_amount as u128).unwrap()
-        .to_u64().unwrap();
-
-    amm_position.ownership = amm_position.ownership.checked_add(additional_ownership).unwrap();
-    amm.total_ownership = amm.total_ownership.checked_add(additional_ownership).unwrap();
 
     // send user base tokens to vault
     token_transfer(

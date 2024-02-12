@@ -9,8 +9,8 @@ use anchor_spl::token::TokenAccount;
 use solana_program::native_token::LAMPORTS_PER_SOL;
 
 use crate::error::ErrorCode;
-use crate::state::*;
 use crate::generate_vault_seeds;
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct CreateProposalPartOne<'info> {
@@ -124,10 +124,7 @@ pub struct CreateProposalPartOne<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(
-    ctx: Context<CreateProposalPartOne>,
-    description_url: String,
-) -> Result<()> {
+pub fn handler(ctx: Context<CreateProposalPartOne>, description_url: String) -> Result<()> {
     let CreateProposalPartOne {
         proposer,
         proposal,
@@ -156,7 +153,7 @@ pub fn handler(
 
     proposal.proposer = proposer.key();
     proposal.description_url = description_url;
-    
+
     proposal.state = ProposalState::Pending;
     proposal.instructions = proposal_instructions.key();
     proposal.pass_market_amm = pass_market_amm.key();
@@ -188,12 +185,10 @@ pub fn handler(
         &proposal.key(),
         LAMPORTS_PER_SOL,
     );
+
     solana_program::program::invoke(
         &lockup_ix,
-        &[
-            proposer.to_account_info(),
-            proposal.to_account_info(),
-        ],
+        &[proposer.to_account_info(), proposal.to_account_info()],
     )?;
 
     Ok(())

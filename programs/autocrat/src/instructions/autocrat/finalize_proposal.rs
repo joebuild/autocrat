@@ -1,9 +1,9 @@
-use std::ops::Div;
-use std::ops::Mul;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
 use anchor_lang::solana_program::instruction::Instruction;
 use num_traits::ToPrimitive;
+use std::ops::Div;
+use std::ops::Mul;
 
 use crate::error::ErrorCode;
 use crate::state::*;
@@ -59,20 +59,19 @@ pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
         ErrorCode::ProposalAlreadyFinalized
     );
 
-    assert_ne!(pass_market_amm.ltwap_latest, 0f64);
-    assert_ne!(fail_market_amm.ltwap_latest, 0f64);
+    assert_ne!(pass_market_amm.ltwap_latest, 0u128);
+    assert_ne!(fail_market_amm.ltwap_latest, 0u128);
 
     let dao_pubkey = dao.key();
     let treasury_seeds = &[dao_pubkey.as_ref(), &[dao.treasury_pda_bump]];
     let signer = &[&treasury_seeds[..]];
 
-    // f64 which is 1.05, or whatever (1.0 + %_to_pass) is
-    let threshold_scale = BPS_SCALE
-        .checked_add(dao.pass_threshold_bps).unwrap()
-        .to_f64().unwrap()
-        .div(BPS_SCALE.to_f64().unwrap());
-
-    let threshold = fail_market_amm.ltwap_latest.mul(threshold_scale);
+    let threshold = fail_market_amm
+        .ltwap_latest
+        .checked_mul(BPS_SCALE.checked_add(dao.pass_threshold_bps).unwrap() as u128)
+        .unwrap()
+        .checked_div(BPS_SCALE as u128)
+        .unwrap();
 
     if pass_market_amm.ltwap_latest > threshold {
         proposal.state = ProposalState::Passed;

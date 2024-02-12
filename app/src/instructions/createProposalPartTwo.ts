@@ -6,8 +6,8 @@ import BN from "bn.js";
 
 export const createProposalPartTwoHandler = async (
     client: AutocratClient,
-    initialPassMarketPriceUnits: number,
-    initialFailMarketPriceUnits: number,
+    initialPassMarketPriceQuoteUnitsPerBaseUnitBps: BN,
+    initialFailMarketPriceQuoteUnitsPerBaseUnitBps: BN,
     quoteLiquidityAmountPerAmm: BN,
 ): Promise<InstructionHandler> => {
     let dao = await client.program.account.dao.fetch(getDaoAddr(client.program.programId)[0])
@@ -23,8 +23,8 @@ export const createProposalPartTwoHandler = async (
 
     let ix = await client.program.methods
         .createProposalPartTwo(
-            initialPassMarketPriceUnits,
-            initialFailMarketPriceUnits,
+            initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
+            initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
             quoteLiquidityAmountPerAmm
         )
         .accounts({

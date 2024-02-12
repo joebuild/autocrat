@@ -9,8 +9,8 @@ use anchor_spl::token::TokenAccount;
 use solana_program::native_token::LAMPORTS_PER_SOL;
 
 use crate::error::ErrorCode;
-use crate::state::*;
 use crate::generate_vault_seeds;
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct CreateProposalPartTwo<'info> {
@@ -144,9 +144,9 @@ pub struct CreateProposalPartTwo<'info> {
 
 pub fn handler(
     ctx: Context<CreateProposalPartTwo>,
-    initial_pass_market_price_units: f32, // human-readable price (i.e. units)
-    initial_fail_market_price_units: f32, // human-readable price (i.e. units)
-    quote_liquidity_atoms_per_amm: u64,
+    initial_pass_market_price_quote_units_per_base_unit_bps: u64,
+    initial_fail_market_price_quote_units_per_base_unit_bps: u64,
+    quote_liquidity_amount_per_amm: u64,
 ) -> Result<()> {
     let CreateProposalPartTwo {
         proposer,
@@ -186,7 +186,7 @@ pub fn handler(
     proposal.sub_lamports(LAMPORTS_PER_SOL)?;
     proposer.add_lamports(LAMPORTS_PER_SOL)?;
 
-    // deposit initial liquidity
+    // ==== deposit initial liquidity to amm ====
     // TODO
 
     Ok(())

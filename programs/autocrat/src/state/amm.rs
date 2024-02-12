@@ -4,8 +4,8 @@ use anchor_lang::prelude::*;
 use num_traits::ToPrimitive;
 
 use crate::error::ErrorCode;
-use crate::{utils::*, BPS_SCALE};
 use crate::generate_vault_seeds;
+use crate::{utils::*, BPS_SCALE};
 
 #[account]
 pub struct Amm {
@@ -22,26 +22,32 @@ pub struct Amm {
     pub num_current_lps: u64,
 
     // ltwap stands for: liquidity time weighted average price
-    pub ltwap_liquidity_duration_aggregator: f64,          // running sum of: current_liquidity * slots_since_last_update
-    pub ltwap_liquidity_duration_price_aggregator: f64,    // running sum of: current_liquidity * slots_since_last_update * price
-    pub ltwap_latest: f64,
+
+    // running sum of: current_liquidity * slots_since_last_update
+    pub ltwap_liquidity_duration_aggregator: u128,
+    // running sum of: current_liquidity * slots_since_last_update * price
+    pub ltwap_liquidity_duration_price_aggregator: u128,
+    pub ltwap_latest: u128,
     pub ltwap_slot_updated: u64,
 }
 
 impl Amm {
-    pub fn get_ltwap(&self) -> Result<f64> {
-        if self.ltwap_liquidity_duration_aggregator == 0f64 {
-            return Ok(0f64)
+    pub fn get_ltwap(&self) -> Result<u128> {
+        if self.ltwap_liquidity_duration_aggregator == 0u128 {
+            return Ok(0u128);
         }
 
-        Ok(self.ltwap_liquidity_duration_price_aggregator.div(self.ltwap_liquidity_duration_aggregator))
+        Ok(self
+            .ltwap_liquidity_duration_price_aggregator
+            .checked_div(self.ltwap_liquidity_duration_aggregator)
+            .unwrap())
     }
 
-    pub fn update_ltwap(&mut self) -> Result<f64> {
+    pub fn update_ltwap(&mut self) -> Result<u128> {
         let slot = Clock::get()?.slot;
-        let slot_difference = slot.checked_sub(self.ltwap_slot_updated).unwrap();
+        let slot_difference = slot.checked_sub(self.ltwap_slot_updated).unwrap() as u128;
 
-        /* 
+        /*
             to calculate the liquidity of the whole pool, it would be:
                 >> quote_units + price * base_units
                     or, when replacing the equation for price in an amm:
@@ -50,34 +56,49 @@ impl Amm {
                 >> quote_units + quote_units = 2 * quote_units
                     so we can just use the quote_units instead, since this is a weighted average
         */
-        let quote_liquidity_units = self.get_quote_liquidity_units()?;
-        let liquidity_x_slot_diff = quote_liquidity_units.mul(slot_difference.to_f64().unwrap());
+        let quote_liquidity_units = self.get_quote_liquidity_units()? as u128;
+        let liquidity_x_slot_diff = quote_liquidity_units.checked_mul(slot_difference).unwrap();
 
-        let base_liquidity_units = self.get_base_liquidity_units()?;
-        let price = quote_liquidity_units.div(base_liquidity_units);
+        let base_liquidity_units = self.get_base_liquidity_units()? as u128;
+        let price = if base_liquidity_units == 0u128 {
+            0u128
+        } else {
+            quote_liquidity_units
+                .checked_div(base_liquidity_units)
+                .unwrap()
+        };
 
         self.ltwap_liquidity_duration_aggregator += liquidity_x_slot_diff;
         self.ltwap_liquidity_duration_price_aggregator += liquidity_x_slot_diff.mul(price);
 
-        self.ltwap_latest = self.ltwap_liquidity_duration_price_aggregator.div(self.ltwap_liquidity_duration_aggregator);
+        if self.ltwap_liquidity_duration_aggregator != 0u128 {
+            self.ltwap_latest = self
+                .ltwap_liquidity_duration_price_aggregator
+                .div(self.ltwap_liquidity_duration_aggregator);
+        }
 
         self.ltwap_slot_updated = slot;
 
         Ok(self.ltwap_latest)
     }
 
-    pub fn get_base_liquidity_units(&self) -> Result<f64> {
-        let base_decimal_scale = get_decimal_scale_f64(self.conditional_base_mint_decimals)?;
-        Ok(
-            self.conditional_base_amount.to_f64().unwrap()
-                .div(base_decimal_scale)
-        )
+    // get base liquidity units, with decimal resolution of 10^6
+    pub fn get_base_liquidity_units(&self) -> Result<u64> {
+        let base_decimal_scale = get_decimal_scale_u64(self.conditional_base_mint_decimals)?;
+        Ok((self.conditional_base_amount)
+            .checked_mul(1_000_000)
+            .unwrap()
+            .checked_div(base_decimal_scale)
+            .unwrap())
     }
 
-    pub fn get_quote_liquidity_units(&self) -> Result<f64> {
-        let quote_decimal_scale = get_decimal_scale_f64(self.conditional_quote_mint_decimals)?;
-        Ok(
-            self.conditional_quote_amount.to_f64().unwrap()
-                .div(quote_decimal_scale))
+    // get quote liquidity units, with decimal resolution of 10^6
+    pub fn get_quote_liquidity_units(&self) -> Result<u64> {
+        let quote_decimal_scale = get_decimal_scale_u64(self.conditional_quote_mint_decimals)?;
+        Ok((self.conditional_quote_amount)
+            .checked_mul(1_000_000)
+            .unwrap()
+            .checked_div(quote_decimal_scale)
+            .unwrap())
     }
- }
+}

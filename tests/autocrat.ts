@@ -81,7 +81,7 @@ describe("autocrat_v1", async function () {
 
   describe("#initialize_dao", async function () {
     it("initializes the DAO", async function () {
-      
+
       let ixh = await autocratClient.initializeDao(META, USDC);
       await ixh.bankrun(banksClient);
 
@@ -238,15 +238,15 @@ describe("autocrat_v1", async function () {
   describe("#create_proposal_part_two", async function () {
     it("finish creating a proposal (part two), and deposit liquidity into amms", async function () {
 
-      let initialPassMarketPriceUnits = 35.5
-      let initialFailMarketPriceUnits = 24.2
+      let initialPassMarketPriceQuoteUnitsPerBaseUnitBps = new BN(35.5 * 10000)
+      let initialFailMarketPriceQuoteUnitsPerBaseUnitBps = new BN(24.2 * 10000)
       let quoteLiquidityAmountPerAmm = new BN(1000 * 10 ** 6)
 
       let startingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
 
       let ixh = await autocratClient.createProposalPartTwo(
-        initialPassMarketPriceUnits,
-        initialFailMarketPriceUnits,
+        initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
+        initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
         quoteLiquidityAmountPerAmm
       );
       await ixh
@@ -283,31 +283,31 @@ describe("autocrat_v1", async function () {
       let conditionalOnFailUsdcUserATA = getATA(conditionalOnFailUsdcMint, autocratClient.provider.publicKey)[0]
 
       let passMetaAtaIx = createAssociatedTokenAccountInstruction(
-          autocratClient.provider.publicKey,
-          conditionalOnPassMetaUserATA,
-          autocratClient.provider.publicKey,
-          conditionalOnPassMetaMint,
+        autocratClient.provider.publicKey,
+        conditionalOnPassMetaUserATA,
+        autocratClient.provider.publicKey,
+        conditionalOnPassMetaMint,
       )
 
       let passUsdcAtaIx = createAssociatedTokenAccountInstruction(
-          autocratClient.provider.publicKey,
-          conditionalOnPassUsdcUserATA,
-          autocratClient.provider.publicKey,
-          conditionalOnPassUsdcMint,
+        autocratClient.provider.publicKey,
+        conditionalOnPassUsdcUserATA,
+        autocratClient.provider.publicKey,
+        conditionalOnPassUsdcMint,
       )
 
       let failMetaAtaIx = createAssociatedTokenAccountInstruction(
-          autocratClient.provider.publicKey,
-          conditionalOnFailMetaUserATA,
-          autocratClient.provider.publicKey,
-          conditionalOnFailMetaMint,
+        autocratClient.provider.publicKey,
+        conditionalOnFailMetaUserATA,
+        autocratClient.provider.publicKey,
+        conditionalOnFailMetaMint,
       )
 
       let failUsdcAtaIx = createAssociatedTokenAccountInstruction(
-          autocratClient.provider.publicKey,
-          conditionalOnFailUsdcUserATA,
-          autocratClient.provider.publicKey,
-          conditionalOnFailUsdcMint,
+        autocratClient.provider.publicKey,
+        conditionalOnFailUsdcUserATA,
+        autocratClient.provider.publicKey,
+        conditionalOnFailUsdcMint,
       )
 
       let ixh = new InstructionHandler(
@@ -365,21 +365,30 @@ describe("autocrat_v1", async function () {
     });
   });
 
-  // describe("#add_liquidity", async function () {
-  //   it("add liquidity to an amm/amm position", async function () {
+  describe("#add_liquidity", async function () {
+    it("add liquidity to an amm/amm position", async function () {
 
-  //     let ixh = await autocratClient.addLiquidity(
-  //       new BN(10 * 10 * 9),
-  //       new BN(100 * 10 ** 6),
-  //       true,
-  //       proposalNumber
-  //     );
-  //     await ixh.bankrun(banksClient);
+      let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
+      const passMarketAmmStart = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
 
-  //     // TODO
+      let passMarketPositionAddr = getAmmPositionAddr(autocratClient.program.programId, passMarketAmmAddr, payer.publicKey)[0]
+      const passMarketPositionStart = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
 
-  //   });
-  // });
+      let ixh = await autocratClient.addLiquidity(
+        new BN(10 * 10 * 9),
+        new BN(100 * 10 ** 6),
+        true,
+        proposalNumber
+      );
+      await ixh.bankrun(banksClient);
+
+      const passMarketAmmEnd = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
+      const passMarketPositionEnd = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
+
+      assert.isAbove(passMarketAmmEnd.totalOwnership.toNumber(), passMarketAmmStart.totalOwnership.toNumber());
+      assert.isAbove(passMarketPositionEnd.ownership.toNumber(), passMarketPositionStart.ownership.toNumber());
+    });
+  });
 
   // describe("#remove_liquidity", async function () {
   //   it("remove liquidity from an amm/amm position", async function () {
