@@ -1,6 +1,6 @@
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
-import {AutocratClient} from "../AutocratClient";
-import {InstructionHandler} from "../InstructionHandler";
+import { AutocratClient } from "../AutocratClient";
+import { InstructionHandler } from "../InstructionHandler";
 import { getATA, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../utils';
 import BN from "bn.js";
 
@@ -42,10 +42,10 @@ export const createProposalPartTwoHandler = async (
             usdcProposerAta: getATA(dao.usdcMint, client.provider.publicKey)[0],
             metaVaultAta: getATA(dao.metaMint, proposalAddr)[0],
             usdcVaultAta: getATA(dao.usdcMint, proposalAddr)[0],
-            conditionalOnPassMetaVaultAta: getATA(conditionalOnPassMetaMint, proposalAddr)[0],
-            conditionalOnPassUsdcVaultAta: getATA(conditionalOnPassUsdcMint, proposalAddr)[0],
-            conditionalOnFailMetaVaultAta: getATA(conditionalOnFailMetaMint, proposalAddr)[0],
-            conditionalOnFailUsdcVaultAta: getATA(conditionalOnFailUsdcMint, proposalAddr)[0],
+            conditionalOnPassMetaUserAta: getATA(conditionalOnPassMetaMint, client.provider.publicKey)[0],
+            conditionalOnPassUsdcUserAta: getATA(conditionalOnPassUsdcMint, client.provider.publicKey)[0],
+            conditionalOnFailMetaUserAta: getATA(conditionalOnFailMetaMint, client.provider.publicKey)[0],
+            conditionalOnFailUsdcUserAta: getATA(conditionalOnFailUsdcMint, client.provider.publicKey)[0],
         })
         .instruction()
 
@@ -98,6 +98,6 @@ export const createProposalPartTwoHandler = async (
         proposalAddr,
         conditionalOnFailUsdcMint,
     )
-   
+
     return new InstructionHandler([metaAtaIx, usdcAtaIx, passMetaAtaIx, passUsdcAtaIx, failMetaAtaIx, failUsdcAtaIx, ix], [], client)
 };

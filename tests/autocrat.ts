@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { BN, Program } from "@coral-xyz/anchor";
+import { BN, IdlAccounts, Program } from "@coral-xyz/anchor";
 import { BankrunProvider } from "anchor-bankrun";
 import { MEMO_PROGRAM_ID } from "@solana/spl-memo";
 
@@ -26,7 +26,7 @@ import { Autocrat } from "../target/types/autocrat";
 import { AutocratClient } from "../app/src/AutocratClient";
 import { getATA, getAmmPositionAddr, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr, sleep } from "../app/src/utils";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { ProposalInstruction } from "../app/src/types";
+import { Proposal, ProposalInstruction } from "../app/src/types";
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { InstructionHandler } from "../app/src/InstructionHandler";
 const AutocratIDL: Autocrat = require("../target/idl/autocrat.json");
@@ -235,41 +235,6 @@ describe("autocrat_v1", async function () {
     });
   });
 
-  describe("#create_proposal_part_two", async function () {
-    it("finish creating a proposal (part two), and deposit liquidity into amms", async function () {
-
-      let initialPassMarketPriceQuoteUnitsPerBaseUnitBps = new BN(35.5 * 10000)
-      let initialFailMarketPriceQuoteUnitsPerBaseUnitBps = new BN(24.2 * 10000)
-      let quoteLiquidityAmountPerAmm = new BN(1000 * 10 ** 6)
-
-      let startingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
-
-      let ixh = await autocratClient.createProposalPartTwo(
-        initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
-        initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
-        quoteLiquidityAmountPerAmm
-      );
-      await ixh
-        .setComputeUnits(400_000)
-        .bankrun(banksClient);
-
-      let proposalAddr = getProposalAddr(autocratClient.program.programId, proposalNumber)[0]
-      const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
-      assert.isAbove(proposalAcc.slotEnqueued.toNumber(), 0)
-
-      let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
-      const passMarketAmmAcc = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
-      assert.isAbove(passMarketAmmAcc.ltwapSlotUpdated.toNumber(), 0)
-
-      let [failMarketAmmAddr] = getFailMarketAmmAddr(autocratClient.program.programId, proposalNumber);
-      const failMarketAmmAcc = await autocratClient.program.account.amm.fetch(failMarketAmmAddr);
-      assert.isAbove(failMarketAmmAcc.ltwapSlotUpdated.toNumber(), 0)
-
-      let endingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
-      assert.isAbove(endingLamports, startingLamports + 0.95 * 10 ** 9) // is up more than 0.95 sol (considering tx fees)
-    });
-  });
-
   describe("#create user ATAs for conditional mints", async function () {
     it("create user ATAs for conditional mints", async function () {
       let conditionalOnPassMetaMint = getConditionalOnPassMetaMintAddr(autocratClient.program.programId, proposalNumber)[0]
@@ -317,6 +282,41 @@ describe("autocrat_v1", async function () {
       )
 
       await ixh.bankrun(banksClient)
+    });
+  });
+
+  describe("#create_proposal_part_two", async function () {
+    it("finish creating a proposal (part two), and deposit liquidity into amms", async function () {
+
+      let initialPassMarketPriceQuoteUnitsPerBaseUnitBps = new BN(35.5 * 10000)
+      let initialFailMarketPriceQuoteUnitsPerBaseUnitBps = new BN(24.2 * 10000)
+      let quoteLiquidityAmountPerAmm = new BN(1000 * 10 ** 6)
+
+      let startingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
+
+      let ixh = await autocratClient.createProposalPartTwo(
+        initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
+        initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
+        quoteLiquidityAmountPerAmm
+      );
+      await ixh
+        .setComputeUnits(400_000)
+        .bankrun(banksClient);
+
+      let proposalAddr = getProposalAddr(autocratClient.program.programId, proposalNumber)[0]
+      const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
+      assert.isAbove(proposalAcc.slotEnqueued.toNumber(), 0)
+
+      let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
+      const passMarketAmmAcc = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
+      assert.isAbove(passMarketAmmAcc.ltwapSlotUpdated.toNumber(), 0)
+
+      let [failMarketAmmAddr] = getFailMarketAmmAddr(autocratClient.program.programId, proposalNumber);
+      const failMarketAmmAcc = await autocratClient.program.account.amm.fetch(failMarketAmmAddr);
+      assert.isAbove(failMarketAmmAcc.ltwapSlotUpdated.toNumber(), 0)
+
+      let endingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
+      assert.isAbove(endingLamports, startingLamports + 0.95 * 10 ** 9) // is up more than 0.95 sol (considering tx fees)
     });
   });
 
@@ -387,21 +387,52 @@ describe("autocrat_v1", async function () {
 
       assert.isAbove(passMarketAmmEnd.totalOwnership.toNumber(), passMarketAmmStart.totalOwnership.toNumber());
       assert.isAbove(passMarketPositionEnd.ownership.toNumber(), passMarketPositionStart.ownership.toNumber());
+
+      assert.isAbove(passMarketAmmEnd.conditionalBaseAmount.toNumber(), passMarketAmmStart.conditionalBaseAmount.toNumber());
+      assert.isAbove(passMarketAmmEnd.conditionalQuoteAmount.toNumber(), passMarketAmmStart.conditionalQuoteAmount.toNumber());
     });
   });
 
-  // describe("#remove_liquidity", async function () {
-  //   it("remove liquidity from an amm/amm position", async function () {
+  describe("#remove_liquidity", async function () {
+    it("remove liquidity from an amm/amm position", async function () {
 
-  //     let ixh = await autocratClient.removeLiquidity(
-  //       new BN(100 * 100),
-  //       true,
-  //       proposalNumber
-  //     );
-  //     await ixh.bankrun(banksClient);
+      let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
+      const passMarketAmmStart = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
 
-  //     // TODO
+      let passMarketPositionAddr = getAmmPositionAddr(autocratClient.program.programId, passMarketAmmAddr, payer.publicKey)[0]
+      const passMarketPositionStart = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
 
-  //   });
-  // });
+      let [proposalAddr] = getProposalAddr(autocratClient.program.programId, proposalNumber);
+      const proposal = await autocratClient.program.account.proposal.fetch(proposalAddr);
+
+      // change clock time to be after proposal is over, so that liquidity can be withdrawn 
+      const currentClock = await banksClient.getClock();
+      context.setClock(
+        new Clock(
+          BigInt(proposal.slotEnqueued.toNumber() + dao.slotsPerProposal.toNumber() + 1),
+          currentClock.epochStartTimestamp,
+          currentClock.epoch,
+          currentClock.leaderScheduleEpoch,
+          50n,
+        ),
+      );
+
+      let ixh = await autocratClient.removeLiquidity(
+        new BN(10_000), // 10_000 removes all liquidity
+        true,
+        proposalNumber
+      );
+      await ixh.bankrun(banksClient);
+
+      const passMarketAmmEnd = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
+      const passMarketPositionEnd = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
+
+      assert.isBelow(passMarketAmmEnd.totalOwnership.toNumber(), passMarketAmmStart.totalOwnership.toNumber());
+      assert.isBelow(passMarketPositionEnd.ownership.toNumber(), passMarketPositionStart.ownership.toNumber());
+      assert.equal(passMarketPositionEnd.ownership.toNumber(), 0);
+
+      assert.isBelow(passMarketAmmEnd.conditionalBaseAmount.toNumber(), passMarketAmmStart.conditionalBaseAmount.toNumber());
+      assert.isBelow(passMarketAmmEnd.conditionalQuoteAmount.toNumber(), passMarketAmmStart.conditionalQuoteAmount.toNumber());
+    });
+  });
 });

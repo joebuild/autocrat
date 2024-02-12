@@ -114,27 +114,27 @@ pub struct CreateProposalPartTwo<'info> {
     #[account(
         mut,
         associated_token::mint = conditional_on_pass_meta_mint,
-        associated_token::authority = proposal,
+        associated_token::authority = proposer,
     )]
-    pub conditional_on_pass_meta_vault_ata: Box<Account<'info, TokenAccount>>,
+    pub conditional_on_pass_meta_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = conditional_on_pass_usdc_mint,
-        associated_token::authority = proposal,
+        associated_token::authority = proposer,
     )]
-    pub conditional_on_pass_usdc_vault_ata: Box<Account<'info, TokenAccount>>,
+    pub conditional_on_pass_usdc_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = conditional_on_fail_meta_mint,
-        associated_token::authority = proposal,
+        associated_token::authority = proposer,
     )]
-    pub conditional_on_fail_meta_vault_ata: Box<Account<'info, TokenAccount>>,
+    pub conditional_on_fail_meta_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = conditional_on_fail_usdc_mint,
-        associated_token::authority = proposal,
+        associated_token::authority = proposer,
     )]
-    pub conditional_on_fail_usdc_vault_ata: Box<Account<'info, TokenAccount>>,
+    pub conditional_on_fail_usdc_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
@@ -163,10 +163,10 @@ pub fn handler(
         usdc_proposer_ata,
         meta_vault_ata,
         usdc_vault_ata,
-        conditional_on_pass_meta_vault_ata,
-        conditional_on_pass_usdc_vault_ata,
-        conditional_on_fail_meta_vault_ata,
-        conditional_on_fail_usdc_vault_ata,
+        conditional_on_pass_meta_user_ata,
+        conditional_on_pass_usdc_user_ata,
+        conditional_on_fail_meta_user_ata,
+        conditional_on_fail_usdc_user_ata,
         associated_token_program: _,
         token_program: _,
         system_program: _,
@@ -186,8 +186,58 @@ pub fn handler(
     proposal.sub_lamports(LAMPORTS_PER_SOL)?;
     proposer.add_lamports(LAMPORTS_PER_SOL)?;
 
-    // ==== deposit initial liquidity to amm ====
-    // TODO
+    // ======== deposit initial liquidity to amms ========
+
+    // ======== pass market amm ========
+
+    // assert_eq!(proposal.pass_market_amm, pass_market_amm.key());
+    // assert_eq!(
+    //     proposal.conditional_on_pass_meta_mint,
+    //     conditional_on_pass_meta_mint.key()
+    // );
+    // assert_eq!(
+    //     proposal.conditional_on_pass_usdc_mint,
+    //     conditional_on_pass_usdc_mint.key()
+    // );
+
+    // pass_market_amm.num_current_lps = 1;
+
+    // let mut temp_base_amount = max_base_amount as u128;
+    // let mut temp_quote_amount = max_quote_amount as u128;
+
+    // // use the higher number for ownership, to reduce rounding errors
+    // let max_base_or_quote_amount = std::cmp::max(temp_base_amount, temp_quote_amount);
+
+    // amm_position.ownership = max_base_or_quote_amount.to_u64().unwrap();
+    // amm.total_ownership = max_base_or_quote_amount.to_u64().unwrap();
+
+    // amm.conditional_base_amount = amm
+    //     .conditional_base_amount
+    //     .checked_add(temp_base_amount.to_u64().unwrap())
+    //     .unwrap();
+
+    // amm.conditional_quote_amount = amm
+    //     .conditional_quote_amount
+    //     .checked_add(temp_quote_amount.to_u64().unwrap())
+    //     .unwrap();
+
+    // // send user base tokens to vault
+    // token_transfer(
+    //     temp_base_amount as u64,
+    //     &token_program,
+    //     user_ata_conditional_base,
+    //     vault_ata_conditional_base,
+    //     user,
+    // )?;
+
+    // // send user quote tokens to vault
+    // token_transfer(
+    //     temp_quote_amount as u64,
+    //     token_program,
+    //     user_ata_conditional_quote,
+    //     vault_ata_conditional_quote,
+    //     user,
+    // )?;
 
     Ok(())
 }

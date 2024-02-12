@@ -194,6 +194,16 @@ pub fn handler(
             .unwrap();
     }
 
+    amm.conditional_base_amount = amm
+        .conditional_base_amount
+        .checked_add(temp_base_amount.to_u64().unwrap())
+        .unwrap();
+
+    amm.conditional_quote_amount = amm
+        .conditional_quote_amount
+        .checked_add(temp_quote_amount.to_u64().unwrap())
+        .unwrap();
+
     // send user base tokens to vault
     token_transfer(
         temp_base_amount as u64,

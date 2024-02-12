@@ -5,9 +5,9 @@ use anchor_spl::token;
 use anchor_spl::token::*;
 
 use crate::error::ErrorCode;
+use crate::generate_vault_seeds;
 use crate::state::*;
 use crate::utils::token::*;
-use crate::generate_vault_seeds;
 
 #[derive(Accounts)]
 pub struct RedeemConditionalTokens<'info> {
@@ -104,9 +104,7 @@ pub struct RedeemConditionalTokens<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(
-    ctx: Context<RedeemConditionalTokens>,
-) -> Result<()> {
+pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
     let RedeemConditionalTokens {
         user,
         dao: _,

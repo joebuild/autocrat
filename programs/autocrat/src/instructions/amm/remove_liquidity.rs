@@ -4,9 +4,9 @@ use anchor_spl::token::*;
 use num_traits::ToPrimitive;
 
 use crate::error::ErrorCode;
+use crate::generate_vault_seeds;
 use crate::state::*;
 use crate::{utils::*, BPS_SCALE};
-use crate::generate_vault_seeds;
 
 #[derive(Accounts)]
 pub struct RemoveLiquidity<'info> {
@@ -73,11 +73,7 @@ pub struct RemoveLiquidity<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(
-    ctx: Context<RemoveLiquidity>,
-    remove_bps: u64,
-    is_pass_market: bool,
-) -> Result<()> {
+pub fn handler(ctx: Context<RemoveLiquidity>, remove_bps: u64, is_pass_market: bool) -> Result<()> {
     let RemoveLiquidity {
         user,
         dao,
@@ -92,7 +88,7 @@ pub fn handler(
         vault_ata_conditional_quote,
         token_program,
         associated_token_program: _,
-        system_program: _
+        system_program: _,
     } = ctx.accounts;
 
     assert!(amm_position.ownership > 0);
@@ -100,10 +96,7 @@ pub fn handler(
     assert!(remove_bps <= BPS_SCALE);
 
     if is_pass_market {
-        assert_eq!(
-            proposal.pass_market_amm,
-            amm.key()
-        );
+        assert_eq!(proposal.pass_market_amm, amm.key());
         assert_eq!(
             proposal.conditional_on_pass_meta_mint,
             conditional_base_mint.key()
@@ -113,10 +106,7 @@ pub fn handler(
             conditional_quote_mint.key()
         );
     } else {
-        assert_eq!(
-            proposal.fail_market_amm,
-            amm.key()
-        );
+        assert_eq!(proposal.fail_market_amm, amm.key());
         assert_eq!(
             proposal.conditional_on_fail_meta_mint,
             conditional_base_mint.key()
@@ -128,8 +118,12 @@ pub fn handler(
     }
 
     let clock = Clock::get()?;
-    let can_ltwap_be_updated = clock.slot < proposal.slot_enqueued.checked_add(dao.slots_per_proposal).unwrap();
-    
+    let can_ltwap_be_updated = clock.slot
+        < proposal
+            .slot_enqueued
+            .checked_add(dao.slots_per_proposal)
+            .unwrap();
+
     if can_ltwap_be_updated {
         amm.update_ltwap()?;
     }
@@ -141,28 +135,55 @@ pub fn handler(
     if amm_position.ownership > 0 && remove_bps == BPS_SCALE {
         amm.num_current_lps = amm.num_current_lps.checked_sub(1).unwrap();
     }
-    
+
     let base_to_withdraw = (amm.conditional_base_amount as u128)
-        .checked_mul(amm_position.ownership as u128).unwrap()
-        .checked_mul(remove_bps as u128).unwrap()
-        .checked_div(BPS_SCALE as u128).unwrap()
-        .checked_div(amm.total_ownership as u128).unwrap()
-        .to_u64().unwrap();
+        .checked_mul(amm_position.ownership as u128)
+        .unwrap()
+        .checked_mul(remove_bps as u128)
+        .unwrap()
+        .checked_div(BPS_SCALE as u128)
+        .unwrap()
+        .checked_div(amm.total_ownership as u128)
+        .unwrap()
+        .to_u64()
+        .unwrap();
 
     let quote_to_withdraw = (amm.conditional_quote_amount as u128)
-        .checked_mul(amm_position.ownership as u128).unwrap()
-        .checked_mul(remove_bps as u128).unwrap()
-        .checked_div(BPS_SCALE as u128).unwrap()
-        .checked_div(amm.total_ownership as u128).unwrap()
-        .to_u64().unwrap();
+        .checked_mul(amm_position.ownership as u128)
+        .unwrap()
+        .checked_mul(remove_bps as u128)
+        .unwrap()
+        .checked_div(BPS_SCALE as u128)
+        .unwrap()
+        .checked_div(amm.total_ownership as u128)
+        .unwrap()
+        .to_u64()
+        .unwrap();
 
     let less_ownership = (amm_position.ownership as u128)
-        .checked_mul(remove_bps as u128).unwrap()
-        .checked_div(BPS_SCALE as u128).unwrap()
-        .to_u64().unwrap();
+        .checked_mul(remove_bps as u128)
+        .unwrap()
+        .checked_div(BPS_SCALE as u128)
+        .unwrap()
+        .to_u64()
+        .unwrap();
 
-    amm_position.ownership = if remove_bps == BPS_SCALE { 0 } else { amm_position.ownership.checked_sub(less_ownership).unwrap() };
+    amm_position.ownership = if remove_bps == BPS_SCALE {
+        0
+    } else {
+        amm_position.ownership.checked_sub(less_ownership).unwrap()
+    };
     amm.total_ownership = amm.total_ownership.checked_sub(less_ownership).unwrap();
+
+    amm.conditional_base_amount = amm
+        .conditional_base_amount
+        .checked_sub(base_to_withdraw)
+        .unwrap();
+
+    amm.conditional_quote_amount = amm
+        .conditional_quote_amount
+        .checked_sub(quote_to_withdraw)
+        .unwrap();
 
     let proposal_number_bytes = proposal.number.to_le_bytes();
     let seeds = generate_vault_seeds!(proposal_number_bytes, ctx.bumps.proposal);
@@ -174,7 +195,7 @@ pub fn handler(
         vault_ata_conditional_base,
         user_ata_conditional_base,
         proposal,
-        seeds
+        seeds,
     )?;
 
     // send vault quote tokens to user
@@ -184,7 +205,7 @@ pub fn handler(
         vault_ata_conditional_quote,
         user_ata_conditional_quote,
         proposal,
-        seeds
+        seeds,
     )?;
 
     Ok(())
