@@ -39,12 +39,9 @@ pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
 
     dao.pass_threshold_bps = DEFAULT_PASS_THRESHOLD_BPS;
 
-    dao.base_burn_lamports = DEFAULT_BASE_BURN_LAMPORTS;
-    dao.burn_decay_per_slot_lamports = DEFAULT_BURN_DECAY_PER_SLOT_LAMPORTS;
-
     dao.slots_per_proposal = PROPOSAL_DURATION_IN_SLOTS;
 
-    dao.amm_initial_quote_liquidity_atoms = AMM_INITIAL_QUOTE_LIQUIDITY_ATOMS;
+    dao.amm_initial_quote_liquidity_amount = AMM_INITIAL_QUOTE_LIQUIDITY_ATOMS;
 
     assert!(AMM_SWAP_FEE_BPS <= AMM_SWAP_FEE_BPS_MAX);
     assert!(AMM_SWAP_FEE_BPS >= AMM_SWAP_FEE_BPS_MIN);

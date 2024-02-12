@@ -6,9 +6,11 @@ use anchor_spl::token;
 use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
+use solana_program::native_token::LAMPORTS_PER_SOL;
 
 use crate::error::ErrorCode;
 use crate::state::*;
+use crate::generate_vault_seeds;
 
 #[derive(Accounts)]
 pub struct CreateProposalPartOne<'info> {
@@ -37,13 +39,6 @@ pub struct CreateProposalPartOne<'info> {
         bump
     )]
     pub dao: Box<Account<'info, Dao>>,
-    /// CHECK: never read
-    #[account(
-        mut,
-        seeds = [dao.key().as_ref()],
-        bump = dao.treasury_pda_bump
-    )]
-    pub dao_treasury: UncheckedAccount<'info>,
     #[account(
         init,
         payer = proposer,
@@ -138,7 +133,6 @@ pub fn handler(
         proposal,
         proposal_instructions,
         dao,
-        dao_treasury,
         pass_market_amm,
         fail_market_amm,
         meta_mint,
@@ -160,27 +154,6 @@ pub fn handler(
     proposal.number = dao.proposal_count;
     dao.proposal_count += 1;
 
-    let clock = Clock::get()?;
-    let slots_passed = clock.slot - dao.last_proposal_slot;
-    let burn_amount = dao.base_burn_lamports.saturating_sub(
-        dao.burn_decay_per_slot_lamports.saturating_mul(slots_passed),
-    );
-    dao.last_proposal_slot = clock.slot;
-
-    let lockup_ix = solana_program::system_instruction::transfer(
-        proposer.key,
-        dao_treasury.key,
-        burn_amount,
-    );
-
-    solana_program::program::invoke(
-        &lockup_ix,
-        &[
-            proposer.to_account_info(),
-            dao_treasury.to_account_info(),
-        ],
-    )?;
-
     proposal.proposer = proposer.key();
     proposal.description_url = description_url;
     
@@ -197,17 +170,31 @@ pub fn handler(
     proposal.conditional_on_fail_meta_mint = conditional_on_fail_meta_mint.key();
     proposal.conditional_on_fail_usdc_mint = conditional_on_fail_usdc_mint.key();
 
-    // ==== pass market amm ====
+    // pass market amm
     pass_market_amm.conditional_base_mint = conditional_on_pass_meta_mint.key();
     pass_market_amm.conditional_quote_mint = conditional_on_pass_usdc_mint.key();
     pass_market_amm.conditional_base_mint_decimals = meta_mint.decimals;
     pass_market_amm.conditional_quote_mint_decimals = usdc_mint.decimals;
 
-    // ==== pass market amm ====
+    // pass market amm
     fail_market_amm.conditional_base_mint = conditional_on_fail_meta_mint.key();
     fail_market_amm.conditional_quote_mint = conditional_on_fail_usdc_mint.key();
     fail_market_amm.conditional_base_mint_decimals = meta_mint.decimals;
     fail_market_amm.conditional_quote_mint_decimals = usdc_mint.decimals;
+
+    // send anti-spam measure of 1 SOL (recouped in part two)
+    let lockup_ix = solana_program::system_instruction::transfer(
+        proposer.key,
+        &proposal.key(),
+        LAMPORTS_PER_SOL,
+    );
+    solana_program::program::invoke(
+        &lockup_ix,
+        &[
+            proposer.to_account_info(),
+            proposal.to_account_info(),
+        ],
+    )?;
 
     Ok(())
 }

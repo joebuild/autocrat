@@ -8,7 +8,7 @@ export const createProposalPartTwoHandler = async (
     client: AutocratClient,
     initialPassMarketPriceUnits: number,
     initialFailMarketPriceUnits: number,
-    quoteLiquidityAtomsPerAmm: BN,
+    quoteLiquidityAmountPerAmm: BN,
 ): Promise<InstructionHandler> => {
     let dao = await client.program.account.dao.fetch(getDaoAddr(client.program.programId)[0])
 
@@ -25,7 +25,7 @@ export const createProposalPartTwoHandler = async (
         .createProposalPartTwo(
             initialPassMarketPriceUnits,
             initialFailMarketPriceUnits,
-            quoteLiquidityAtomsPerAmm
+            quoteLiquidityAmountPerAmm
         )
         .accounts({
             proposer: client.provider.publicKey,

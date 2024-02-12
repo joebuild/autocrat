@@ -17,6 +17,7 @@ import {
   mintToOverride,
   getMint,
   getAccount,
+  mintTo,
 } from "spl-token-bankrun";
 
 import { assert } from "chai";
@@ -61,6 +62,14 @@ describe("autocrat_v1", async function () {
     autocratClient = await AutocratClient.createClient(provider)
     payer = provider.wallet.payer;
 
+    META = await createMint(
+      banksClient,
+      payer,
+      payer.publicKey,
+      payer.publicKey,
+      9
+    );
+
     USDC = await createMint(
       banksClient,
       payer,
@@ -68,8 +77,6 @@ describe("autocrat_v1", async function () {
       payer.publicKey,
       6
     );
-
-    META = await createMint(banksClient, payer, dao, dao, 9);
   });
 
   describe("#initialize_dao", async function () {
@@ -88,9 +95,6 @@ describe("autocrat_v1", async function () {
 
       assert.equal(daoAcc.proposalCount, 4);
       assert.equal(daoAcc.passThresholdBps, 500);
-      
-      assert.ok(daoAcc.baseBurnLamports.eq(new BN(1_000_000_000).muln(10)));
-      assert.ok(daoAcc.burnDecayPerSlotLamports.eq(new BN(23_150)));
 
       treasuryMetaAccount = await createAssociatedTokenAccount(
         banksClient,
@@ -104,6 +108,7 @@ describe("autocrat_v1", async function () {
         USDC,
         daoTreasury
       );
+
       userMetaAccount = await createAssociatedTokenAccount(
         banksClient,
         payer,
@@ -116,6 +121,23 @@ describe("autocrat_v1", async function () {
         USDC,
         payer.publicKey
       );
+
+      mintTo(
+        banksClient,
+        payer,
+        META,
+        userMetaAccount,
+        payer.publicKey,
+        1000 * 10 ** 9,
+      )
+      mintTo(
+        banksClient,
+        payer,
+        USDC,
+        userUsdcAccount,
+        payer.publicKey,
+        10000 * 10 ** 6,
+      )
     });
   });
 
@@ -124,10 +146,8 @@ describe("autocrat_v1", async function () {
 
       let ixh = await autocratClient.updateDao({
         passThresholdBps: new BN(123),
-        baseBurnLamports: new BN(11_000_000_000).muln(10),
-        burnDecayPerSlotLamports: new BN(44_444),
         slotsPerProposal: new BN(69_420),
-        ammInitialQuoteLiquidityAtoms: new BN(100_000_005),
+        ammInitialQuoteLiquidityAmount: new BN(100_000_005),
         ammSwapFeeBps: new BN(600),
       });
       await ixh.bankrun(banksClient);
@@ -137,10 +157,8 @@ describe("autocrat_v1", async function () {
       proposalNumber = dao.proposalCount
 
       assert.equal(dao.passThresholdBps, 123);
-      assert.equal(dao.baseBurnLamports, 110_000_000_000);
-      assert.equal(dao.burnDecayPerSlotLamports, 44_444);
       assert.equal(dao.slotsPerProposal, 69_420);
-      assert.equal(dao.ammInitialQuoteLiquidityAtoms, 100_000_005);
+      assert.equal(dao.ammInitialQuoteLiquidityAmount, 100_000_005);
       assert.equal(dao.ammSwapFeeBps, 600);
     });
   });
@@ -198,6 +216,8 @@ describe("autocrat_v1", async function () {
 
       let descriptionUrl = "https://metadao.futarchy/proposal-4"
 
+      let startingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
+
       let ixh = await autocratClient.createProposalPartOne(
         descriptionUrl,
         proposalInstructionsAddr
@@ -208,6 +228,10 @@ describe("autocrat_v1", async function () {
       const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
 
       assert.equal(proposalAcc.descriptionUrl, descriptionUrl);
+
+      let endingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
+
+      assert.isAbove(startingLamports, endingLamports + 10 ** 9) // is down at least 1 sol (considering tx fees)
     });
   });
 
@@ -216,12 +240,14 @@ describe("autocrat_v1", async function () {
 
       let initialPassMarketPriceUnits = 35.5
       let initialFailMarketPriceUnits = 24.2
-      let quoteLiquidityAtomsPerAmm = new BN(1000 * 10 ** 6)
+      let quoteLiquidityAmountPerAmm = new BN(1000 * 10 ** 6)
+
+      let startingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
 
       let ixh = await autocratClient.createProposalPartTwo(
         initialPassMarketPriceUnits,
         initialFailMarketPriceUnits,
-        quoteLiquidityAtomsPerAmm
+        quoteLiquidityAmountPerAmm
       );
       await ixh
         .setComputeUnits(400_000)
@@ -238,10 +264,90 @@ describe("autocrat_v1", async function () {
       let [failMarketAmmAddr] = getFailMarketAmmAddr(autocratClient.program.programId, proposalNumber);
       const failMarketAmmAcc = await autocratClient.program.account.amm.fetch(failMarketAmmAddr);
       assert.isAbove(failMarketAmmAcc.ltwapSlotUpdated.toNumber(), 0)
+
+      let endingLamports = (await banksClient.getAccount(payer.publicKey)).lamports
+      assert.isAbove(endingLamports, startingLamports + 0.95 * 10 ** 9) // is up more than 0.95 sol (considering tx fees)
     });
   });
 
-  describe("#create_amm_position", async function () {
+  describe("#create user ATAs for conditional mints", async function () {
+    it("create user ATAs for conditional mints", async function () {
+      let conditionalOnPassMetaMint = getConditionalOnPassMetaMintAddr(autocratClient.program.programId, proposalNumber)[0]
+      let conditionalOnPassUsdcMint = getConditionalOnPassUsdcMintAddr(autocratClient.program.programId, proposalNumber)[0]
+      let conditionalOnFailMetaMint = getConditionalOnFailMetaMintAddr(autocratClient.program.programId, proposalNumber)[0]
+      let conditionalOnFailUsdcMint = getConditionalOnFailUsdcMintAddr(autocratClient.program.programId, proposalNumber)[0]
+
+      let conditionalOnPassMetaUserATA = getATA(conditionalOnPassMetaMint, autocratClient.provider.publicKey)[0]
+      let conditionalOnPassUsdcUserATA = getATA(conditionalOnPassUsdcMint, autocratClient.provider.publicKey)[0]
+      let conditionalOnFailMetaUserATA = getATA(conditionalOnFailMetaMint, autocratClient.provider.publicKey)[0]
+      let conditionalOnFailUsdcUserATA = getATA(conditionalOnFailUsdcMint, autocratClient.provider.publicKey)[0]
+
+      let passMetaAtaIx = createAssociatedTokenAccountInstruction(
+          autocratClient.provider.publicKey,
+          conditionalOnPassMetaUserATA,
+          autocratClient.provider.publicKey,
+          conditionalOnPassMetaMint,
+      )
+
+      let passUsdcAtaIx = createAssociatedTokenAccountInstruction(
+          autocratClient.provider.publicKey,
+          conditionalOnPassUsdcUserATA,
+          autocratClient.provider.publicKey,
+          conditionalOnPassUsdcMint,
+      )
+
+      let failMetaAtaIx = createAssociatedTokenAccountInstruction(
+          autocratClient.provider.publicKey,
+          conditionalOnFailMetaUserATA,
+          autocratClient.provider.publicKey,
+          conditionalOnFailMetaMint,
+      )
+
+      let failUsdcAtaIx = createAssociatedTokenAccountInstruction(
+          autocratClient.provider.publicKey,
+          conditionalOnFailUsdcUserATA,
+          autocratClient.provider.publicKey,
+          conditionalOnFailUsdcMint,
+      )
+
+      let ixh = new InstructionHandler(
+        [passMetaAtaIx, passUsdcAtaIx, failMetaAtaIx, failUsdcAtaIx],
+        [],
+        autocratClient
+      )
+
+      await ixh.bankrun(banksClient)
+    });
+  });
+
+  describe("#mint_conditional_tokens", async function () {
+    it("mint conditional tokens for proposal", async function () {
+
+      let ixh = await autocratClient.mintConditionalTokens(
+        new BN(10 * 10 ** 9),
+        new BN(100 * 10 ** 6),
+        proposalNumber
+      );
+      await ixh.bankrun(banksClient);
+
+      let conditionalOnPassMetaMint = getConditionalOnPassMetaMintAddr(autocratClient.program.programId, proposalNumber)[0]
+      let conditionalOnPassUsdcMint = getConditionalOnPassUsdcMintAddr(autocratClient.program.programId, proposalNumber)[0]
+      let conditionalOnFailMetaMint = getConditionalOnFailMetaMintAddr(autocratClient.program.programId, proposalNumber)[0]
+      let conditionalOnFailUsdcMint = getConditionalOnFailUsdcMintAddr(autocratClient.program.programId, proposalNumber)[0]
+
+      let conditionalOnPassMetaUserATA = getATA(conditionalOnPassMetaMint, autocratClient.provider.publicKey)[0]
+      let conditionalOnPassUsdcUserATA = getATA(conditionalOnPassUsdcMint, autocratClient.provider.publicKey)[0]
+      let conditionalOnFailMetaUserATA = getATA(conditionalOnFailMetaMint, autocratClient.provider.publicKey)[0]
+      let conditionalOnFailUsdcUserATA = getATA(conditionalOnFailUsdcMint, autocratClient.provider.publicKey)[0]
+
+      assert.isAbove(Number((await getAccount(banksClient, conditionalOnPassMetaUserATA)).amount), 0);
+      assert.isAbove(Number((await getAccount(banksClient, conditionalOnPassUsdcUserATA)).amount), 0);
+      assert.isAbove(Number((await getAccount(banksClient, conditionalOnFailMetaUserATA)).amount), 0);
+      assert.isAbove(Number((await getAccount(banksClient, conditionalOnFailUsdcUserATA)).amount), 0);
+    });
+  });
+
+  describe("#create_position", async function () {
     it("create a new amm position (just the account, adding liquidity is separate)", async function () {
 
       let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
@@ -259,4 +365,34 @@ describe("autocrat_v1", async function () {
     });
   });
 
+  // describe("#add_liquidity", async function () {
+  //   it("add liquidity to an amm/amm position", async function () {
+
+  //     let ixh = await autocratClient.addLiquidity(
+  //       new BN(10 * 10 * 9),
+  //       new BN(100 * 10 ** 6),
+  //       true,
+  //       proposalNumber
+  //     );
+  //     await ixh.bankrun(banksClient);
+
+  //     // TODO
+
+  //   });
+  // });
+
+  // describe("#remove_liquidity", async function () {
+  //   it("remove liquidity from an amm/amm position", async function () {
+
+  //     let ixh = await autocratClient.removeLiquidity(
+  //       new BN(100 * 100),
+  //       true,
+  //       proposalNumber
+  //     );
+  //     await ixh.bankrun(banksClient);
+
+  //     // TODO
+
+  //   });
+  // });
 });

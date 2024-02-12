@@ -39,63 +39,61 @@ pub struct MintConditionalTokens<'info> {
     )]
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
-    pub conditional_on_pass_meta_mint: Account<'info, Mint>,
+    pub conditional_on_pass_meta_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
-    pub conditional_on_pass_usdc_mint: Account<'info, Mint>,
+    pub conditional_on_pass_usdc_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
-    pub conditional_on_fail_meta_mint: Account<'info, Mint>,
+    pub conditional_on_fail_meta_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
-    pub conditional_on_fail_usdc_mint: Account<'info, Mint>,
+    pub conditional_on_fail_usdc_mint: Box<Account<'info, Mint>>,
     #[account(
-        init_if_needed,
-        payer = user,
+        mut,
         associated_token::mint = meta_mint,
         associated_token::authority = user,
     )]
-    pub meta_user_ata: Account<'info, TokenAccount>,
+    pub meta_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
-        init_if_needed,
-        payer = user,
+        mut,
         associated_token::mint = usdc_mint,
         associated_token::authority = user,
     )]
-    pub usdc_user_ata: Account<'info, TokenAccount>,
+    pub usdc_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = conditional_on_pass_meta_mint,
         associated_token::authority = user,
     )]
-    pub conditional_on_pass_meta_user_ata: Account<'info, TokenAccount>,
+    pub conditional_on_pass_meta_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = conditional_on_pass_usdc_mint,
         associated_token::authority = user,
     )]
-    pub conditional_on_pass_usdc_user_ata: Account<'info, TokenAccount>,
+    pub conditional_on_pass_usdc_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = conditional_on_fail_meta_mint,
         associated_token::authority = user,
     )]
-    pub conditional_on_fail_meta_user_ata: Account<'info, TokenAccount>,
+    pub conditional_on_fail_meta_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = conditional_on_fail_usdc_mint,
         associated_token::authority = user,
     )]
-    pub conditional_on_fail_usdc_user_ata: Account<'info, TokenAccount>,
+    pub conditional_on_fail_usdc_user_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = meta_mint.key(),
         associated_token::authority = proposal,
     )]
-    pub meta_vault_ata: Account<'info, TokenAccount>,
+    pub meta_vault_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = usdc_mint.key(),
         associated_token::authority = proposal,
     )]
-    pub usdc_vault_ata: Account<'info, TokenAccount>,
+    pub usdc_vault_ata: Box<Account<'info, TokenAccount>>,
     #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
@@ -105,7 +103,7 @@ pub struct MintConditionalTokens<'info> {
 
 pub fn handler(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amount: u64) -> Result<()> {
     let MintConditionalTokens {
-        user: _,
+        user,
         dao: _,
         proposal,
         meta_mint: _,
@@ -135,9 +133,9 @@ pub fn handler(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amoun
         token_transfer_signed(
             meta_amount,
             token_program,
-            meta_user_ata,
-            meta_vault_ata,
-            proposal.as_ref(),
+            meta_user_ata.as_ref(),
+            meta_vault_ata.as_ref(),
+            user.as_ref(),
             seeds,
         )?;
 
@@ -145,8 +143,8 @@ pub fn handler(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amoun
         token_mint_signed(
             meta_amount,
             token_program,
-            conditional_on_pass_meta_mint,
-            conditional_on_pass_meta_user_ata,
+            conditional_on_pass_meta_mint.as_ref(),
+            conditional_on_pass_meta_user_ata.as_ref(),
             proposal.as_ref(),
             seeds,
         )?;
@@ -155,8 +153,8 @@ pub fn handler(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amoun
         token_mint_signed(
             meta_amount,
             token_program,
-            conditional_on_fail_meta_mint,
-            conditional_on_fail_meta_user_ata,
+            conditional_on_fail_meta_mint.as_ref(),
+            conditional_on_fail_meta_user_ata.as_ref(),
             proposal.as_ref(),
             seeds,
         )?;
@@ -167,9 +165,9 @@ pub fn handler(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amoun
         token_transfer_signed(
             usdc_amount,
             token_program,
-            usdc_user_ata,
-            usdc_vault_ata,
-            proposal.as_ref(),
+            usdc_user_ata.as_ref(),
+            usdc_vault_ata.as_ref(),
+            user.as_ref(),
             seeds,
         )?;
 
@@ -177,8 +175,8 @@ pub fn handler(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amoun
         token_mint_signed(
             usdc_amount,
             token_program,
-            conditional_on_pass_usdc_mint,
-            conditional_on_pass_usdc_user_ata,
+            conditional_on_pass_usdc_mint.as_ref(),
+            conditional_on_pass_usdc_user_ata.as_ref(),
             proposal.as_ref(),
             seeds,
         )?;
@@ -187,8 +185,8 @@ pub fn handler(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amoun
         token_mint_signed(
             meta_amount,
             token_program,
-            conditional_on_fail_usdc_mint,
-            conditional_on_fail_usdc_user_ata,
+            conditional_on_fail_usdc_mint.as_ref(),
+            conditional_on_fail_usdc_user_ata.as_ref(),
             proposal.as_ref(),
             seeds,
         )?;

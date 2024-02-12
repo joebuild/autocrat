@@ -107,9 +107,13 @@ export class InstructionHandler {
     }
 
     async bankrun(banksClient: BanksClient){
-        let [blockhash] = (await banksClient.getLatestBlockhash())!;
-        const tx = await this.getVersionedTransaction(blockhash);
-        return await banksClient.processTransaction(tx);
+        try {
+            let [blockhash] = (await banksClient.getLatestBlockhash())!;
+            const tx = await this.getVersionedTransaction(blockhash);
+            return await banksClient.processTransaction(tx);
+        } catch (e){
+            console.log(e)
+        }
     }
 
     async rpc(opts?: ConfirmOptions){

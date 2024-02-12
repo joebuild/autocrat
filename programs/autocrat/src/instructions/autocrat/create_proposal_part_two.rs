@@ -6,9 +6,11 @@ use anchor_spl::token;
 use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
+use solana_program::native_token::LAMPORTS_PER_SOL;
 
 use crate::error::ErrorCode;
 use crate::state::*;
+use crate::generate_vault_seeds;
 
 #[derive(Accounts)]
 pub struct CreateProposalPartTwo<'info> {
@@ -180,7 +182,11 @@ pub fn handler(
     pass_market_amm.ltwap_slot_updated = clock.slot;
     fail_market_amm.ltwap_slot_updated = clock.slot;
 
-    // ==== deposit initial liquidity ====
+    // recoup anti-spam measure of 1 SOL (sent in part one)
+    proposal.sub_lamports(LAMPORTS_PER_SOL)?;
+    proposer.add_lamports(LAMPORTS_PER_SOL)?;
+
+    // deposit initial liquidity
     // TODO
 
     Ok(())

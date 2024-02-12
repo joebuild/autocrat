@@ -21,10 +21,8 @@ pub struct UpdateDao<'info> {
 #[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
 pub struct UpdateDaoParams {
     pub pass_threshold_bps: Option<u64>,
-    pub base_burn_lamports: Option<u64>,
-    pub burn_decay_per_slot_lamports: Option<u64>,
     pub slots_per_proposal: Option<u64>,
-    pub amm_initial_quote_liquidity_atoms: Option<u64>,
+    pub amm_initial_quote_liquidity_amount: Option<u64>,
     pub amm_swap_fee_bps: Option<u64>,
 }
 
@@ -38,20 +36,12 @@ pub fn handler(
         dao.pass_threshold_bps = pass_threshold_bps;
     }
 
-    if let Some(base_burn_lamports) = dao_params.base_burn_lamports {
-        dao.base_burn_lamports = base_burn_lamports;
-    }
-
-    if let Some(burn_decay_per_slot_lamports) = dao_params.burn_decay_per_slot_lamports {
-        dao.burn_decay_per_slot_lamports = burn_decay_per_slot_lamports;
-    }
-
     if let Some(slots_per_proposal) = dao_params.slots_per_proposal {
         dao.slots_per_proposal = slots_per_proposal;
     }
 
-    if let Some(amm_initial_quote_liquidity_atoms) = dao_params.amm_initial_quote_liquidity_atoms {
-        dao.amm_initial_quote_liquidity_atoms = amm_initial_quote_liquidity_atoms;
+    if let Some(amm_initial_quote_liquidity_amount) = dao_params.amm_initial_quote_liquidity_amount {
+        dao.amm_initial_quote_liquidity_amount = amm_initial_quote_liquidity_amount;
     }
 
     if let Some(amm_swap_fee_bps) = dao_params.amm_swap_fee_bps {

@@ -16,7 +16,7 @@ pub struct CreateProposalInstructions<'info> {
     #[account(
         init,
         payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalInstructions>() + get_instructions_size(&instructions),
+        space = 8 + ProposalInstructions::SERIALIZED_LEN + get_instructions_size(&instructions),
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     pub rent: Sysvar<'info, Rent>,

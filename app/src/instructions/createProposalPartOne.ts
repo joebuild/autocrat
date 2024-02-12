@@ -27,7 +27,6 @@ export const createProposalPartOneHandler = async (
             proposal: proposalAddr,
             proposalInstructions: proposalInstructionsAddr,
             dao: getDaoAddr(client.program.programId)[0],
-            daoTreasury: getDaoTreasuryAddr(client.program.programId)[0],
             passMarketAmm: getPassMarketAmmAddr(client.program.programId, dao.proposalCount)[0],
             failMarketAmm: getFailMarketAmmAddr(client.program.programId, dao.proposalCount)[0],
             metaMint: dao.metaMint,

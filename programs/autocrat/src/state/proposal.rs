@@ -1,6 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::instruction::Instruction;
 
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
+pub enum ProposalState {
+    Pending,
+    Passed,
+    Failed,
+}
+
 #[account]
 pub struct Proposal {
     pub number: u32,
@@ -33,11 +40,8 @@ pub struct ProposalInstructions {
     pub instructions: Vec<ProposalInstruction>,
 }
 
-#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
-pub enum ProposalState {
-    Pending,
-    Passed,
-    Failed,
+impl ProposalInstructions {
+    pub const SERIALIZED_LEN: usize = 4 + 32 + 1 + 4;
 }
 
 #[derive(Clone, AnchorSerialize, AnchorDeserialize)]
