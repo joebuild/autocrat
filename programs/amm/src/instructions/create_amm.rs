@@ -46,16 +46,18 @@ pub struct CreateAmm<'info> {
         associated_token::mint = quote_mint
     )]
     pub vault_ata_quote: Account<'info, TokenAccount>,
+    #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
 pub struct CreateAmmParams {
-    pub permissioned: Option<bool>,
+    pub permissioned: bool,
     pub permissioned_caller: Option<Pubkey>,
-    pub swap_fee_bps: u64,
+    pub swap_fee_bps: u32,
 }
 
 pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> Result<()> {
@@ -71,14 +73,14 @@ pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> R
         system_program: _,
     } = ctx.accounts;
 
-    amm.permissioned = create_amm_params.permissioned.unwrap_or(false);
+    amm.permissioned = create_amm_params.permissioned;
     if amm.permissioned {
         amm.permissioned_caller = create_amm_params.permissioned_caller.unwrap();
     }
 
     amm.created_at_slot = Clock::get()?.slot;
 
-    assert!(create_amm_params.swap_fee_bps < BPS_SCALE);
+    assert!((create_amm_params.swap_fee_bps as u64) < BPS_SCALE);
 
     amm.swap_fee_bps = create_amm_params.swap_fee_bps;
 
@@ -86,6 +88,8 @@ pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> R
 
     amm.base_mint = base_mint.key();
     amm.quote_mint = quote_mint.key();
+
+    amm.bump = ctx.bumps.amm;
 
     Ok(())
 }

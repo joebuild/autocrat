@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
+use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token;
 use anchor_spl::token::*;
 use num_traits::ToPrimitive;
 
@@ -44,7 +46,9 @@ pub struct Swap<'info> {
         associated_token::authority = amm,
     )]
     pub vault_ata_quote: Account<'info, TokenAccount>,
+    #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
     /// CHECK:
     #[account(address = tx_instructions::ID)]
@@ -92,7 +96,7 @@ pub fn handler(
         .unwrap();
 
     let input_amount_minus_fee = input_amount
-        .checked_mul(BPS_SCALE.checked_sub(amm.swap_fee_bps).unwrap())
+        .checked_mul(BPS_SCALE.checked_sub(amm.swap_fee_bps as u64).unwrap())
         .unwrap()
         .checked_div(BPS_SCALE)
         .unwrap() as u128;
@@ -109,14 +113,6 @@ pub fn handler(
         permissioned_caller,
         amm.bump
     );
-
-    // let seeds: &[&[u8]] = &[
-    //     base_mint.key().as_ref(),
-    //     quote_mint.key().as_ref(),
-    //     amm.swap_fee_bps.to_le_bytes().as_ref(),
-    //     amm.permissioned_caller.as_ref(),
-    //     &[amm.bump],
-    // ];
 
     let output_amount = if is_quote_to_base {
         let temp_conditional_quote_amount = conditional_quote_amount_start

@@ -26,7 +26,7 @@ pub struct Amm {
 
     pub total_ownership: u64,
 
-    pub swap_fee_bps: u64,
+    pub swap_fee_bps: u32,
 
     // ltwap stands for: liquidity time weighted average price
     pub ltwap_slot_updated: u64,

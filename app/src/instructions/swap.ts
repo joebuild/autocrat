@@ -1,5 +1,5 @@
-import {AutocratClient} from "../AutocratClient";
-import {InstructionHandler} from "../InstructionHandler";
+import { AutocratClient } from "../AutocratClient";
+import { InstructionHandler } from "../InstructionHandler";
 import { getATA, getAmmPositionAddr, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../utils';
 import BN from "bn.js";
 
@@ -15,19 +15,19 @@ export const swapHandler = async (
         conditionalQuoteMint,
         amm;
 
-    if (isPassMarket){
-        conditionalBaseMint = getConditionalOnPassMetaMintAddr(client.program.programId, proposalNumber)[0]
-        conditionalQuoteMint = getConditionalOnPassUsdcMintAddr(client.program.programId, proposalNumber)[0]
-        amm = getPassMarketAmmAddr(client.program.programId, proposalNumber)[0]
+    if (isPassMarket) {
+        conditionalBaseMint = getConditionalOnPassMetaMintAddr(client.autocratProgram.programId, proposalNumber)[0]
+        conditionalQuoteMint = getConditionalOnPassUsdcMintAddr(client.autocratProgram.programId, proposalNumber)[0]
+        amm = getPassMarketAmmAddr(client.autocratProgram.programId, proposalNumber)[0]
     } else {
-        conditionalBaseMint = getConditionalOnFailMetaMintAddr(client.program.programId, proposalNumber)[0]
-        conditionalQuoteMint = getConditionalOnFailUsdcMintAddr(client.program.programId, proposalNumber)[0]
-        amm = getFailMarketAmmAddr(client.program.programId, proposalNumber)[0]
-    } 
+        conditionalBaseMint = getConditionalOnFailMetaMintAddr(client.autocratProgram.programId, proposalNumber)[0]
+        conditionalQuoteMint = getConditionalOnFailUsdcMintAddr(client.autocratProgram.programId, proposalNumber)[0]
+        amm = getFailMarketAmmAddr(client.autocratProgram.programId, proposalNumber)[0]
+    }
 
-    let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
+    let proposalAddr = getProposalAddr(client.autocratProgram.programId, proposalNumber)[0]
 
-    let ix = await client.program.methods
+    let ix = await client.autocratProgram.methods
         .swap(
             isQuoteToBase,
             inputAmount,
@@ -36,7 +36,7 @@ export const swapHandler = async (
         )
         .accounts({
             user: client.provider.publicKey,
-            dao: getDaoAddr(client.program.programId)[0],
+            dao: getDaoAddr(client.autocratProgram.programId)[0],
             proposal: proposalAddr,
             amm,
             conditionalBaseMint,
@@ -47,6 +47,6 @@ export const swapHandler = async (
             vaultAtaConditionalQuote: getATA(conditionalQuoteMint, proposalAddr)[0],
         })
         .instruction()
-        
+
     return new InstructionHandler([ix], [], client)
 };

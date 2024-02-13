@@ -1,6 +1,6 @@
-import {PublicKey} from '@solana/web3.js';
-import {AutocratClient} from "../AutocratClient";
-import {InstructionHandler} from "../InstructionHandler";
+import { PublicKey } from '@solana/web3.js';
+import { AutocratClient } from "../AutocratClient";
+import { InstructionHandler } from "../InstructionHandler";
 import { getATA, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getProposalAddr } from '../utils';
 import BN from 'bn.js';
 
@@ -11,17 +11,17 @@ export const mintConditionalTokensHandler = async (
     proposalNumber: number
 ): Promise<InstructionHandler> => {
 
-    let daoAddr = getDaoAddr(client.program.programId)[0]
-    let dao = await client.program.account.dao.fetch(daoAddr)
+    let daoAddr = getDaoAddr(client.autocratProgram.programId)[0]
+    let dao = await client.autocratProgram.account.dao.fetch(daoAddr)
 
-    let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
+    let proposalAddr = getProposalAddr(client.autocratProgram.programId, proposalNumber)[0]
 
-    let conditionalOnPassMetaMint = getConditionalOnPassMetaMintAddr(client.program.programId, proposalNumber)[0]
-    let conditionalOnPassUsdcMint = getConditionalOnPassUsdcMintAddr(client.program.programId, proposalNumber)[0]
-    let conditionalOnFailMetaMint = getConditionalOnFailMetaMintAddr(client.program.programId, proposalNumber)[0]
-    let conditionalOnFailUsdcMint = getConditionalOnFailUsdcMintAddr(client.program.programId, proposalNumber)[0]
+    let conditionalOnPassMetaMint = getConditionalOnPassMetaMintAddr(client.autocratProgram.programId, proposalNumber)[0]
+    let conditionalOnPassUsdcMint = getConditionalOnPassUsdcMintAddr(client.autocratProgram.programId, proposalNumber)[0]
+    let conditionalOnFailMetaMint = getConditionalOnFailMetaMintAddr(client.autocratProgram.programId, proposalNumber)[0]
+    let conditionalOnFailUsdcMint = getConditionalOnFailUsdcMintAddr(client.autocratProgram.programId, proposalNumber)[0]
 
-    let ix = await client.program.methods
+    let ix = await client.autocratProgram.methods
         .mintConditionalTokens(metaAmount, usdcAmount)
         .accounts({
             user: client.provider.publicKey,
@@ -43,6 +43,6 @@ export const mintConditionalTokensHandler = async (
             usdcVaultAta: getATA(dao.usdcMint, proposalAddr)[0],
         })
         .instruction()
-        
+
     return new InstructionHandler([ix], [], client)
 };

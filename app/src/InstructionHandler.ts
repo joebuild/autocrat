@@ -58,21 +58,21 @@ export class InstructionHandler {
         return this
     }
 
-    async getVersionedTransaction(blockhash: Blockhash){
+    async getVersionedTransaction(blockhash: Blockhash) {
         this.instructions = [
             ...this.preInstructions,
             ...this.instructions,
             ...this.postInstructions,
         ]
 
-        if (this.microLamportsPerComputeUnit != 0){
+        if (this.microLamportsPerComputeUnit != 0) {
             this.instructions = [
                 addPriorityFee(this.microLamportsPerComputeUnit),
                 ...this.instructions
             ]
         }
-        
-        if (this.computeUnits != 200_000){
+
+        if (this.computeUnits != 200_000) {
             this.instructions = [
                 addComputeUnits(this.computeUnits),
                 ...this.instructions
@@ -89,7 +89,7 @@ export class InstructionHandler {
         tx = await this.client.provider.wallet.signTransaction(tx)
 
         let signersArray = Array.from(this.signers)
-        if (this.signers.size){
+        if (this.signers.size) {
             tx.sign(signersArray)
         }
 
@@ -106,17 +106,18 @@ export class InstructionHandler {
         return this
     }
 
-    async bankrun(banksClient: BanksClient){
+    async bankrun(banksClient: BanksClient) {
         try {
             let [blockhash] = (await banksClient.getLatestBlockhash())!;
             const tx = await this.getVersionedTransaction(blockhash);
             return await banksClient.processTransaction(tx);
-        } catch (e){
+        } catch (e) {
             console.log(e)
+            throw e
         }
     }
 
-    async rpc(opts?: ConfirmOptions){
+    async rpc(opts?: ConfirmOptions) {
         let blockhash = (await this.client.provider.connection.getLatestBlockhash()).blockhash
         const tx = await this.getVersionedTransaction(blockhash);
         return await this.client.provider.sendAndConfirm(tx, undefined, opts)

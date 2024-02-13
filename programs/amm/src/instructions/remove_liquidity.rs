@@ -58,7 +58,9 @@ pub struct RemoveLiquidity<'info> {
         associated_token::authority = amm,
     )]
     pub vault_ata_quote: Account<'info, TokenAccount>,
+    #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
     /// CHECK:
     #[account(address = tx_instructions::ID)]
@@ -146,14 +148,6 @@ pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
         permissioned_caller,
         amm.bump
     );
-
-    // let seeds: &[&[u8]] = &[
-    //     base_mint.key().as_ref(),
-    //     quote_mint.key().as_ref(),
-    //     amm.swap_fee_bps.to_le_bytes().as_ref(),
-    //     amm.permissioned_caller.as_ref(),
-    //     &[amm.bump],
-    // ];
 
     // send vault base tokens to user
     token_transfer_signed(

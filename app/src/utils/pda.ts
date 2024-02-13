@@ -1,6 +1,6 @@
-import {AccountMeta, PublicKey} from "@solana/web3.js";
-import {utils} from "@coral-xyz/anchor";
-import { numToBytes32LE } from "./numbers";
+import { AccountMeta, PublicKey } from "@solana/web3.js";
+import { utils } from "@coral-xyz/anchor";
+import { numToBytes32LE, numToBytes64LE } from "./numbers";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export const getDaoAddr = (
@@ -28,6 +28,19 @@ export const getProposalAddr = (
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
         [utils.bytes.utf8.encode("proposal"), numToBytes32LE(proposalNumber)],
+        programId,
+    );
+};
+
+export const getAmmAddr = (
+    programId: PublicKey,
+    baseMint: PublicKey,
+    quoteMint: PublicKey,
+    swapFeeBps: number,
+    permissionedCaller: PublicKey
+): [PublicKey, number] => {
+    return PublicKey.findProgramAddressSync(
+        [baseMint.toBuffer(), quoteMint.toBuffer(), numToBytes32LE(swapFeeBps), permissionedCaller.toBuffer()],
         programId,
     );
 };

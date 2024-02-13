@@ -60,7 +60,9 @@ pub struct AddLiquidity<'info> {
         associated_token::authority = amm,
     )]
     pub vault_ata_quote: Account<'info, TokenAccount>,
+    #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
     /// CHECK:
     #[account(address = tx_instructions::ID)]

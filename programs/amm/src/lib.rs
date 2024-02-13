@@ -27,7 +27,7 @@ use crate::utils::*;
 
 declare_id!("Ens7Gx99whnA8zZm6ZiFnWgGq3x76nXbSmh5gaaJqpAz");
 #[program]
-pub mod autocrat {
+pub mod amm {
     use super::*;
 
     pub fn create_amm(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> Result<()> {

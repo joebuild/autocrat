@@ -10,29 +10,45 @@ import {
 } from "@solana/web3.js";
 import { Autocrat as AutocratIDLType } from '../../target/types/autocrat';
 // @ts-ignore
-import * as IDL from '../../target/idl/autocrat.json';
+import * as AutocratIDL from '../../target/idl/autocrat.json';
+
+import { Amm as AmmIDLType } from '../../target/types/amm';
+// @ts-ignore
+import * as AmmIDL from '../../target/idl/amm.json';
+
 import * as ixs from "./instructions";
 import BN from "bn.js";
 import { addComputeUnits } from "./utils";
-import { AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
+import { AMM_PROGRAM_ID, AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
 import { ProposalInstruction, UpdateDaoParams } from "./types";
+
+export type CreateAutocratClientParams = {
+    provider: AnchorProvider,
+    autocratProgramId?: PublicKey,
+    ammProgramId?: PublicKey,
+}
 
 export class AutocratClient {
     public readonly provider: AnchorProvider;
-    public readonly program: Program<AutocratIDLType>;
+    public readonly autocratProgram: Program<AutocratIDLType>;
+    public readonly ammProgram: Program<AmmIDLType>;
     public readonly luts: AddressLookupTableAccount[];
 
     constructor(
         provider: AnchorProvider,
-        programId: PublicKey,
+        autocratProgramId: PublicKey,
+        ammProgramId: PublicKey,
         luts: AddressLookupTableAccount[],
     ) {
         this.provider = provider
-        this.program = new Program<AutocratIDLType>(IDL, programId, provider)
+        this.autocratProgram = new Program<AutocratIDLType>(AutocratIDL, autocratProgramId, provider)
+        this.ammProgram = new Program<AmmIDLType>(AmmIDL, ammProgramId, provider)
         this.luts = luts
     }
 
-    public static async createClient(provider: AnchorProvider, programId?: PublicKey): Promise<AutocratClient> {
+    public static async createClient(createAutocratClientParams: CreateAutocratClientParams): Promise<AutocratClient> {
+        let { provider, autocratProgramId, ammProgramId } = createAutocratClientParams;
+
         const getLuts = () => Promise.all(
             AUTOCRAT_LUTS.map(lut => {
                 return provider.connection
@@ -45,7 +61,8 @@ export class AutocratClient {
 
         return new AutocratClient(
             provider,
-            programId || AUTOCRAT_PROGRAM_ID,
+            autocratProgramId || AUTOCRAT_PROGRAM_ID,
+            ammProgramId || AMM_PROGRAM_ID,
             luts as AddressLookupTableAccount[],
         )
     }
@@ -148,6 +165,23 @@ export class AutocratClient {
         )
     }
 
+    async createAmm(
+        baseMint: PublicKey,
+        quoteMint: PublicKey,
+        swapFeeBps: number,
+        permissioned: boolean,
+        permissionedCaller: PublicKey = PublicKey.default,
+    ) {
+        return ixs.createAmmHandler(
+            this,
+            baseMint,
+            quoteMint,
+            swapFeeBps,
+            permissioned,
+            permissionedCaller,
+        )
+    }
+
     async createAmmPosition(
         amm: PublicKey
     ) {
@@ -158,30 +192,30 @@ export class AutocratClient {
     }
 
     async addLiquidity(
+        ammAddr: PublicKey,
+        ammPositionAddr: PublicKey,
         maxBaseAmount: BN,
         maxQuoteAmount: BN,
-        isPassMarket: boolean,
-        proposalNumber: number
     ) {
         return ixs.addLiquidityHandler(
             this,
+            ammAddr,
+            ammPositionAddr,
             maxBaseAmount,
-            maxQuoteAmount,
-            isPassMarket,
-            proposalNumber
+            maxQuoteAmount
         )
     }
 
     async removeLiquidity(
+        ammAddr: PublicKey,
+        ammPositionAddr: PublicKey,
         removeBps: BN,
-        isPassMarket: boolean,
-        proposalNumber: number
     ) {
         return ixs.removeLiquidityHandler(
             this,
-            removeBps,
-            isPassMarket,
-            proposalNumber
+            ammAddr,
+            ammPositionAddr,
+            removeBps
         )
     }
 

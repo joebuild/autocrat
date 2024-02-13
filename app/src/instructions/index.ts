@@ -1,5 +1,6 @@
 export * from './addLiquidity'
 export * from './addProposalInstructions'
+export * from './createAmm'
 export * from './createAmmPosition'
 export * from './createProposalPartOne'
 export * from './createProposalPartTwo'
