@@ -5,14 +5,15 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
+amm = "Ens7Gx99whnA8zZm6ZiFnWgGq3x76nXbSmh5gaaJqpAz"
 autocrat = "66629qDqH5vJuz4ZgaL1HVpeAC9kJXnzamMpvMJfr3kE"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
-wallet = "~/.config/solana/id.json"
+cluster = "Localnet"
+wallet = "/Users/joe/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

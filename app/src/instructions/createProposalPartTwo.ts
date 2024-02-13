@@ -1,7 +1,7 @@
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { AutocratClient } from "../AutocratClient";
 import { InstructionHandler } from "../InstructionHandler";
-import { getATA, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../utils';
+import { getATA, getAmmPositionAddr, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../utils';
 import BN from "bn.js";
 
 export const createProposalPartTwoHandler = async (
@@ -21,6 +21,9 @@ export const createProposalPartTwoHandler = async (
     let conditionalOnFailMetaMint = getConditionalOnFailMetaMintAddr(client.program.programId, proposalNumber)[0]
     let conditionalOnFailUsdcMint = getConditionalOnFailUsdcMintAddr(client.program.programId, proposalNumber)[0]
 
+    let passMarketAmm = getPassMarketAmmAddr(client.program.programId, proposalNumber)[0]
+    let failMarketAmm = getFailMarketAmmAddr(client.program.programId, proposalNumber)[0]
+
     let ix = await client.program.methods
         .createProposalPartTwo(
             initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
@@ -30,8 +33,10 @@ export const createProposalPartTwoHandler = async (
         .accounts({
             proposer: client.provider.publicKey,
             proposal: proposalAddr,
-            passMarketAmm: getPassMarketAmmAddr(client.program.programId, proposalNumber)[0],
-            failMarketAmm: getFailMarketAmmAddr(client.program.programId, proposalNumber)[0],
+            passMarketAmm,
+            failMarketAmm,
+            passMarketAmmPosition: getAmmPositionAddr(client.program.programId, passMarketAmm, client.provider.publicKey)[0],
+            failMarketAmmPosition: getAmmPositionAddr(client.program.programId, failMarketAmm, client.provider.publicKey)[0],
             metaMint: dao.metaMint,
             usdcMint: dao.usdcMint,
             conditionalOnPassMetaMint,

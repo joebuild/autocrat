@@ -285,6 +285,40 @@ describe("autocrat_v1", async function () {
     });
   });
 
+  describe("#create_position", async function () {
+    it("create new pass-market amm position (just the account, adding liquidity is separate)", async function () {
+
+      let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
+
+      let ixh = await autocratClient.createAmmPosition(
+        passMarketAmmAddr
+      );
+      await ixh.bankrun(banksClient);
+
+      let passMarketPositionAddr = getAmmPositionAddr(autocratClient.program.programId, passMarketAmmAddr, payer.publicKey)[0]
+      const passMarketPosition = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
+
+      assert.equal(passMarketPosition.amm.toBase58(), passMarketAmmAddr.toBase58());
+      assert.equal(passMarketPosition.user.toBase58(), payer.publicKey.toBase58());
+    });
+
+    it("create new fail-market amm position (just the account, adding liquidity is separate)", async function () {
+
+      let [failMarketAmmAddr] = getFailMarketAmmAddr(autocratClient.program.programId, proposalNumber);
+
+      let ixh = await autocratClient.createAmmPosition(
+        failMarketAmmAddr
+      );
+      await ixh.bankrun(banksClient);
+
+      let failMarketPositionAddr = getAmmPositionAddr(autocratClient.program.programId, failMarketAmmAddr, payer.publicKey)[0]
+      const failMarketPosition = await autocratClient.program.account.ammPosition.fetch(failMarketPositionAddr);
+
+      assert.equal(failMarketPosition.amm.toBase58(), failMarketAmmAddr.toBase58());
+      assert.equal(failMarketPosition.user.toBase58(), payer.publicKey.toBase58());
+    });
+  });
+
   describe("#create_proposal_part_two", async function () {
     it("finish creating a proposal (part two), and deposit liquidity into amms", async function () {
 
@@ -344,24 +378,6 @@ describe("autocrat_v1", async function () {
       assert.isAbove(Number((await getAccount(banksClient, conditionalOnPassUsdcUserATA)).amount), 0);
       assert.isAbove(Number((await getAccount(banksClient, conditionalOnFailMetaUserATA)).amount), 0);
       assert.isAbove(Number((await getAccount(banksClient, conditionalOnFailUsdcUserATA)).amount), 0);
-    });
-  });
-
-  describe("#create_position", async function () {
-    it("create a new amm position (just the account, adding liquidity is separate)", async function () {
-
-      let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
-
-      let ixh = await autocratClient.createAmmPosition(
-        passMarketAmmAddr
-      );
-      await ixh.bankrun(banksClient);
-
-      let passMarketPositionAddr = getAmmPositionAddr(autocratClient.program.programId, passMarketAmmAddr, payer.publicKey)[0]
-      const passMarketPosition = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
-
-      assert.equal(passMarketPosition.amm.toBase58(), passMarketAmmAddr.toBase58());
-      assert.equal(passMarketPosition.user.toBase58(), payer.publicKey.toBase58());
     });
   });
 

@@ -44,6 +44,24 @@ pub struct CreateProposalPartTwo<'info> {
     )]
     pub fail_market_amm: Box<Account<'info, Amm>>,
     #[account(
+        mut,
+        seeds = [
+            pass_market_amm.key().as_ref(),
+            proposer.key().as_ref(),
+        ],
+        bump
+    )]
+    pub pass_market_amm_position: Box<Account<'info, AmmPosition>>,
+    #[account(
+        mut,
+        seeds = [
+            fail_market_amm.key().as_ref(),
+            proposer.key().as_ref(),
+        ],
+        bump
+    )]
+    pub fail_market_amm_position: Box<Account<'info, AmmPosition>>,
+    #[account(
         constraint = meta_mint.key() == proposal.meta_mint.key()
     )]
     pub meta_mint: Box<Account<'info, Mint>>,
@@ -153,6 +171,8 @@ pub fn handler(
         proposal,
         pass_market_amm,
         fail_market_amm,
+        pass_market_amm_position,
+        fail_market_amm_position,
         meta_mint,
         usdc_mint,
         conditional_on_pass_meta_mint,
