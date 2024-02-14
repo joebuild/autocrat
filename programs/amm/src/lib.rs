@@ -58,4 +58,8 @@ pub mod amm {
     ) -> Result<()> {
         instructions::swap::handler(ctx, is_quote_to_base, input_amount, output_amount_min)
     }
+
+    pub fn update_ltwap(ctx: Context<UpdateLtwap>) -> Result<()> {
+        instructions::update_ltwap::handler(ctx)
+    }
 }

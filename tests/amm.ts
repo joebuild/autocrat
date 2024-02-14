@@ -116,7 +116,7 @@ describe("amm_v1", async function () {
       let ixh = await autocratClient.createAmm(
         META,
         USDC,
-        400,
+        1,
         false,
       );
       await ixh.bankrun(banksClient);
@@ -125,7 +125,7 @@ describe("amm_v1", async function () {
         autocratClient.ammProgram.programId,
         META,
         USDC,
-        400,
+        1,
         PublicKey.default
       );
 
@@ -133,7 +133,9 @@ describe("amm_v1", async function () {
 
       assert.equal(permissionlessAmmAcc.baseMint.toBase58(), META.toBase58());
       assert.equal(permissionlessAmmAcc.quoteMint.toBase58(), USDC.toBase58());
-      assert.equal(permissionlessAmmAcc.swapFeeBps, 400);
+      assert.equal(permissionlessAmmAcc.baseMintDecimals, 9);
+      assert.equal(permissionlessAmmAcc.quoteMintDecimals, 6);
+      assert.equal(permissionlessAmmAcc.swapFeeBps, 1);
       assert.equal(permissionlessAmmAcc.permissionedCaller.toBase58(), PublicKey.default.toBase58());
     });
 
@@ -155,12 +157,14 @@ describe("amm_v1", async function () {
         autocratClient.ammProgram.programId,
       );
 
-      const permissionedAmmAcc = await autocratClient.ammProgram.account.amm.fetch(permissionedAccessibleAmmAddr);
+      const permissionedAccessibleAmmAcc = await autocratClient.ammProgram.account.amm.fetch(permissionedAccessibleAmmAddr);
 
-      assert.equal(permissionedAmmAcc.baseMint.toBase58(), META.toBase58());
-      assert.equal(permissionedAmmAcc.quoteMint.toBase58(), USDC.toBase58());
-      assert.equal(permissionedAmmAcc.swapFeeBps, 300);
-      assert.equal(permissionedAmmAcc.permissionedCaller.toBase58(), autocratClient.ammProgram.programId.toBase58());
+      assert.equal(permissionedAccessibleAmmAcc.baseMint.toBase58(), META.toBase58());
+      assert.equal(permissionedAccessibleAmmAcc.quoteMint.toBase58(), USDC.toBase58());
+      assert.equal(permissionedAccessibleAmmAcc.baseMintDecimals, 9);
+      assert.equal(permissionedAccessibleAmmAcc.quoteMintDecimals, 6);
+      assert.equal(permissionedAccessibleAmmAcc.swapFeeBps, 300);
+      assert.equal(permissionedAccessibleAmmAcc.permissionedCaller.toBase58(), autocratClient.ammProgram.programId.toBase58());
     });
 
     it("create a permissioned amm (uncontrolled program)", async function () {
@@ -183,12 +187,14 @@ describe("amm_v1", async function () {
         randomAuthCaller,
       );
 
-      const permissionedAmmAcc = await autocratClient.ammProgram.account.amm.fetch(permissionedInaccessibleAmmAddr);
+      const permissionedInaccessibleAmmAcc = await autocratClient.ammProgram.account.amm.fetch(permissionedInaccessibleAmmAddr);
 
-      assert.equal(permissionedAmmAcc.baseMint.toBase58(), META.toBase58());
-      assert.equal(permissionedAmmAcc.quoteMint.toBase58(), USDC.toBase58());
-      assert.equal(permissionedAmmAcc.swapFeeBps, 200);
-      assert.equal(permissionedAmmAcc.permissionedCaller.toBase58(), randomAuthCaller.toBase58());
+      assert.equal(permissionedInaccessibleAmmAcc.baseMint.toBase58(), META.toBase58());
+      assert.equal(permissionedInaccessibleAmmAcc.quoteMint.toBase58(), USDC.toBase58());
+      assert.equal(permissionedInaccessibleAmmAcc.baseMintDecimals, 9);
+      assert.equal(permissionedInaccessibleAmmAcc.quoteMintDecimals, 6);
+      assert.equal(permissionedInaccessibleAmmAcc.swapFeeBps, 200);
+      assert.equal(permissionedInaccessibleAmmAcc.permissionedCaller.toBase58(), randomAuthCaller.toBase58());
     });
   });
 
@@ -232,7 +238,7 @@ describe("amm_v1", async function () {
       let ixh = await autocratClient.addLiquidity(
         permissionlessAmmAddr,
         ammPositionAddr,
-        new BN(10 * 10 * 9),
+        new BN(10 * 10 ** 9),
         new BN(100 * 10 ** 6),
       );
       await ixh.bankrun(banksClient);
@@ -248,6 +254,143 @@ describe("amm_v1", async function () {
     });
   });
 
+  describe("#swap", async function () {
+    it("swap quote to base", async function () {
+      const permissionlessAmmStart = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+
+      let ixh = await autocratClient.swap(
+        permissionlessAmmAddr,
+        true,
+        new BN(10 * 10 ** 6),
+        new BN(0.8 * 10 ** 9),
+      );
+      await ixh.bankrun(banksClient);
+
+      const permissionlessAmmEnd = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+
+      assert.isBelow(permissionlessAmmEnd.baseAmount.toNumber(), permissionlessAmmStart.baseAmount.toNumber());
+      assert.isAbove(permissionlessAmmEnd.quoteAmount.toNumber(), permissionlessAmmStart.quoteAmount.toNumber());
+    });
+
+    it("swap base to quote", async function () {
+      const permissionlessAmmStart = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+
+      let ixh = await autocratClient.swap(
+        permissionlessAmmAddr,
+        false,
+        new BN(1 * 10 ** 9),
+        new BN(8 * 10 ** 6),
+      );
+      await ixh.bankrun(banksClient);
+
+      const permissionlessAmmEnd = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+
+      assert.isAbove(permissionlessAmmEnd.baseAmount.toNumber(), permissionlessAmmStart.baseAmount.toNumber());
+      assert.isBelow(permissionlessAmmEnd.quoteAmount.toNumber(), permissionlessAmmStart.quoteAmount.toNumber());
+    });
+
+    it("swap base to quote and back, should not be profitable", async function () {
+      const permissionlessAmmStart = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+
+      let startingBaseSwapAmount = 1 * 10 ** 9
+
+      let ixh1 = await autocratClient.swap(
+        permissionlessAmmAddr,
+        false,
+        new BN(startingBaseSwapAmount),
+        new BN(1),
+      );
+      await ixh1.bankrun(banksClient);
+
+      const permissionlessAmmMiddle = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+      let quoteReceived = permissionlessAmmStart.quoteAmount.toNumber() - permissionlessAmmMiddle.quoteAmount.toNumber()
+
+      let ixh2 = await autocratClient.swap(
+        permissionlessAmmAddr,
+        true,
+        new BN(quoteReceived),
+        new BN(1),
+      );
+      await ixh2.bankrun(banksClient);
+
+      const permissionlessAmmEnd = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+      let baseReceived = permissionlessAmmMiddle.baseAmount.toNumber() - permissionlessAmmEnd.baseAmount.toNumber()
+
+      assert.isAbove(startingBaseSwapAmount, baseReceived);
+      assert.isBelow(startingBaseSwapAmount * 0.999, baseReceived);
+    });
+
+    it("swap quote to base and back, should not be profitable", async function () {
+      const permissionlessAmmStart = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+
+      let startingQuoteSwapAmount = 1 * 10 ** 6
+
+      let ixh1 = await autocratClient.swap(
+        permissionlessAmmAddr,
+        true,
+        new BN(startingQuoteSwapAmount),
+        new BN(1),
+      );
+      await ixh1.bankrun(banksClient);
+
+      const permissionlessAmmMiddle = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+      let baseReceived = permissionlessAmmStart.baseAmount.toNumber() - permissionlessAmmMiddle.baseAmount.toNumber()
+
+      let ixh2 = await autocratClient.swap(
+        permissionlessAmmAddr,
+        false,
+        new BN(baseReceived),
+        new BN(1),
+      );
+      await ixh2.bankrun(banksClient);
+
+      const permissionlessAmmEnd = await autocratClient.ammProgram.account.amm.fetch(permissionlessAmmAddr);
+      let quoteReceived = permissionlessAmmMiddle.quoteAmount.toNumber() - permissionlessAmmEnd.quoteAmount.toNumber()
+
+      assert.isAbove(startingQuoteSwapAmount, quoteReceived);
+      assert.isBelow(startingQuoteSwapAmount * 0.999, quoteReceived);
+    });
+
+    it("ltwap should go up after buying base, down after selling base", async function () {
+      let ixh1 = await autocratClient.updateLTWAP(permissionlessAmmAddr);
+      await ixh1.bankrun(banksClient);
+
+      const ltwapStart = await autocratClient.getLTWAP(permissionlessAmmAddr);
+
+      let ixh2 = await autocratClient.swap(
+        permissionlessAmmAddr,
+        true,
+        new BN(2 * 10 ** 9),
+      );
+      await ixh2.bankrun(banksClient);
+
+      await fastForward(context, 100n)
+
+      let ixh3 = await autocratClient.updateLTWAP(permissionlessAmmAddr);
+      await ixh3.bankrun(banksClient);
+
+      const ltwapMiddle = await autocratClient.getLTWAP(permissionlessAmmAddr);
+
+      assert.isAbove(ltwapMiddle, ltwapStart);
+
+      let ixh4 = await autocratClient.swap(
+        permissionlessAmmAddr,
+        false,
+        new BN(20 * 10 ** 6),
+      );
+      await ixh4.bankrun(banksClient);
+
+      await fastForward(context, 100n)
+
+      let ixh5 = await autocratClient.updateLTWAP(permissionlessAmmAddr);
+      await ixh5.bankrun(banksClient);
+
+      const ltwapEnd = await autocratClient.getLTWAP(permissionlessAmmAddr);
+
+      assert.isAbove(ltwapMiddle, ltwapEnd);
+    });
+  });
+
   describe("#remove_liquidity", async function () {
     it("remove some liquidity from an amm position", async function () {
 
@@ -259,7 +402,7 @@ describe("amm_v1", async function () {
       let ixh = await autocratClient.removeLiquidity(
         permissionlessAmmAddr,
         ammPositionAddr,
-        new BN(5_000), // 10_000 removes all liquidity
+        new BN(5_000),
       );
       await ixh.bankrun(banksClient);
 
@@ -283,7 +426,7 @@ describe("amm_v1", async function () {
       let ixh = await autocratClient.removeLiquidity(
         permissionlessAmmAddr,
         ammPositionAddr,
-        new BN(10_000), // 10_000 removes all liquidity
+        new BN(10_000),
       );
       await ixh.bankrun(banksClient);
 
@@ -300,3 +443,16 @@ describe("amm_v1", async function () {
   });
 
 });
+
+const fastForward = async (context: ProgramTestContext, slots: bigint) => {
+  const currentClock = await context.banksClient.getClock();
+  context.setClock(
+    new Clock(
+      currentClock.slot + slots,
+      currentClock.epochStartTimestamp,
+      currentClock.epoch,
+      currentClock.leaderScheduleEpoch,
+      50n,
+    ),
+  );
+}

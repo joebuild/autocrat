@@ -78,6 +78,7 @@ pub fn handler(
     } = ctx.accounts;
 
     assert!(input_amount > 0);
+    assert!(amm.total_ownership > 0);
 
     if amm.permissioned {
         let ixns = ctx.accounts.instructions.to_account_info();
@@ -88,12 +89,10 @@ pub fn handler(
 
     amm.update_ltwap()?;
 
-    let conditional_base_amount_start = amm.base_amount as u128;
-    let conditional_quote_amount_start = amm.quote_amount as u128;
+    let base_amount_start = amm.base_amount as u128;
+    let quote_amount_start = amm.quote_amount as u128;
 
-    let k = conditional_base_amount_start
-        .checked_mul(conditional_quote_amount_start)
-        .unwrap();
+    let k = base_amount_start.checked_mul(quote_amount_start).unwrap();
 
     let input_amount_minus_fee = input_amount
         .checked_mul(BPS_SCALE.checked_sub(amm.swap_fee_bps as u64).unwrap())
@@ -115,13 +114,13 @@ pub fn handler(
     );
 
     let output_amount = if is_quote_to_base {
-        let temp_conditional_quote_amount = conditional_quote_amount_start
+        let temp_quote_amount = quote_amount_start
             .checked_add(input_amount_minus_fee)
             .unwrap();
-        let temp_conditional_base_amount = k.checked_div(temp_conditional_quote_amount).unwrap();
+        let temp_base_amount = k.checked_div(temp_quote_amount).unwrap();
 
-        let output_amount_base = conditional_base_amount_start
-            .checked_sub(temp_conditional_base_amount)
+        let output_amount_base = base_amount_start
+            .checked_sub(temp_base_amount)
             .unwrap()
             .to_u64()
             .unwrap();
@@ -150,13 +149,13 @@ pub fn handler(
 
         output_amount_base
     } else {
-        let temp_conditional_base_amount = conditional_base_amount_start
+        let temp_base_amount = base_amount_start
             .checked_add(input_amount_minus_fee)
             .unwrap();
-        let temp_conditional_quote_amount = k.checked_div(temp_conditional_base_amount).unwrap();
+        let temp_quote_amount = k.checked_div(temp_base_amount).unwrap();
 
-        let output_amount_quote = conditional_quote_amount_start
-            .checked_sub(temp_conditional_quote_amount)
+        let output_amount_quote = quote_amount_start
+            .checked_sub(temp_quote_amount)
             .unwrap()
             .to_u64()
             .unwrap();
@@ -186,7 +185,13 @@ pub fn handler(
         output_amount_quote
     };
 
-    // TODO: add invariant checks
+    let new_k = (amm.base_amount as u128)
+        .checked_mul(amm.quote_amount as u128)
+        .unwrap();
+
+    assert!(new_k >= k); // with non-zero fees, k should always increase
+
+    assert!(output_amount >= output_amount_min);
 
     Ok(())
 }

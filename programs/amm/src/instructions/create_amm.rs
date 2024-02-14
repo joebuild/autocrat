@@ -81,6 +81,7 @@ pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> R
     amm.created_at_slot = Clock::get()?.slot;
 
     assert!((create_amm_params.swap_fee_bps as u64) < BPS_SCALE);
+    assert!((create_amm_params.swap_fee_bps as u64) > 0);
 
     amm.swap_fee_bps = create_amm_params.swap_fee_bps;
 
@@ -88,6 +89,9 @@ pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> R
 
     amm.base_mint = base_mint.key();
     amm.quote_mint = quote_mint.key();
+
+    amm.base_mint_decimals = base_mint.decimals;
+    amm.quote_mint_decimals = quote_mint.decimals;
 
     amm.bump = ctx.bumps.amm;
 

@@ -220,20 +220,34 @@ export class AutocratClient {
     }
 
     async swap(
+        ammAddr: PublicKey,
         isQuoteToBase: boolean,
         inputAmount: BN,
         minOutputAmount: BN,
-        isPassMarket: boolean,
-        proposalNumber: number
     ) {
         return ixs.swapHandler(
             this,
+            ammAddr,
             isQuoteToBase,
             inputAmount,
             minOutputAmount,
-            isPassMarket,
-            proposalNumber
         )
+    }
+
+    async updateLTWAP(
+        ammAddr: PublicKey,
+    ) {
+        return ixs.updateLtwapHandler(
+            this,
+            ammAddr,
+        )
+    }
+
+    async getLTWAP(
+        ammAddr: PublicKey,
+    ): Promise<number> {
+        const amm = await this.ammProgram.account.amm.fetch(ammAddr);
+        return amm.ltwapLatest
     }
 
 }
