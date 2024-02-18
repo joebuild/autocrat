@@ -9,8 +9,6 @@ pub mod anchor_decimal;
 pub mod seeds;
 pub mod token;
 
-use crate::state::*;
-
 pub fn get_decimal_scale_u64(decimals: u8) -> Result<u64> {
     match decimals {
         0u8 => Ok(1u64),

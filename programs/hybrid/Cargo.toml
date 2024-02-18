@@ -1,12 +1,12 @@
 [package]
-name = "amm"
+name = "hybrid"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "amm"
+name = "hybrid"
 
 [features]
 no-entrypoint = []
@@ -24,3 +24,5 @@ num-traits = "0.2"
 num-derive = "0.4.1"
 rust_decimal = "=1.29.1"
 borsh = "0.9.1"
+bytemuck = "1.14"
+lib-sokoban = { path = "../../../sokoban" }

@@ -30,24 +30,27 @@ declare_id!("Ens7Gx99whnA8zZm6ZiFnWgGq3x76nXbSmh5gaaJqpAz");
 pub mod amm {
     use super::*;
 
-    pub fn create_amm(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> Result<()> {
-        instructions::create_amm::handler(ctx, create_amm_params)
+    pub fn create_hybrid_market(
+        ctx: Context<CreateHybridMarket>,
+        create_hybrid_market_params: CreateHybridMarketParams,
+    ) -> Result<()> {
+        instructions::create_hybrid_market::handler(ctx, create_hybrid_market_params)
     }
 
-    pub fn create_position(ctx: Context<CreatePosition>) -> Result<()> {
-        instructions::create_position::handler(ctx)
+    pub fn create_amm_position(ctx: Context<CreateAmmPosition>) -> Result<()> {
+        instructions::create_amm_position::handler(ctx)
     }
 
-    pub fn add_liquidity(
-        ctx: Context<AddLiquidity>,
+    pub fn add_amm_liquidity(
+        ctx: Context<AddAmmLiquidity>,
         max_base_amount: u64,
         max_quote_amount: u64,
     ) -> Result<()> {
-        instructions::add_liquidity::handler(ctx, max_base_amount, max_quote_amount)
+        instructions::add_amm_liquidity::handler(ctx, max_base_amount, max_quote_amount)
     }
 
-    pub fn remove_liquidity(ctx: Context<RemoveLiquidity>, remove_bps: u64) -> Result<()> {
-        instructions::remove_liquidity::handler(ctx, remove_bps)
+    pub fn remove_amm_liquidity(ctx: Context<RemoveAmmLiquidity>, remove_bps: u64) -> Result<()> {
+        instructions::remove_amm_liquidity::handler(ctx, remove_bps)
     }
 
     pub fn swap(

@@ -12,7 +12,7 @@ use crate::state::*;
 use crate::{utils::*, BPS_SCALE};
 
 #[derive(Accounts)]
-pub struct RemoveLiquidity<'info> {
+pub struct RemoveAmmLiquidity<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
@@ -20,13 +20,13 @@ pub struct RemoveLiquidity<'info> {
         has_one = base_mint,
         has_one = quote_mint,
     )]
-    pub amm: Account<'info, Amm>,
+    pub hybrid_market: Account<'info, HybridMarket>,
     #[account(
         mut,
         has_one = user,
-        has_one = amm,
+        has_one = hybrid_market,
         seeds = [
-            amm.key().as_ref(),
+            hybrid_market.key().as_ref(),
             user.key().as_ref(),
         ],
         bump
@@ -49,13 +49,13 @@ pub struct RemoveLiquidity<'info> {
     #[account(
         mut,
         associated_token::mint = base_mint,
-        associated_token::authority = amm,
+        associated_token::authority = hybrid_market,
     )]
     pub vault_ata_base: Account<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = quote_mint,
-        associated_token::authority = amm,
+        associated_token::authority = hybrid_market,
     )]
     pub vault_ata_quote: Account<'info, TokenAccount>,
     #[account(address = associated_token::ID)]
@@ -68,10 +68,10 @@ pub struct RemoveLiquidity<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
-    let RemoveLiquidity {
-        user,
-        amm,
+pub fn handler(ctx: Context<RemoveAmmLiquidity>, withdraw_bps: u64) -> Result<()> {
+    let RemoveAmmLiquidity {
+        user: _,
+        hybrid_market,
         amm_position,
         base_mint,
         quote_mint,
@@ -89,35 +89,35 @@ pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
     assert!(withdraw_bps > 0);
     assert!(withdraw_bps <= BPS_SCALE);
 
-    if amm.permissioned {
-        let ixns = ctx.accounts.instructions.to_account_info();
+    if hybrid_market.permissioned {
+        let ixns = instructions.to_account_info();
         let current_index = tx_instructions::load_current_index_checked(&ixns)? as usize;
         let current_ixn = tx_instructions::load_instruction_at_checked(current_index, &ixns)?;
-        assert!(amm.permissioned_caller == current_ixn.program_id);
+        assert!(hybrid_market.permissioned_caller == current_ixn.program_id);
     }
 
-    amm.update_ltwap()?;
+    hybrid_market.update_ltwap()?;
 
-    let base_to_withdraw = (amm.base_amount as u128)
+    let base_to_withdraw = (hybrid_market.base_amount as u128)
         .checked_mul(amm_position.ownership as u128)
         .unwrap()
         .checked_mul(withdraw_bps as u128)
         .unwrap()
         .checked_div(BPS_SCALE as u128)
         .unwrap()
-        .checked_div(amm.total_ownership as u128)
+        .checked_div(hybrid_market.total_ownership as u128)
         .unwrap()
         .to_u64()
         .unwrap();
 
-    let quote_to_withdraw = (amm.quote_amount as u128)
+    let quote_to_withdraw = (hybrid_market.quote_amount as u128)
         .checked_mul(amm_position.ownership as u128)
         .unwrap()
         .checked_mul(withdraw_bps as u128)
         .unwrap()
         .checked_div(BPS_SCALE as u128)
         .unwrap()
-        .checked_div(amm.total_ownership as u128)
+        .checked_div(hybrid_market.total_ownership as u128)
         .unwrap()
         .to_u64()
         .unwrap();
@@ -131,22 +131,31 @@ pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
         .unwrap();
 
     amm_position.ownership = amm_position.ownership.checked_sub(less_ownership).unwrap();
-    amm.total_ownership = amm.total_ownership.checked_sub(less_ownership).unwrap();
+    hybrid_market.total_ownership = hybrid_market
+        .total_ownership
+        .checked_sub(less_ownership)
+        .unwrap();
 
-    amm.base_amount = amm.base_amount.checked_sub(base_to_withdraw).unwrap();
-    amm.quote_amount = amm.quote_amount.checked_sub(quote_to_withdraw).unwrap();
+    hybrid_market.base_amount = hybrid_market
+        .base_amount
+        .checked_sub(base_to_withdraw)
+        .unwrap();
+    hybrid_market.quote_amount = hybrid_market
+        .quote_amount
+        .checked_sub(quote_to_withdraw)
+        .unwrap();
 
     let base_mint_key = base_mint.key();
     let quote_mint_key = quote_mint.key();
-    let swap_fee_bps_bytes = amm.swap_fee_bps.to_le_bytes();
-    let permissioned_caller = amm.permissioned_caller;
+    let swap_fee_bps_bytes = hybrid_market.swap_fee_bps.to_le_bytes();
+    let permissioned_caller = hybrid_market.permissioned_caller;
 
     let seeds = generate_vault_seeds!(
         base_mint_key,
         quote_mint_key,
         swap_fee_bps_bytes,
         permissioned_caller,
-        amm.bump
+        hybrid_market.bump
     );
 
     // send vault base tokens to user
@@ -155,7 +164,7 @@ pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
         token_program,
         vault_ata_base,
         user_ata_base,
-        amm,
+        hybrid_market,
         seeds,
     )?;
 
@@ -165,7 +174,7 @@ pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
         token_program,
         vault_ata_quote,
         user_ata_quote,
-        amm,
+        hybrid_market,
         seeds,
     )?;
 

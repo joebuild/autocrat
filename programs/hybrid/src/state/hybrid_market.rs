@@ -1,15 +1,13 @@
-use std::ops::{Div, Mul};
-
 use anchor_lang::prelude::*;
 use num_traits::{FromPrimitive, ToPrimitive};
 use rust_decimal::Decimal;
 
 use crate::error::ErrorCode;
 use crate::utils::anchor_decimal::*;
-use crate::{utils::*, BPS_SCALE};
+use crate::utils::*;
 
 #[account]
-pub struct Amm {
+pub struct HybridMarket {
     pub bump: u8,
 
     pub permissioned: bool,
@@ -26,20 +24,23 @@ pub struct Amm {
     pub base_amount: u64,
     pub quote_amount: u64,
 
-    pub total_ownership: u64,
+    // ==== LTWAP: liquidity time weighted average price
+    pub ltwap_slot_updated: u64,
+    pub ltwap_denominator_agg: AnchorDecimal, // running sum of: current_liquidity * slots_since_last_update
+    pub ltwap_numerator_agg: AnchorDecimal, // running sum of: current_liquidity * slots_since_last_update * price
+    pub ltwap_latest: f64,
 
+    // ==== AMM
+    pub total_ownership: u64,
     pub swap_fee_bps: u32,
 
-    // ltwap stands for: liquidity time weighted average price
-    pub ltwap_slot_updated: u64,
-    // running sum of: current_liquidity * slots_since_last_update
-    pub ltwap_denominator_agg: AnchorDecimal,
-    // running sum of: current_liquidity * slots_since_last_update * price
-    pub ltwap_numerator_agg: AnchorDecimal,
-    pub ltwap_latest: f64,
+    // === Orderbook
+    pub orders: Pubkey,
+    pub settlement: Pubkey,
+    pub history: Pubkey,
 }
 
-impl Amm {
+impl HybridMarket {
     pub fn get_ltwap(&self) -> Result<f64> {
         let ltwap_denominator_agg = self.ltwap_denominator_agg.deser();
 

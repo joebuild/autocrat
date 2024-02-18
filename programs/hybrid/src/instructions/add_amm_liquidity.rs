@@ -1,5 +1,3 @@
-use std::borrow::BorrowMut;
-
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
@@ -9,12 +7,11 @@ use anchor_spl::token::*;
 use num_traits::ToPrimitive;
 
 use crate::error::ErrorCode;
-use crate::generate_vault_seeds;
 use crate::state::*;
-use crate::{utils::*, BPS_SCALE};
+use crate::utils::*;
 
 #[derive(Accounts)]
-pub struct AddLiquidity<'info> {
+pub struct AddAmmLiquidity<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
@@ -22,13 +19,13 @@ pub struct AddLiquidity<'info> {
         has_one = base_mint,
         has_one = quote_mint,
     )]
-    pub amm: Account<'info, Amm>,
+    pub hybrid_market: Account<'info, HybridMarket>,
     #[account(
         mut,
         has_one = user,
-        has_one = amm,
+        has_one = hybrid_market,
         seeds = [
-            amm.key().as_ref(),
+            hybrid_market.key().as_ref(),
             user.key().as_ref(),
         ],
         bump
@@ -51,13 +48,13 @@ pub struct AddLiquidity<'info> {
     #[account(
         mut,
         associated_token::mint = base_mint,
-        associated_token::authority = amm,
+        associated_token::authority = hybrid_market,
     )]
     pub vault_ata_base: Account<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = quote_mint,
-        associated_token::authority = amm,
+        associated_token::authority = hybrid_market,
     )]
     pub vault_ata_quote: Account<'info, TokenAccount>,
     #[account(address = associated_token::ID)]
@@ -71,16 +68,16 @@ pub struct AddLiquidity<'info> {
 }
 
 pub fn handler(
-    ctx: Context<AddLiquidity>,
+    ctx: Context<AddAmmLiquidity>,
     max_base_amount: u64,
     max_quote_amount: u64,
 ) -> Result<()> {
-    let AddLiquidity {
+    let AddAmmLiquidity {
         user,
-        amm,
+        hybrid_market,
         amm_position,
-        base_mint,
-        quote_mint,
+        base_mint: _,
+        quote_mint: _,
         user_ata_base,
         user_ata_quote,
         vault_ata_base,
@@ -94,20 +91,20 @@ pub fn handler(
     assert!(max_base_amount > 0);
     assert!(max_quote_amount > 0);
 
-    if amm.permissioned {
-        let ixns = ctx.accounts.instructions.to_account_info();
+    if hybrid_market.permissioned {
+        let ixns = instructions.to_account_info();
         let current_index = tx_instructions::load_current_index_checked(&ixns)? as usize;
         let current_ixn = tx_instructions::load_instruction_at_checked(current_index, &ixns)?;
-        assert!(amm.permissioned_caller == current_ixn.program_id);
+        assert!(hybrid_market.permissioned_caller == current_ixn.program_id);
     }
 
-    amm.update_ltwap()?;
+    hybrid_market.update_ltwap()?;
 
-    let mut temp_base_amount = 0u128;
-    let mut temp_quote_amount = 0u128;
+    let mut temp_base_amount: u128;
+    let mut temp_quote_amount: u128;
 
     // if there is no liquidity in the amm, then initialize with new ownership values
-    if amm.base_amount == 0 && amm.quote_amount == 0 {
+    if hybrid_market.base_amount == 0 && hybrid_market.quote_amount == 0 {
         temp_base_amount = max_base_amount as u128;
         temp_quote_amount = max_quote_amount as u128;
 
@@ -115,14 +112,14 @@ pub fn handler(
         let max_base_or_quote_amount = std::cmp::max(temp_base_amount, temp_quote_amount);
 
         amm_position.ownership = max_base_or_quote_amount.to_u64().unwrap();
-        amm.total_ownership = max_base_or_quote_amount.to_u64().unwrap();
+        hybrid_market.total_ownership = max_base_or_quote_amount.to_u64().unwrap();
     } else {
         temp_base_amount = max_base_amount as u128;
 
         temp_quote_amount = temp_base_amount
-            .checked_mul(amm.quote_amount as u128)
+            .checked_mul(hybrid_market.quote_amount as u128)
             .unwrap()
-            .checked_div(amm.base_amount as u128)
+            .checked_div(hybrid_market.base_amount as u128)
             .unwrap();
 
         // if the temp_quote_amount calculation with max_base_amount led to a value higher than max_quote_amount,
@@ -131,9 +128,9 @@ pub fn handler(
             temp_quote_amount = max_quote_amount as u128;
 
             temp_base_amount = temp_quote_amount
-                .checked_mul(amm.base_amount as u128)
+                .checked_mul(hybrid_market.base_amount as u128)
                 .unwrap()
-                .checked_div(amm.quote_amount as u128)
+                .checked_div(hybrid_market.quote_amount as u128)
                 .unwrap();
 
             if temp_base_amount > max_base_amount as u128 {
@@ -142,9 +139,9 @@ pub fn handler(
         }
 
         let additional_ownership = temp_base_amount
-            .checked_mul(amm.total_ownership as u128)
+            .checked_mul(hybrid_market.total_ownership as u128)
             .unwrap()
-            .checked_div(amm.base_amount as u128)
+            .checked_div(hybrid_market.base_amount as u128)
             .unwrap()
             .to_u64()
             .unwrap();
@@ -153,18 +150,18 @@ pub fn handler(
             .ownership
             .checked_add(additional_ownership)
             .unwrap();
-        amm.total_ownership = amm
+        hybrid_market.total_ownership = hybrid_market
             .total_ownership
             .checked_add(additional_ownership)
             .unwrap();
     }
 
-    amm.base_amount = amm
+    hybrid_market.base_amount = hybrid_market
         .base_amount
         .checked_add(temp_base_amount.to_u64().unwrap())
         .unwrap();
 
-    amm.quote_amount = amm
+    hybrid_market.quote_amount = hybrid_market
         .quote_amount
         .checked_add(temp_quote_amount.to_u64().unwrap())
         .unwrap();

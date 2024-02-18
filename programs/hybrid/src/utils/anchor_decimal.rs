@@ -1,11 +1,9 @@
 use anchor_lang::prelude::*;
-use num_traits::ToPrimitive;
 use rust_decimal::Decimal;
-use std::io::Write;
 
 #[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
 pub struct AnchorDecimal {
-    data: [u8; 16],
+    data: [u8; 16], // serialized rust_decimal::Decimal (96 dec, 32 scale)
 }
 
 impl AnchorDecimal {

@@ -1,27 +1,20 @@
-use std::borrow::BorrowMut;
-
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::*;
-use num_traits::ToPrimitive;
 
 use crate::error::ErrorCode;
-use crate::generate_vault_seeds;
 use crate::state::*;
-use crate::{utils::*, BPS_SCALE};
 
 #[derive(Accounts)]
-pub struct CreatePosition<'info> {
+pub struct CreateAmmPosition<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    pub amm: Account<'info, Amm>,
+    pub hybrid_market: Account<'info, HybridMarket>,
     #[account(
         init,
         payer = user,
         space = 8 + std::mem::size_of::<AmmPosition>(),
         seeds = [
-            amm.key().as_ref(),
+            hybrid_market.key().as_ref(),
             user.key().as_ref(),
         ],
         bump
@@ -33,24 +26,24 @@ pub struct CreatePosition<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<CreatePosition>) -> Result<()> {
-    let CreatePosition {
+pub fn handler(ctx: Context<CreateAmmPosition>) -> Result<()> {
+    let CreateAmmPosition {
         user,
-        amm,
+        hybrid_market,
         amm_position,
         instructions,
         system_program: _,
     } = ctx.accounts;
 
-    if amm.permissioned {
-        let ixns = ctx.accounts.instructions.to_account_info();
+    if hybrid_market.permissioned {
+        let ixns = instructions.to_account_info();
         let current_index = tx_instructions::load_current_index_checked(&ixns)? as usize;
         let current_ixn = tx_instructions::load_instruction_at_checked(current_index, &ixns)?;
-        assert!(amm.permissioned_caller == current_ixn.program_id);
+        assert!(hybrid_market.permissioned_caller == current_ixn.program_id);
     }
 
     amm_position.user = user.key();
-    amm_position.amm = amm.key();
+    amm_position.hybrid_market = hybrid_market.key();
     amm_position.ownership = 0;
 
     Ok(())
