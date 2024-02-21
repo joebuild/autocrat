@@ -1,19 +1,19 @@
 import { PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
-import { AutocratClient } from "../AutocratClient";
-import { InstructionHandler } from "../InstructionHandler";
-import { getATA, getAmmPositionAddr, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../utils';
+import { InstructionHandler } from "../../InstructionHandler";
+import { getATA } from '../../utils';
 import BN from "bn.js";
+import { AmmClient } from "../../AmmClient";
 
 export const swapHandler = async (
-    client: AutocratClient,
+    client: AmmClient,
     ammAddr: PublicKey,
     isQuoteToBase: boolean,
     inputAmount: BN,
     minOutputAmount: BN,
-): Promise<InstructionHandler> => {
-    const amm = await client.ammProgram.account.amm.fetch(ammAddr);
+): Promise<InstructionHandler<typeof client.program, AmmClient>> => {
+    const amm = await client.program.account.amm.fetch(ammAddr);
 
-    let ix = await client.ammProgram.methods
+    let ix = await client.program.methods
         .swap(
             isQuoteToBase,
             inputAmount,

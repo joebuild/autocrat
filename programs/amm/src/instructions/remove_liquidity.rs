@@ -90,7 +90,7 @@ pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
     assert!(withdraw_bps <= BPS_SCALE);
 
     if amm.permissioned {
-        let ixns = ctx.accounts.instructions.to_account_info();
+        let ixns = instructions.to_account_info();
         let current_index = tx_instructions::load_current_index_checked(&ixns)? as usize;
         let current_ixn = tx_instructions::load_instruction_at_checked(current_index, &ixns)?;
         assert!(amm.permissioned_caller == current_ixn.program_id);

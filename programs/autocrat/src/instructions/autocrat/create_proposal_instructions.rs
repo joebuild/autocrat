@@ -25,7 +25,7 @@ pub struct CreateProposalInstructions<'info> {
 
 pub fn handler(
     ctx: Context<CreateProposalInstructions>,
-    instructions: Vec<ProposalInstruction>
+    instructions: Vec<ProposalInstruction>,
 ) -> Result<()> {
     let CreateProposalInstructions {
         proposer,
@@ -35,7 +35,6 @@ pub fn handler(
         system_program: _,
     } = ctx.accounts;
 
-    proposal_instructions.proposal_number = dao.proposal_count;
     proposal_instructions.proposer = proposer.key();
     proposal_instructions.instructions = instructions;
 

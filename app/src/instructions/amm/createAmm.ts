@@ -1,19 +1,20 @@
 import { PublicKey } from "@solana/web3.js";
-import { AutocratClient } from "../AutocratClient";
-import { InstructionHandler } from "../InstructionHandler";
-import { getATA, getAmmAddr, getAmmPositionAddr, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../utils';
+import { AmmClient } from "../../AmmClient";
+import { InstructionHandler } from "../../InstructionHandler";
+import { getATA, getAmmAddr } from '../../utils';
 import BN from "bn.js";
 
 export const createAmmHandler = async (
-    client: AutocratClient,
+    client: AmmClient,
     baseMint: PublicKey,
     quoteMint: PublicKey,
     swapFeeBps: number,
     permissioned: boolean,
     permissionedCaller: PublicKey,
-): Promise<InstructionHandler> => {
+    ltwapDecimals: number,
+): Promise<InstructionHandler<typeof client.program, AmmClient>> => {
     let [ammAddr] = getAmmAddr(
-        client.ammProgram.programId,
+        client.program.programId,
         baseMint,
         quoteMint,
         swapFeeBps,
@@ -23,11 +24,12 @@ export const createAmmHandler = async (
     let [vaultAtaBase] = getATA(baseMint, ammAddr)
     let [vaultAtaQuote] = getATA(quoteMint, ammAddr)
 
-    let ix = await client.ammProgram.methods
+    let ix = await client.program.methods
         .createAmm({
             permissioned,
             permissionedCaller,
-            swapFeeBps: swapFeeBps,
+            swapFeeBps: new BN(swapFeeBps),
+            ltwapDecimals
         })
         .accounts({
             user: client.provider.publicKey,

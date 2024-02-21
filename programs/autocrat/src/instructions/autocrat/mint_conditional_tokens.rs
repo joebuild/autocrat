@@ -5,37 +5,27 @@ use anchor_spl::token;
 use anchor_spl::token::*;
 
 use crate::error::ErrorCode;
+use crate::generate_vault_seeds;
 use crate::state::*;
 use crate::utils::token::*;
-use crate::generate_vault_seeds;
 
 #[derive(Accounts)]
 pub struct MintConditionalTokens<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
-        bump
-    )]
-    pub dao: Box<Account<'info, Dao>>,
-    #[account(
         has_one = conditional_on_pass_meta_mint,
         has_one = conditional_on_pass_usdc_mint,
         has_one = conditional_on_fail_meta_mint,
         has_one = conditional_on_fail_usdc_mint,
-        seeds = [
-            b"proposal",
-            proposal.number.to_le_bytes().as_ref(),
-        ],
-        bump
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        constraint = meta_mint.key() == dao.meta_mint.key()
+        constraint = meta_mint.key() == proposal.meta_mint.key()
     )]
     pub meta_mint: Box<Account<'info, Mint>>,
     #[account(
-        constraint = usdc_mint.key() == dao.usdc_mint.key()
+        constraint = usdc_mint.key() == proposal.usdc_mint.key()
     )]
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
@@ -101,10 +91,13 @@ pub struct MintConditionalTokens<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<MintConditionalTokens>, meta_amount: u64, usdc_amount: u64) -> Result<()> {
+pub fn handler(
+    ctx: Context<MintConditionalTokens>,
+    meta_amount: u64,
+    usdc_amount: u64,
+) -> Result<()> {
     let MintConditionalTokens {
         user,
-        dao: _,
         proposal,
         meta_mint: _,
         usdc_mint: _,

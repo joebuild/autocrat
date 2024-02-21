@@ -1,4 +1,5 @@
 import {
+    AddressLookupTableAccount,
     Blockhash,
     ConfirmOptions,
     Keypair,
@@ -10,13 +11,21 @@ import {
 import { BanksClient } from "solana-bankrun";
 import { AutocratClient } from "./AutocratClient";
 import { addComputeUnits, addPriorityFee } from "./utils";
+import { AmmClient } from "./AmmClient";
+import { AnchorProvider, Program } from "@coral-xyz/anchor";
 
 export type SignerOrKeypair = Signer | Keypair
 
-export class InstructionHandler {
+interface Client<ProgramType> {
+    provider: AnchorProvider;
+    program: ProgramType;
+    luts: AddressLookupTableAccount[];
+}
+
+export class InstructionHandler<ProgramType, Type extends Client<ProgramType> = Client<ProgramType>> {
     public instructions: TransactionInstruction[];
     public signers: Set<SignerOrKeypair>;
-    public client: AutocratClient;
+    public client: Type;
 
     public computeUnits = 200_000;
     public microLamportsPerComputeUnit = 0;
@@ -27,7 +36,7 @@ export class InstructionHandler {
     constructor(
         instructions: TransactionInstruction[],
         signers: SignerOrKeypair[],
-        client: AutocratClient,
+        client: Type,
     ) {
         this.instructions = instructions
 
@@ -40,7 +49,7 @@ export class InstructionHandler {
         this.postInstructions = []
     }
 
-    addPreInstructions(instructions: TransactionInstruction[], signers: SignerOrKeypair[] = []): InstructionHandler {
+    addPreInstructions(instructions: TransactionInstruction[], signers: SignerOrKeypair[] = []): InstructionHandler<ProgramType, Type> {
         this.preInstructions = [
             ...instructions,
             ...this.preInstructions
@@ -49,7 +58,7 @@ export class InstructionHandler {
         return this
     }
 
-    addPostInstructions(instructions: TransactionInstruction[], signers: SignerOrKeypair[] = []): InstructionHandler {
+    addPostInstructions(instructions: TransactionInstruction[], signers: SignerOrKeypair[] = []): InstructionHandler<ProgramType, Type> {
         this.postInstructions = [
             ...instructions,
             ...this.postInstructions
@@ -96,12 +105,12 @@ export class InstructionHandler {
         return tx
     }
 
-    setComputeUnits(computeUnits: number): InstructionHandler {
+    setComputeUnits(computeUnits: number): InstructionHandler<ProgramType, Type> {
         this.computeUnits = computeUnits
         return this
     }
 
-    setPriorityFee(microLamportsPerComputeUnit: number): InstructionHandler {
+    setPriorityFee(microLamportsPerComputeUnit: number): InstructionHandler<ProgramType, Type> {
         this.microLamportsPerComputeUnit = microLamportsPerComputeUnit
         return this
     }

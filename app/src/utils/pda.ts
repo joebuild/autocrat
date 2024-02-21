@@ -45,26 +45,6 @@ export const getAmmAddr = (
     );
 };
 
-export const getPassMarketAmmAddr = (
-    programId: PublicKey,
-    proposalNumber: number
-): [PublicKey, number] => {
-    return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("pass_market_amm"), numToBytes32LE(proposalNumber)],
-        programId,
-    );
-};
-
-export const getFailMarketAmmAddr = (
-    programId: PublicKey,
-    proposalNumber: number
-): [PublicKey, number] => {
-    return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("fail_market_amm"), numToBytes32LE(proposalNumber)],
-        programId,
-    );
-};
-
 export const getAmmPositionAddr = (
     programId: PublicKey,
     amm: PublicKey,
@@ -76,45 +56,45 @@ export const getAmmPositionAddr = (
     );
 };
 
-export const getConditionalOnPassMetaMintAddr = (
-    programId: PublicKey,
-    proposalNumber: number
-): [PublicKey, number] => {
-    return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("conditional_on_pass_meta"), numToBytes32LE(proposalNumber)],
-        programId,
-    );
-};
+// export const getConditionalOnPassMetaMintAddr = (
+//     programId: PublicKey,
+//     proposalNumber: number
+// ): [PublicKey, number] => {
+//     return PublicKey.findProgramAddressSync(
+//         [utils.bytes.utf8.encode("conditional_on_pass_meta"), numToBytes32LE(proposalNumber)],
+//         programId,
+//     );
+// };
 
-export const getConditionalOnPassUsdcMintAddr = (
-    programId: PublicKey,
-    proposalNumber: number
-): [PublicKey, number] => {
-    return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("conditional_on_pass_usdc"), numToBytes32LE(proposalNumber)],
-        programId,
-    );
-};
+// export const getConditionalOnPassUsdcMintAddr = (
+//     programId: PublicKey,
+//     proposalNumber: number
+// ): [PublicKey, number] => {
+//     return PublicKey.findProgramAddressSync(
+//         [utils.bytes.utf8.encode("conditional_on_pass_usdc"), numToBytes32LE(proposalNumber)],
+//         programId,
+//     );
+// };
 
-export const getConditionalOnFailMetaMintAddr = (
-    programId: PublicKey,
-    proposalNumber: number
-): [PublicKey, number] => {
-    return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("conditional_on_fail_meta"), numToBytes32LE(proposalNumber)],
-        programId,
-    );
-};
+// export const getConditionalOnFailMetaMintAddr = (
+//     programId: PublicKey,
+//     proposalNumber: number
+// ): [PublicKey, number] => {
+//     return PublicKey.findProgramAddressSync(
+//         [utils.bytes.utf8.encode("conditional_on_fail_meta"), numToBytes32LE(proposalNumber)],
+//         programId,
+//     );
+// };
 
-export const getConditionalOnFailUsdcMintAddr = (
-    programId: PublicKey,
-    proposalNumber: number
-): [PublicKey, number] => {
-    return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("conditional_on_fail_usdc"), numToBytes32LE(proposalNumber)],
-        programId,
-    );
-};
+// export const getConditionalOnFailUsdcMintAddr = (
+//     programId: PublicKey,
+//     proposalNumber: number
+// ): [PublicKey, number] => {
+//     return PublicKey.findProgramAddressSync(
+//         [utils.bytes.utf8.encode("conditional_on_fail_usdc"), numToBytes32LE(proposalNumber)],
+//         programId,
+//     );
+// };
 
 export const getATA = (mint: PublicKey, owner: PublicKey) => {
     return PublicKey.findProgramAddressSync(

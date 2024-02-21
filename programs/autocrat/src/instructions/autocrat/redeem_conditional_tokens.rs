@@ -14,29 +14,18 @@ pub struct RedeemConditionalTokens<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
-        bump
-    )]
-    pub dao: Box<Account<'info, Dao>>,
-    #[account(
-        zero,
         has_one = conditional_on_pass_meta_mint,
         has_one = conditional_on_pass_usdc_mint,
         has_one = conditional_on_fail_meta_mint,
         has_one = conditional_on_fail_usdc_mint,
-        seeds = [
-            b"proposal",
-            proposal.number.to_le_bytes().as_ref(),
-        ],
-        bump
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        constraint = meta_mint.key() == dao.meta_mint.key()
+        constraint = meta_mint.key() == proposal.meta_mint.key()
     )]
     pub meta_mint: Box<Account<'info, Mint>>,
     #[account(
-        constraint = usdc_mint.key() == dao.usdc_mint.key()
+        constraint = usdc_mint.key() == proposal.usdc_mint.key()
     )]
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
@@ -107,7 +96,6 @@ pub struct RedeemConditionalTokens<'info> {
 pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
     let RedeemConditionalTokens {
         user,
-        dao: _,
         proposal,
         meta_mint: _,
         usdc_mint: _,

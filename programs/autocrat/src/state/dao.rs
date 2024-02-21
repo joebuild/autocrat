@@ -9,7 +9,7 @@ pub struct Dao {
     pub meta_mint: Pubkey,
     pub usdc_mint: Pubkey,
 
-    pub proposal_count: u32,
+    pub proposal_count: u64,
 
     // the percentage, in basis points, the pass price needs to be above the
     // fail price in order for the proposal to pass
@@ -17,7 +17,8 @@ pub struct Dao {
 
     pub slots_per_proposal: u64,
 
-    // amount of quote liquidity to be deposited per market by the proposer
-    pub amm_initial_quote_liquidity_amount: u64,
+    // amm
+    pub amm_initial_quote_liquidity_amount: u64, // amount of quote liquidity to be deposited per market by the proposer
     pub amm_swap_fee_bps: u64,
+    pub amm_ltwap_decimals: u8,
 }

@@ -22,3 +22,5 @@ solana-program = "=1.17.18"
 solana-security-txt = "1.1.1"
 num-traits = "0.2"
 num-derive = "0.4.1"
+
+amm = { path = "../amm", features = ["cpi"] }

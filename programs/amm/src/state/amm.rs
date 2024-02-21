@@ -28,33 +28,37 @@ pub struct Amm {
 
     pub total_ownership: u64,
 
-    pub swap_fee_bps: u32,
+    pub swap_fee_bps: u64,
 
     // ltwap stands for: liquidity time weighted average price
+    pub ltwap_decimals: u8,
     pub ltwap_slot_updated: u64,
     // running sum of: current_liquidity * slots_since_last_update
     pub ltwap_denominator_agg: AnchorDecimal,
     // running sum of: current_liquidity * slots_since_last_update * price
     pub ltwap_numerator_agg: AnchorDecimal,
-    pub ltwap_latest: f64,
+    pub ltwap_latest: u64,
 }
 
 impl Amm {
-    pub fn get_ltwap(&self) -> Result<f64> {
+    pub fn get_ltwap(&self) -> Result<u64> {
         let ltwap_denominator_agg = self.ltwap_denominator_agg.deser();
 
         if ltwap_denominator_agg.is_zero() {
-            return Ok(0f64);
+            return Ok(0);
         }
 
         let ltwap_numerator_agg = self.ltwap_numerator_agg.deser();
 
-        Ok((ltwap_numerator_agg / ltwap_denominator_agg)
-            .to_f64()
-            .unwrap())
+        let ltwap_decimal_scale = get_decimal_scale_u64(self.ltwap_decimals)?;
+
+        Ok(((ltwap_numerator_agg / ltwap_denominator_agg)
+            * Decimal::from_u64(ltwap_decimal_scale).unwrap())
+        .to_u64()
+        .unwrap_or(u64::MAX))
     }
 
-    pub fn update_ltwap(&mut self) -> Result<f64> {
+    pub fn update_ltwap(&mut self) -> Result<u64> {
         let slot = Clock::get()?.slot;
         let slot_difference_u64 = slot.checked_sub(self.ltwap_slot_updated).unwrap();
         let slot_difference = Decimal::from_u64(slot_difference_u64).unwrap();
@@ -87,10 +91,13 @@ impl Amm {
         self.ltwap_denominator_agg = AnchorDecimal::ser(updated_ltwap_denominator_agg);
         self.ltwap_numerator_agg = AnchorDecimal::ser(updated_ltwap_numerator_agg);
 
+        let ltwap_decimal_scale = get_decimal_scale_u64(self.ltwap_decimals)?;
+
         if !updated_ltwap_denominator_agg.is_zero() {
-            self.ltwap_latest = (updated_ltwap_numerator_agg / updated_ltwap_denominator_agg)
-                .to_f64()
-                .unwrap();
+            self.ltwap_latest = ((updated_ltwap_numerator_agg / updated_ltwap_denominator_agg)
+                * Decimal::from_u64(ltwap_decimal_scale).unwrap())
+            .to_u64()
+            .unwrap_or(u64::MAX);
         }
 
         self.ltwap_slot_updated = slot;

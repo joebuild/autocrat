@@ -28,14 +28,15 @@ pub struct InitializeDao<'info> {
 pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
     let dao = &mut ctx.accounts.dao;
 
-    let (treasury_pubkey, treasury_bump) = Pubkey::find_program_address(&[dao.key().as_ref()], ctx.program_id);
+    let (treasury_pubkey, treasury_bump) =
+        Pubkey::find_program_address(&[dao.key().as_ref()], ctx.program_id);
     dao.treasury_pda_bump = treasury_bump;
     dao.treasury_pda = treasury_pubkey;
 
     dao.meta_mint = ctx.accounts.meta_mint.key();
     dao.usdc_mint = ctx.accounts.usdc_mint.key();
 
-    dao.proposal_count = 4;
+    dao.proposal_count = 10;
 
     dao.pass_threshold_bps = DEFAULT_PASS_THRESHOLD_BPS;
 
@@ -46,6 +47,8 @@ pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
     assert!(AMM_SWAP_FEE_BPS <= AMM_SWAP_FEE_BPS_MAX);
     assert!(AMM_SWAP_FEE_BPS >= AMM_SWAP_FEE_BPS_MIN);
     dao.amm_swap_fee_bps = AMM_SWAP_FEE_BPS;
+
+    dao.amm_ltwap_decimals = 9;
 
     Ok(())
 }

@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::instruction::Instruction;
 
-#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
 pub enum ProposalState {
+    Initialize,
     Pending,
     Passed,
     Failed,
@@ -10,15 +11,17 @@ pub enum ProposalState {
 
 #[account]
 pub struct Proposal {
-    pub number: u32,
+    pub number: u64,
     pub proposer: Pubkey,
     pub description_url: String,
     pub slot_enqueued: u64,
     pub state: ProposalState,
     pub instructions: Pubkey,
 
-    pub part_one_complete: bool,
-    pub part_two_complete: bool,
+    pub proposal_treasury: Pubkey,
+
+    pub is_pass_market_created: bool,
+    pub is_fail_market_created: bool,
 
     pub meta_mint: Pubkey,
     pub usdc_mint: Pubkey,
@@ -28,13 +31,13 @@ pub struct Proposal {
 
     pub conditional_on_pass_meta_mint: Pubkey,
     pub conditional_on_pass_usdc_mint: Pubkey,
+
     pub conditional_on_fail_meta_mint: Pubkey,
     pub conditional_on_fail_usdc_mint: Pubkey,
 }
 
 #[account]
 pub struct ProposalInstructions {
-    pub proposal_number: u32,
     pub proposer: Pubkey,
     pub proposal_instructions_frozen: bool,
     pub instructions: Vec<ProposalInstruction>,

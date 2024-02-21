@@ -57,7 +57,8 @@ pub struct CreateAmm<'info> {
 pub struct CreateAmmParams {
     pub permissioned: bool,
     pub permissioned_caller: Option<Pubkey>,
-    pub swap_fee_bps: u32,
+    pub swap_fee_bps: u64,
+    pub ltwap_decimals: u8,
 }
 
 pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> Result<()> {
@@ -84,6 +85,7 @@ pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> R
     assert!((create_amm_params.swap_fee_bps as u64) > 0);
 
     amm.swap_fee_bps = create_amm_params.swap_fee_bps;
+    amm.ltwap_decimals = create_amm_params.ltwap_decimals;
 
     assert_ne!(base_mint.key(), quote_mint.key());
 

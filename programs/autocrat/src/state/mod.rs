@@ -1,13 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{native_token::LAMPORTS_PER_SOL, pubkey};
 
-pub use amm::*;
-pub use amm_position::*;
 pub use dao::*;
 pub use proposal::*;
 
-pub mod amm;
-pub mod amm_position;
 pub mod dao;
 pub mod proposal;
 
@@ -21,7 +17,7 @@ pub const DEFAULT_PASS_THRESHOLD_BPS: u64 = 500;
 pub const DEFAULT_BASE_BURN_LAMPORTS: u64 = 10 * LAMPORTS_PER_SOL;
 pub const DEFAULT_BURN_DECAY_PER_SLOT_LAMPORTS: u64 = 23_150;
 
-pub const AMM_INITIAL_QUOTE_LIQUIDITY_ATOMS: u64 = 500 * 1_000_000; // $500 * 10^6
+pub const AMM_INITIAL_QUOTE_LIQUIDITY_ATOMS: u64 = 1000 * 1_000_000; // $1000 * 10^6
 
 pub const AMM_SWAP_FEE_BPS: u64 = 300; // 3%
 pub const AMM_SWAP_FEE_BPS_MIN: u64 = 100; // 1%

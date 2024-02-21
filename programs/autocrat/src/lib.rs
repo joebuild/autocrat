@@ -55,27 +55,6 @@ pub mod autocrat {
         instructions::autocrat::add_proposal_instructions::handler(ctx, instructions)
     }
 
-    pub fn create_proposal_part_one(
-        ctx: Context<CreateProposalPartOne>,
-        description_url: String,
-    ) -> Result<()> {
-        instructions::autocrat::create_proposal_part_one::handler(ctx, description_url)
-    }
-
-    pub fn create_proposal_part_two(
-        ctx: Context<CreateProposalPartTwo>,
-        initial_pass_market_price_quote_units_per_base_unit_bps: u64,
-        initial_fail_market_price_quote_units_per_base_unit_bps: u64,
-        quote_liquidity_amount_per_amm: u64,
-    ) -> Result<()> {
-        instructions::autocrat::create_proposal_part_two::handler(
-            ctx,
-            initial_pass_market_price_quote_units_per_base_unit_bps,
-            initial_fail_market_price_quote_units_per_base_unit_bps,
-            quote_liquidity_amount_per_amm,
-        )
-    }
-
     pub fn mint_conditional_tokens(
         ctx: Context<MintConditionalTokens>,
         meta_amount: u64,
@@ -92,31 +71,21 @@ pub mod autocrat {
         instructions::autocrat::finalize_proposal::handler(ctx)
     }
 
-    // ==== amm
+    // ==== amm cpi
     pub fn create_position(ctx: Context<CreatePosition>) -> Result<()> {
-        instructions::amm::create_position::handler(ctx)
+        instructions::amm_cpi::create_position::handler(ctx)
     }
 
     pub fn add_liquidity(
         ctx: Context<AddLiquidity>,
         max_base_amount: u64,
         max_quote_amount: u64,
-        is_pass_market: bool,
     ) -> Result<()> {
-        instructions::amm::add_liquidity::handler(
-            ctx,
-            max_base_amount,
-            max_quote_amount,
-            is_pass_market,
-        )
+        instructions::amm_cpi::add_liquidity::handler(ctx, max_base_amount, max_quote_amount)
     }
 
-    pub fn remove_liquidity(
-        ctx: Context<RemoveLiquidity>,
-        remove_bps: u64,
-        is_pass_market: bool,
-    ) -> Result<()> {
-        instructions::amm::remove_liquidity::handler(ctx, remove_bps, is_pass_market)
+    pub fn remove_liquidity(ctx: Context<RemoveLiquidity>, remove_bps: u64) -> Result<()> {
+        instructions::amm_cpi::remove_liquidity::handler(ctx, remove_bps)
     }
 
     pub fn swap(
@@ -124,14 +93,7 @@ pub mod autocrat {
         is_quote_to_base: bool,
         input_amount: u64,
         output_amount_min: u64,
-        is_pass_market: bool,
     ) -> Result<()> {
-        instructions::amm::swap::handler(
-            ctx,
-            is_quote_to_base,
-            input_amount,
-            output_amount_min,
-            is_pass_market,
-        )
+        instructions::amm_cpi::swap::handler(ctx, is_quote_to_base, input_amount, output_amount_min)
     }
 }

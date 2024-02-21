@@ -27,7 +27,7 @@ pub struct AddProposalInstructions<'info> {
 
 pub fn handler(
     ctx: Context<AddProposalInstructions>,
-    instructions: Vec<ProposalInstruction>
+    instructions: Vec<ProposalInstruction>,
 ) -> Result<()> {
     let AddProposalInstructions {
         proposer,
@@ -39,7 +39,9 @@ pub fn handler(
 
     assert!(!proposal_instructions.proposal_instructions_frozen);
 
-    proposal_instructions.instructions.extend(instructions.into_iter());
+    proposal_instructions
+        .instructions
+        .extend(instructions.into_iter());
 
     Ok(())
 }

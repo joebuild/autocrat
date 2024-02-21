@@ -1,7 +1,7 @@
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
-import { AutocratClient } from "../AutocratClient";
-import { InstructionHandler } from "../InstructionHandler";
-import { getATA, getAmmPositionAddr, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../utils';
+import { AutocratClient } from "../../AutocratClient";
+import { InstructionHandler } from "../../InstructionHandler";
+import { getATA, getAmmPositionAddr, getConditionalOnFailMetaMintAddr, getConditionalOnFailUsdcMintAddr, getConditionalOnPassMetaMintAddr, getConditionalOnPassUsdcMintAddr, getDaoAddr, getDaoTreasuryAddr, getFailMarketAmmAddr, getPassMarketAmmAddr, getProposalAddr } from '../../utils';
 import BN from "bn.js";
 
 export const createProposalPartTwoHandler = async (
@@ -10,21 +10,21 @@ export const createProposalPartTwoHandler = async (
     initialFailMarketPriceQuoteUnitsPerBaseUnitBps: BN,
     quoteLiquidityAmountPerAmm: BN,
 ): Promise<InstructionHandler> => {
-    let dao = await client.autocratProgram.account.dao.fetch(getDaoAddr(client.autocratProgram.programId)[0])
+    let dao = await client.program.account.dao.fetch(getDaoAddr(client.program.programId)[0])
 
     let proposalNumber = dao.proposalCount - 1
 
-    let proposalAddr = getProposalAddr(client.autocratProgram.programId, proposalNumber)[0]
+    let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
 
-    let conditionalOnPassMetaMint = getConditionalOnPassMetaMintAddr(client.autocratProgram.programId, proposalNumber)[0]
-    let conditionalOnPassUsdcMint = getConditionalOnPassUsdcMintAddr(client.autocratProgram.programId, proposalNumber)[0]
-    let conditionalOnFailMetaMint = getConditionalOnFailMetaMintAddr(client.autocratProgram.programId, proposalNumber)[0]
-    let conditionalOnFailUsdcMint = getConditionalOnFailUsdcMintAddr(client.autocratProgram.programId, proposalNumber)[0]
+    let conditionalOnPassMetaMint = getConditionalOnPassMetaMintAddr(client.program.programId, proposalNumber)[0]
+    let conditionalOnPassUsdcMint = getConditionalOnPassUsdcMintAddr(client.program.programId, proposalNumber)[0]
+    let conditionalOnFailMetaMint = getConditionalOnFailMetaMintAddr(client.program.programId, proposalNumber)[0]
+    let conditionalOnFailUsdcMint = getConditionalOnFailUsdcMintAddr(client.program.programId, proposalNumber)[0]
 
-    let passMarketAmm = getPassMarketAmmAddr(client.autocratProgram.programId, proposalNumber)[0]
-    let failMarketAmm = getFailMarketAmmAddr(client.autocratProgram.programId, proposalNumber)[0]
+    let passMarketAmm = getPassMarketAmmAddr(client.program.programId, proposalNumber)[0]
+    let failMarketAmm = getFailMarketAmmAddr(client.program.programId, proposalNumber)[0]
 
-    let ix = await client.autocratProgram.methods
+    let ix = await client.program.methods
         .createProposalPartTwo(
             initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
             initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
@@ -35,8 +35,8 @@ export const createProposalPartTwoHandler = async (
             proposal: proposalAddr,
             passMarketAmm,
             failMarketAmm,
-            passMarketAmmPosition: getAmmPositionAddr(client.autocratProgram.programId, passMarketAmm, client.provider.publicKey)[0],
-            failMarketAmmPosition: getAmmPositionAddr(client.autocratProgram.programId, failMarketAmm, client.provider.publicKey)[0],
+            passMarketAmmPosition: getAmmPositionAddr(client.program.programId, passMarketAmm, client.provider.publicKey)[0],
+            failMarketAmmPosition: getAmmPositionAddr(client.program.programId, failMarketAmm, client.provider.publicKey)[0],
             metaMint: dao.metaMint,
             usdcMint: dao.usdcMint,
             conditionalOnPassMetaMint,

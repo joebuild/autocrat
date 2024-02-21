@@ -81,7 +81,7 @@ pub fn handler(
     assert!(amm.total_ownership > 0);
 
     if amm.permissioned {
-        let ixns = ctx.accounts.instructions.to_account_info();
+        let ixns = instructions.to_account_info();
         let current_index = tx_instructions::load_current_index_checked(&ixns)? as usize;
         let current_ixn = tx_instructions::load_instruction_at_checked(current_index, &ixns)?;
         assert!(amm.permissioned_caller == current_ixn.program_id);
@@ -95,7 +95,7 @@ pub fn handler(
     let k = base_amount_start.checked_mul(quote_amount_start).unwrap();
 
     let input_amount_minus_fee = input_amount
-        .checked_mul(BPS_SCALE.checked_sub(amm.swap_fee_bps as u64).unwrap())
+        .checked_mul(BPS_SCALE.checked_sub(amm.swap_fee_bps).unwrap())
         .unwrap()
         .checked_div(BPS_SCALE)
         .unwrap() as u128;

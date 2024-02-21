@@ -5,6 +5,8 @@ use num_traits::ToPrimitive;
 use std::ops::Div;
 use std::ops::Mul;
 
+use amm::state::Amm;
+
 use crate::error::ErrorCode;
 use crate::state::*;
 
@@ -17,11 +19,7 @@ pub struct FinalizeProposal<'info> {
         has_one = instructions,
     )]
     pub proposal: Account<'info, Proposal>,
-    #[account(
-        mut,
-        constraint = instructions.proposal_number == proposal.number,
-        constraint = instructions.proposer == proposal.proposer
-    )]
+    #[account(mut)]
     pub instructions: Account<'info, ProposalInstructions>,
     pub dao: Box<Account<'info, Dao>>,
     /// CHECK: never read
@@ -59,21 +57,17 @@ pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
         ErrorCode::ProposalAlreadyFinalized
     );
 
-    assert_ne!(pass_market_amm.ltwap_latest, 0u128);
-    assert_ne!(fail_market_amm.ltwap_latest, 0u128);
-
     let dao_pubkey = dao.key();
     let treasury_seeds = &[dao_pubkey.as_ref(), &[dao.treasury_pda_bump]];
     let signer = &[&treasury_seeds[..]];
 
-    let threshold = fail_market_amm
-        .ltwap_latest
+    let threshold = (fail_market_amm.ltwap_latest as u128)
         .checked_mul(BPS_SCALE.checked_add(dao.pass_threshold_bps).unwrap() as u128)
         .unwrap()
         .checked_div(BPS_SCALE as u128)
         .unwrap();
 
-    if pass_market_amm.ltwap_latest > threshold {
+    if (pass_market_amm.ltwap_latest as u128) > threshold {
         proposal.state = ProposalState::Passed;
 
         for ix in instructions.instructions.iter() {
