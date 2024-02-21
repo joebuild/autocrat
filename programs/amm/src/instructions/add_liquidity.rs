@@ -1,5 +1,3 @@
-use std::borrow::BorrowMut;
-
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
@@ -9,9 +7,8 @@ use anchor_spl::token::*;
 use num_traits::ToPrimitive;
 
 use crate::error::ErrorCode;
-use crate::generate_vault_seeds;
 use crate::state::*;
-use crate::{utils::*, BPS_SCALE};
+use crate::utils::*;
 
 #[derive(Accounts)]
 pub struct AddLiquidity<'info> {
@@ -79,8 +76,8 @@ pub fn handler(
         user,
         amm,
         amm_position,
-        base_mint,
-        quote_mint,
+        base_mint: _,
+        quote_mint: _,
         user_ata_base,
         user_ata_quote,
         vault_ata_base,
@@ -103,8 +100,8 @@ pub fn handler(
 
     amm.update_ltwap()?;
 
-    let mut temp_base_amount = 0u128;
-    let mut temp_quote_amount = 0u128;
+    let mut temp_base_amount: u128;
+    let mut temp_quote_amount: u128;
 
     // if there is no liquidity in the amm, then initialize with new ownership values
     if amm.base_amount == 0 && amm.quote_amount == 0 {

@@ -70,7 +70,7 @@ pub struct RemoveLiquidity<'info> {
 
 pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
     let RemoveLiquidity {
-        user,
+        user: _,
         amm,
         amm_position,
         base_mint,

@@ -2,7 +2,9 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Either the `pass_market` or the `fail_market`'s tokens doesn't match the vaults supplied")]
+    #[msg(
+        "Either the `pass_market` or the `fail_market`'s tokens doesn't match the vaults supplied"
+    )]
     InvalidMarket,
     #[msg("`TWAPMarket` must have an `initial_slot` within 50 slots of the proposal's `slot_enqueued`")]
     TWAPMarketTooOld,
@@ -22,7 +24,6 @@ pub enum ErrorCode {
     ProposalAlreadyFinalized,
     #[msg("A conditional vault has an invalid nonce. A nonce should encode pass = 0 / fail = 1 in its most significant bit, base = 0 / quote = 1 in its second most significant bit, and the proposal number in least significant 32 bits")]
     InvalidVaultNonce,
-
     #[msg("Insufficient underlying token balance to mint this amount of conditional tokens")]
     InsufficientUnderlyingTokens,
     #[msg("This `vault_underlying_token_account` is not this vault's `underlying_token_account`")]
@@ -33,17 +34,14 @@ pub enum ErrorCode {
     CantRedeemConditionalTokens,
     #[msg("Once a vault has been settled, its status as either finalized or reverted cannot be changed")]
     VaultAlreadySettled,
-
     #[msg("Proposer cannot remove intitial liquidity while the proposal is pending")]
     ProposerCannotPullLiquidityWhileMarketIsPending,
-
     #[msg("Proposal numbers must be consecutive")]
     NonConsecutiveProposalNumber,
-
     #[msg("Add liquidity calculation error")]
     AddLiquidityCalculationError,
     #[msg("Error in decimal scale conversion")]
-    DecimalScaleError
+    DecimalScaleError,
 }
 
 #[macro_export]

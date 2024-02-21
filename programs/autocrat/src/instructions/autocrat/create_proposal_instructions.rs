@@ -9,11 +9,6 @@ pub struct CreateProposalInstructions<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
     #[account(
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
-        bump
-    )]
-    pub dao: Box<Account<'info, Dao>>,
-    #[account(
         init,
         payer = proposer,
         space = 8 + ProposalInstructions::SERIALIZED_LEN + get_instructions_size(&instructions),
@@ -29,7 +24,6 @@ pub fn handler(
 ) -> Result<()> {
     let CreateProposalInstructions {
         proposer,
-        dao,
         proposal_instructions,
         rent: _,
         system_program: _,

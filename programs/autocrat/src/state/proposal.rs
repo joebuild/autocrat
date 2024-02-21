@@ -18,7 +18,7 @@ pub struct Proposal {
     pub state: ProposalState,
     pub instructions: Pubkey,
 
-    pub proposal_treasury: Pubkey,
+    pub proposal_vault: Pubkey,
 
     pub is_pass_market_created: bool,
     pub is_fail_market_created: bool,
@@ -34,6 +34,9 @@ pub struct Proposal {
 
     pub conditional_on_fail_meta_mint: Pubkey,
     pub conditional_on_fail_usdc_mint: Pubkey,
+
+    pub proposer_inititial_conditional_meta_minted: u64,
+    pub proposer_inititial_conditional_usdc_minted: u64,
 }
 
 #[account]

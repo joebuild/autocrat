@@ -1,14 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
-use anchor_spl::associated_token;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token;
-use anchor_spl::token::*;
-use num_traits::ToPrimitive;
 
-use crate::generate_vault_seeds;
 use crate::state::*;
-use crate::{utils::*, BPS_SCALE};
 
 #[derive(Accounts)]
 pub struct UpdateLtwap<'info> {
@@ -27,7 +20,7 @@ pub struct UpdateLtwap<'info> {
  */
 pub fn handler(ctx: Context<UpdateLtwap>) -> Result<()> {
     let UpdateLtwap {
-        user,
+        user: _,
         amm,
         instructions,
         system_program: _,

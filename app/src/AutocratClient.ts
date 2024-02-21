@@ -11,7 +11,7 @@ import { Autocrat as AutocratIDLType } from '../../target/types/autocrat';
 
 import * as ixs from "./instructions/autocrat";
 import BN from "bn.js";
-import { AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
+import { AMM_PROGRAM_ID, AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
 import { ProposalInstruction, UpdateDaoParams } from "./types";
 
 export type CreateAutocratClientParams = {
@@ -97,29 +97,39 @@ export class AutocratClient {
         )
     }
 
-    async createProposalPartOne(
-        descriptionUrl: string,
-        proposalInstructionsAddr: PublicKey,
+    async createProposalMarketSide(
+        proposalKeypair: Keypair,
+        isPassMarket: boolean,
+        condMetaToMint: BN,
+        condUsdcToMint: BN,
+        ammBaseAmountDeposit: BN,
+        ammQuoteAmountDeposit: BN,
+        ammProgram = AMM_PROGRAM_ID,
     ) {
-        return ixs.createProposalPartOneHandler(
+        return ixs.createProposalMarketSideHandler(
             this,
-            descriptionUrl,
-            proposalInstructionsAddr
+            proposalKeypair,
+            isPassMarket,
+            condMetaToMint,
+            condUsdcToMint,
+            ammBaseAmountDeposit,
+            ammQuoteAmountDeposit,
+            ammProgram
         )
     }
 
-    async createProposalPartTwo(
-        initialPassMarketPriceQuoteUnitsPerBaseUnitBps: BN,
-        initialFailMarketPriceQuoteUnitsPerBaseUnitBps: BN,
-        quoteLiquidityAmountPerAmm: BN,
-    ) {
-        return ixs.createProposalPartTwoHandler(
-            this,
-            initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
-            initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
-            quoteLiquidityAmountPerAmm,
-        )
-    }
+    // async createProposalPartTwo(
+    //     initialPassMarketPriceQuoteUnitsPerBaseUnitBps: BN,
+    //     initialFailMarketPriceQuoteUnitsPerBaseUnitBps: BN,
+    //     quoteLiquidityAmountPerAmm: BN,
+    // ) {
+    //     return ixs.createProposalPartTwoHandler(
+    //         this,
+    //         initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
+    //         initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
+    //         quoteLiquidityAmountPerAmm,
+    //     )
+    // }
 
     async mintConditionalTokens(
         proposalAddr: PublicKey,

@@ -1,16 +1,12 @@
-use std::borrow::BorrowMut;
-
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::*;
-use num_traits::ToPrimitive;
 
 use crate::error::ErrorCode;
-use crate::generate_vault_seeds;
 use crate::state::*;
-use crate::{utils::*, BPS_SCALE};
+use crate::BPS_SCALE;
 
 #[derive(Accounts)]
 #[instruction(create_amm_params: CreateAmmParams)]
@@ -33,14 +29,14 @@ pub struct CreateAmm<'info> {
     pub base_mint: Account<'info, Mint>,
     pub quote_mint: Account<'info, Mint>,
     #[account(
-        init,
+        init_if_needed,
         payer = user,
         associated_token::authority = amm,
         associated_token::mint = base_mint
     )]
     pub vault_ata_base: Account<'info, TokenAccount>,
     #[account(
-        init,
+        init_if_needed,
         payer = user,
         associated_token::authority = amm,
         associated_token::mint = quote_mint
@@ -63,14 +59,14 @@ pub struct CreateAmmParams {
 
 pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> Result<()> {
     let CreateAmm {
-        user,
+        user: _,
         amm,
         base_mint,
         quote_mint,
-        vault_ata_base,
-        vault_ata_quote,
+        vault_ata_base: _,
+        vault_ata_quote: _,
         associated_token_program: _,
-        token_program,
+        token_program: _,
         system_program: _,
     } = ctx.accounts;
 

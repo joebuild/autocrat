@@ -55,6 +55,32 @@ pub mod autocrat {
         instructions::autocrat::add_proposal_instructions::handler(ctx, instructions)
     }
 
+    pub fn create_proposal_market_side(
+        ctx: Context<CreateProposalMarketSide>,
+        is_pass_market: bool,
+        mint_cond_meta: u64,
+        mint_cond_usdc: u64,
+        amm_cond_meta_deposit: u64,
+        amm_cond_usdc_deposit: u64,
+    ) -> Result<()> {
+        instructions::autocrat::create_proposal_market_side::handler(
+            ctx,
+            is_pass_market,
+            mint_cond_meta,
+            mint_cond_usdc,
+            amm_cond_meta_deposit,
+            amm_cond_usdc_deposit,
+        )
+    }
+
+    pub fn submit_proposal(ctx: Context<SubmitProposal>, description_url: String) -> Result<()> {
+        instructions::autocrat::submit_proposal::handler(ctx, description_url)
+    }
+
+    pub fn finalize_proposal(ctx: Context<FinalizeProposal>) -> Result<()> {
+        instructions::autocrat::finalize_proposal::handler(ctx)
+    }
+
     pub fn mint_conditional_tokens(
         ctx: Context<MintConditionalTokens>,
         meta_amount: u64,
@@ -65,10 +91,6 @@ pub mod autocrat {
 
     pub fn redeem_conditional_tokens(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
         instructions::autocrat::redeem_conditional_tokens::handler(ctx)
-    }
-
-    pub fn finalize_proposal(ctx: Context<FinalizeProposal>) -> Result<()> {
-        instructions::autocrat::finalize_proposal::handler(ctx)
     }
 
     // ==== amm cpi

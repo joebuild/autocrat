@@ -1,11 +1,11 @@
 use anchor_lang::prelude::*;
 use crate::error::ErrorCode;
 
-pub use seeds::*;
 pub use token::*;
+pub use seeds::*;
 
-pub mod seeds;
 pub mod token;
+pub mod seeds;
 
 use crate::state::*;
 

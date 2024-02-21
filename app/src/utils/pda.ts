@@ -22,12 +22,12 @@ export const getDaoTreasuryAddr = (
     );
 };
 
-export const getProposalAddr = (
+export const getProposalVaultAddr = (
     programId: PublicKey,
-    proposalNumber: number
+    proposal: PublicKey
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("proposal"), numToBytes32LE(proposalNumber)],
+        [proposal.toBuffer()],
         programId,
     );
 };
@@ -40,7 +40,7 @@ export const getAmmAddr = (
     permissionedCaller: PublicKey
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [baseMint.toBuffer(), quoteMint.toBuffer(), numToBytes32LE(swapFeeBps), permissionedCaller.toBuffer()],
+        [baseMint.toBuffer(), quoteMint.toBuffer(), numToBytes64LE(swapFeeBps), permissionedCaller.toBuffer()],
         programId,
     );
 };
@@ -55,46 +55,6 @@ export const getAmmPositionAddr = (
         programId,
     );
 };
-
-// export const getConditionalOnPassMetaMintAddr = (
-//     programId: PublicKey,
-//     proposalNumber: number
-// ): [PublicKey, number] => {
-//     return PublicKey.findProgramAddressSync(
-//         [utils.bytes.utf8.encode("conditional_on_pass_meta"), numToBytes32LE(proposalNumber)],
-//         programId,
-//     );
-// };
-
-// export const getConditionalOnPassUsdcMintAddr = (
-//     programId: PublicKey,
-//     proposalNumber: number
-// ): [PublicKey, number] => {
-//     return PublicKey.findProgramAddressSync(
-//         [utils.bytes.utf8.encode("conditional_on_pass_usdc"), numToBytes32LE(proposalNumber)],
-//         programId,
-//     );
-// };
-
-// export const getConditionalOnFailMetaMintAddr = (
-//     programId: PublicKey,
-//     proposalNumber: number
-// ): [PublicKey, number] => {
-//     return PublicKey.findProgramAddressSync(
-//         [utils.bytes.utf8.encode("conditional_on_fail_meta"), numToBytes32LE(proposalNumber)],
-//         programId,
-//     );
-// };
-
-// export const getConditionalOnFailUsdcMintAddr = (
-//     programId: PublicKey,
-//     proposalNumber: number
-// ): [PublicKey, number] => {
-//     return PublicKey.findProgramAddressSync(
-//         [utils.bytes.utf8.encode("conditional_on_fail_usdc"), numToBytes32LE(proposalNumber)],
-//         programId,
-//     );
-// };
 
 export const getATA = (mint: PublicKey, owner: PublicKey) => {
     return PublicKey.findProgramAddressSync(

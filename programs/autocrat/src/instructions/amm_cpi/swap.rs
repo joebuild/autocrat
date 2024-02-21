@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program;
 use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
@@ -7,41 +6,32 @@ use anchor_spl::token;
 use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
-use solana_program::native_token::LAMPORTS_PER_SOL;
 
-use amm::cpi::accounts::CreateAmm;
-use amm::cpi::accounts::CreatePosition;
 use amm::cpi::accounts::Swap as AmmSwap;
-use amm::instructions::create_amm::CreateAmmParams;
 use amm::program::Amm;
 
 use crate::error::ErrorCode;
-use crate::generate_vault_seeds;
-use crate::program::Autocrat;
 use crate::state::*;
-use crate::utils::*;
 
 #[derive(Accounts)]
 pub struct Swap<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        mut,
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
-        bump
+        has_one = meta_mint,
+        has_one = usdc_mint,
     )]
-    pub dao: Box<Account<'info, Dao>>,
+    pub proposal: Box<Account<'info, Proposal>>,
     /// CHECK:
     pub amm: UncheckedAccount<'info>,
     /// CHECK
     pub amm_position: UncheckedAccount<'info>,
     #[account(
-        constraint = meta_mint.key() == dao.meta_mint.key()
+        constraint = meta_mint.key() == proposal.meta_mint.key()
     )]
     pub meta_mint: Box<Account<'info, Mint>>,
     #[account(
-        constraint = usdc_mint.key() == dao.usdc_mint.key()
+        constraint = usdc_mint.key() == proposal.usdc_mint.key()
     )]
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(
@@ -97,19 +87,18 @@ pub fn handler(
     output_amount_min: u64,
 ) -> Result<()> {
     let Swap {
-        user,
+        user: _,
         proposal,
-        dao,
         amm,
-        amm_position,
-        meta_mint,
-        usdc_mint,
-        conditional_meta_mint,
-        conditional_usdc_mint,
-        conditional_meta_user_ata,
-        conditional_usdc_user_ata,
-        conditional_meta_vault_ata,
-        conditional_usdc_vault_ata,
+        amm_position: _,
+        meta_mint: _,
+        usdc_mint: _,
+        conditional_meta_mint: _,
+        conditional_usdc_mint: _,
+        conditional_meta_user_ata: _,
+        conditional_usdc_user_ata: _,
+        conditional_meta_vault_ata: _,
+        conditional_usdc_vault_ata: _,
         amm_program: _,
         associated_token_program: _,
         token_program: _,

@@ -9,11 +9,6 @@ pub struct AddProposalInstructions<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
     #[account(
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
-        bump
-    )]
-    pub dao: Box<Account<'info, Dao>>,
-    #[account(
         mut,
         constraint = proposal_instructions.proposer == proposer.key(),
         realloc = proposal_instructions.to_account_info().data_len() + get_instructions_size(&instructions),
@@ -30,8 +25,7 @@ pub fn handler(
     instructions: Vec<ProposalInstruction>,
 ) -> Result<()> {
     let AddProposalInstructions {
-        proposer,
-        dao,
+        proposer: _,
         proposal_instructions,
         rent: _,
         system_program: _,

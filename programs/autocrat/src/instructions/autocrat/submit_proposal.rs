@@ -1,23 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
-use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
-use solana_program::native_token::LAMPORTS_PER_SOL;
-
-use amm::cpi::accounts::AddLiquidity;
-use amm::cpi::accounts::CreateAmm;
-use amm::cpi::accounts::CreatePosition;
-use amm::instructions::create_amm::CreateAmmParams;
-use amm::program::Amm;
 
 use crate::error::ErrorCode;
-use crate::generate_vault_seeds;
 use crate::state::*;
+use crate::utils::*;
 
 #[derive(Accounts)]
 pub struct SubmitProposal<'info> {
@@ -26,27 +16,48 @@ pub struct SubmitProposal<'info> {
     #[account(mut)]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        init,
+        init_if_needed,
         payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalTreasury>(),
+        space = 8 + std::mem::size_of::<ProposalVault>(),
         seeds = [
             proposal.key().as_ref(),
         ],
         bump
     )]
-    pub proposal_treasury: Box<Account<'info, ProposalTreasury>>,
+    pub proposal_vault: Box<Account<'info, ProposalVault>>,
     #[account(
         mut,
         constraint = proposal_instructions.proposer == proposer.key(),
-        constraint = proposal_instructions.proposal_number == dao.proposal_count @ ErrorCode::NonConsecutiveProposalNumber,
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     #[account(
         mut,
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
-        bump
+        associated_token::mint = proposal.meta_mint,
+        associated_token::authority = proposer,
     )]
-    pub dao: Box<Account<'info, Dao>>,
+    pub meta_proposer_ata: Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
+        associated_token::mint = proposal.usdc_mint,
+        associated_token::authority = proposer,
+    )]
+    pub usdc_proposer_ata: Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
+        associated_token::mint = proposal.meta_mint,
+        associated_token::authority = proposal_vault,
+    )]
+    pub meta_vault_ata: Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
+        associated_token::mint = proposal.usdc_mint,
+        associated_token::authority = proposal_vault,
+    )]
+    pub usdc_vault_ata: Box<Account<'info, TokenAccount>>,
+    #[account(address = associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -54,9 +65,14 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
     let SubmitProposal {
         proposer,
         proposal,
-        proposal_treasury,
+        proposal_vault,
         proposal_instructions,
-        dao,
+        meta_proposer_ata,
+        usdc_proposer_ata,
+        meta_vault_ata,
+        usdc_vault_ata,
+        associated_token_program: _,
+        token_program,
         system_program: _,
     } = ctx.accounts;
 
@@ -69,11 +85,29 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
     proposal.state = ProposalState::Pending;
 
     proposal.description_url = description_url;
-    proposal.proposal_treasury = proposal_treasury.key();
+    proposal.proposal_vault = proposal_vault.key();
     proposal.instructions = proposal_instructions.key();
     proposal.slot_enqueued = Clock::get()?.slot;
 
     proposal_instructions.proposal_instructions_frozen = true;
+
+    // transfer user meta to vault
+    token_transfer(
+        proposal.proposer_inititial_conditional_meta_minted,
+        token_program,
+        meta_proposer_ata.as_ref(),
+        meta_vault_ata.as_ref(),
+        proposer.as_ref(),
+    )?;
+
+    // transfer user usdc to vault
+    token_transfer(
+        proposal.proposer_inititial_conditional_usdc_minted,
+        token_program,
+        usdc_proposer_ata.as_ref(),
+        usdc_vault_ata.as_ref(),
+        proposer.as_ref(),
+    )?;
 
     Ok(())
 }

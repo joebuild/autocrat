@@ -1,12 +1,10 @@
-use std::ops::{Div, Mul};
-
 use anchor_lang::prelude::*;
 use num_traits::{FromPrimitive, ToPrimitive};
 use rust_decimal::Decimal;
 
 use crate::error::ErrorCode;
 use crate::utils::anchor_decimal::*;
-use crate::{utils::*, BPS_SCALE};
+use crate::utils::*;
 
 #[account]
 pub struct Amm {

@@ -5,7 +5,6 @@ use anchor_spl::token;
 use anchor_spl::token::*;
 
 use crate::error::ErrorCode;
-use crate::generate_vault_seeds;
 use crate::state::*;
 use crate::utils::token::*;
 
@@ -14,6 +13,8 @@ pub struct RedeemConditionalTokens<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
+        has_one = meta_mint,
+        has_one = usdc_mint,
         has_one = conditional_on_pass_meta_mint,
         has_one = conditional_on_pass_usdc_mint,
         has_one = conditional_on_fail_meta_mint,
@@ -21,12 +22,14 @@ pub struct RedeemConditionalTokens<'info> {
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        constraint = meta_mint.key() == proposal.meta_mint.key()
+        mut,
+        seeds = [
+            proposal.key().as_ref(),
+        ],
+        bump
     )]
+    pub proposal_vault: Box<Account<'info, ProposalVault>>,
     pub meta_mint: Box<Account<'info, Mint>>,
-    #[account(
-        constraint = usdc_mint.key() == proposal.usdc_mint.key()
-    )]
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
     pub conditional_on_pass_meta_mint: Account<'info, Mint>,
@@ -76,14 +79,14 @@ pub struct RedeemConditionalTokens<'info> {
     pub conditional_on_fail_usdc_user_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
-        associated_token::mint = meta_mint.key(),
-        associated_token::authority = proposal,
+        associated_token::mint = meta_mint,
+        associated_token::authority = proposal_vault,
     )]
     pub meta_vault_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
-        associated_token::mint = usdc_mint.key(),
-        associated_token::authority = proposal,
+        associated_token::mint = usdc_mint,
+        associated_token::authority = proposal_vault,
     )]
     pub usdc_vault_ata: Account<'info, TokenAccount>,
     #[account(address = associated_token::ID)]
@@ -97,6 +100,7 @@ pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
     let RedeemConditionalTokens {
         user,
         proposal,
+        proposal_vault,
         meta_mint: _,
         usdc_mint: _,
         conditional_on_pass_meta_mint,
@@ -128,8 +132,8 @@ pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
         ErrorCode::ProposalStillPending
     );
 
-    let proposal_number_bytes = proposal.number.to_le_bytes();
-    let seeds = generate_vault_seeds!(proposal_number_bytes, ctx.bumps.proposal);
+    let proposal_vault_key = proposal_vault.key();
+    let seeds = &[proposal_vault_key.as_ref(), &[ctx.bumps.proposal_vault]];
 
     token_burn(
         c_pass_meta_user_balance,

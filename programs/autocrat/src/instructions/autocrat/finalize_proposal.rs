@@ -1,9 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
 use anchor_lang::solana_program::instruction::Instruction;
-use num_traits::ToPrimitive;
-use std::ops::Div;
-use std::ops::Mul;
 
 use amm::state::Amm;
 
