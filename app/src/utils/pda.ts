@@ -27,7 +27,7 @@ export const getProposalVaultAddr = (
     proposal: PublicKey
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [proposal.toBuffer()],
+        [utils.bytes.utf8.encode("proposal_vault"), proposal.toBuffer()],
         programId,
     );
 };

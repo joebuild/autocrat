@@ -1,4 +1,3 @@
-import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
 import { getATA, getAmmAddr, getAmmPositionAddr, getDaoAddr, getProposalVaultAddr } from '../../utils';
@@ -19,7 +18,6 @@ export const createProposalMarketSideHandler = async (
     let dao = await client.program.account.dao.fetch(daoAddr)
 
     let proposalAddr = proposalKeypair.publicKey
-
     let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
 
     let conditionalMetaMintKeypair = Keypair.generate()
@@ -51,8 +49,8 @@ export const createProposalMarketSideHandler = async (
             conditionalUsdcMint: conditionalUsdcMintAddr,
             conditionalMetaProposerAta: getATA(conditionalMetaMintAddr, client.provider.publicKey)[0],
             conditionalUsdcProposerAta: getATA(conditionalUsdcMintAddr, client.provider.publicKey)[0],
-            conditionalMetaVaultAta: getATA(conditionalMetaMintAddr, ammAddr)[0],
-            conditionalUsdcVaultAta: getATA(conditionalUsdcMintAddr, ammAddr)[0],
+            conditionalMetaAmmVaultAta: getATA(conditionalMetaMintAddr, ammAddr)[0],
+            conditionalUsdcAmmVaultAta: getATA(conditionalUsdcMintAddr, ammAddr)[0],
             ammProgram,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         })

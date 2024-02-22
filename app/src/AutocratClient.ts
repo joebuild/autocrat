@@ -118,18 +118,27 @@ export class AutocratClient {
         )
     }
 
-    // async createProposalPartTwo(
-    //     initialPassMarketPriceQuoteUnitsPerBaseUnitBps: BN,
-    //     initialFailMarketPriceQuoteUnitsPerBaseUnitBps: BN,
-    //     quoteLiquidityAmountPerAmm: BN,
-    // ) {
-    //     return ixs.createProposalPartTwoHandler(
-    //         this,
-    //         initialPassMarketPriceQuoteUnitsPerBaseUnitBps,
-    //         initialFailMarketPriceQuoteUnitsPerBaseUnitBps,
-    //         quoteLiquidityAmountPerAmm,
-    //     )
-    // }
+    async submitProposal(
+        proposalKeypair: Keypair,
+        proposalInstructions: PublicKey,
+        descriptionUrl: string
+    ) {
+        return ixs.submitProposalHandler(
+            this,
+            proposalKeypair,
+            proposalInstructions,
+            descriptionUrl,
+        )
+    }
+
+    async finalizeProposal(
+        proposalAddr: PublicKey
+    ) {
+        return ixs.finalizeProposalHandler(
+            this,
+            proposalAddr,
+        )
+    }
 
     async mintConditionalTokens(
         proposalAddr: PublicKey,
@@ -148,15 +157,6 @@ export class AutocratClient {
         proposalAddr: PublicKey
     ) {
         return ixs.redeemConditionalTokensHandler(
-            this,
-            proposalAddr,
-        )
-    }
-
-    async finalizeProposal(
-        proposalAddr: PublicKey
-    ) {
-        return ixs.finalizeProposalHandler(
             this,
             proposalAddr,
         )

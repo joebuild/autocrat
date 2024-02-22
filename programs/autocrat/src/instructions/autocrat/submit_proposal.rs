@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
+use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
 
@@ -13,47 +14,53 @@ use crate::utils::*;
 pub struct SubmitProposal<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
-    #[account(mut)]
-    pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        init_if_needed,
-        payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalVault>(),
+        mut,
+        has_one = meta_mint,
+        has_one = usdc_mint,
+    )]
+    pub proposal: Account<'info, Proposal>,
+    #[account(
+        mut,
         seeds = [
             proposal.key().as_ref(),
         ],
         bump
     )]
-    pub proposal_vault: Box<Account<'info, ProposalVault>>,
+    pub proposal_vault: Account<'info, ProposalVault>,
     #[account(
         mut,
-        constraint = proposal_instructions.proposer == proposer.key(),
+        has_one = proposer,
     )]
-    pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
+    pub proposal_instructions: Account<'info, ProposalInstructions>,
+    pub meta_mint: Account<'info, Mint>,
+    pub usdc_mint: Account<'info, Mint>,
     #[account(
         mut,
-        associated_token::mint = proposal.meta_mint,
+        associated_token::mint = meta_mint,
         associated_token::authority = proposer,
     )]
-    pub meta_proposer_ata: Box<Account<'info, TokenAccount>>,
+    pub meta_proposer_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
-        associated_token::mint = proposal.usdc_mint,
+        associated_token::mint = usdc_mint,
         associated_token::authority = proposer,
     )]
-    pub usdc_proposer_ata: Box<Account<'info, TokenAccount>>,
+    pub usdc_proposer_ata: Account<'info, TokenAccount>,
     #[account(
-        mut,
-        associated_token::mint = proposal.meta_mint,
+        init_if_needed,
+        payer = proposer,
+        associated_token::mint = meta_mint,
         associated_token::authority = proposal_vault,
     )]
-    pub meta_vault_ata: Box<Account<'info, TokenAccount>>,
+    pub meta_vault_ata: Account<'info, TokenAccount>,
     #[account(
-        mut,
-        associated_token::mint = proposal.usdc_mint,
+        init_if_needed,
+        payer = proposer,
+        associated_token::mint = usdc_mint,
         associated_token::authority = proposal_vault,
     )]
-    pub usdc_vault_ata: Box<Account<'info, TokenAccount>>,
+    pub usdc_vault_ata: Account<'info, TokenAccount>,
     #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
@@ -67,6 +74,8 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
         proposal,
         proposal_vault,
         proposal_instructions,
+        meta_mint: _,
+        usdc_mint: _,
         meta_proposer_ata,
         usdc_proposer_ata,
         meta_vault_ata,
@@ -95,18 +104,18 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
     token_transfer(
         proposal.proposer_inititial_conditional_meta_minted,
         token_program,
-        meta_proposer_ata.as_ref(),
-        meta_vault_ata.as_ref(),
-        proposer.as_ref(),
+        meta_proposer_ata,
+        meta_vault_ata,
+        proposer,
     )?;
 
     // transfer user usdc to vault
     token_transfer(
         proposal.proposer_inititial_conditional_usdc_minted,
         token_program,
-        usdc_proposer_ata.as_ref(),
-        usdc_vault_ata.as_ref(),
-        proposer.as_ref(),
+        usdc_proposer_ata,
+        usdc_vault_ata,
+        proposer,
     )?;
 
     Ok(())

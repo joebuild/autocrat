@@ -18,6 +18,7 @@ import { getAmmAddr, getAmmPositionAddr } from "../app/src/utils";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { assert } from "chai";
 import { AmmClient } from "../app/src/AmmClient";
+import { fastForward } from "./utils";
 
 describe("amm", async function () {
   let provider,
@@ -90,6 +91,10 @@ describe("amm", async function () {
       10000 * 10 ** 6,
     )
   });
+
+  beforeEach(async function () {
+    await fastForward(context, 1n)
+  })
 
   describe("#create_amm", async function () {
     it("create a permissionless amm", async function () {
@@ -423,16 +428,3 @@ describe("amm", async function () {
   });
 
 });
-
-const fastForward = async (context: ProgramTestContext, slots: bigint) => {
-  const currentClock = await context.banksClient.getClock();
-  context.setClock(
-    new Clock(
-      currentClock.slot + slots,
-      currentClock.epochStartTimestamp,
-      currentClock.epoch,
-      currentClock.leaderScheduleEpoch,
-      50n,
-    ),
-  );
-}

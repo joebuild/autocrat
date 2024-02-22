@@ -37,6 +37,7 @@ pub struct CreateProposalMarketSide<'info> {
         payer = proposer,
         space = 8 + std::mem::size_of::<ProposalVault>(),
         seeds = [
+            b"proposal_vault",
             proposal.key().as_ref(),
         ],
         bump
@@ -94,14 +95,14 @@ pub struct CreateProposalMarketSide<'info> {
         associated_token::mint = conditional_meta_mint,
         associated_token::authority = amm,
     )]
-    pub conditional_meta_vault_ata: Box<Account<'info, TokenAccount>>,
+    pub conditional_meta_amm_vault_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         init,
         payer = proposer,
         associated_token::mint = conditional_usdc_mint,
         associated_token::authority = amm,
     )]
-    pub conditional_usdc_vault_ata: Box<Account<'info, TokenAccount>>,
+    pub conditional_usdc_amm_vault_ata: Box<Account<'info, TokenAccount>>,
     #[account(address = amm::ID)]
     pub amm_program: Program<'info, Amm>,
     #[account(address = associated_token::ID)]
@@ -135,8 +136,8 @@ pub fn handler(
         conditional_usdc_mint,
         conditional_meta_proposer_ata,
         conditional_usdc_proposer_ata,
-        conditional_meta_vault_ata: _,
-        conditional_usdc_vault_ata: _,
+        conditional_meta_amm_vault_ata: _,
+        conditional_usdc_amm_vault_ata: _,
         amm_program: _,
         associated_token_program: _,
         token_program,
@@ -259,8 +260,8 @@ impl<'info> CreateProposalMarketSide<'info> {
             amm: self.amm.to_account_info(),
             base_mint: self.conditional_meta_mint.to_account_info(),
             quote_mint: self.conditional_usdc_mint.to_account_info(),
-            vault_ata_base: self.conditional_meta_vault_ata.to_account_info(),
-            vault_ata_quote: self.conditional_usdc_vault_ata.to_account_info(),
+            vault_ata_base: self.conditional_meta_amm_vault_ata.to_account_info(),
+            vault_ata_quote: self.conditional_usdc_amm_vault_ata.to_account_info(),
             associated_token_program: self.associated_token_program.to_account_info(),
             token_program: self.token_program.to_account_info(),
             system_program: self.system_program.to_account_info(),
@@ -296,8 +297,8 @@ impl<'info> CreateProposalMarketSide<'info> {
             quote_mint: self.conditional_usdc_mint.to_account_info(),
             user_ata_base: self.conditional_meta_proposer_ata.to_account_info(),
             user_ata_quote: self.conditional_usdc_proposer_ata.to_account_info(),
-            vault_ata_base: self.conditional_meta_vault_ata.to_account_info(),
-            vault_ata_quote: self.conditional_usdc_vault_ata.to_account_info(),
+            vault_ata_base: self.conditional_meta_amm_vault_ata.to_account_info(),
+            vault_ata_quote: self.conditional_usdc_amm_vault_ata.to_account_info(),
             associated_token_program: self.associated_token_program.to_account_info(),
             token_program: self.token_program.to_account_info(),
             instructions: self.instructions.to_account_info(),

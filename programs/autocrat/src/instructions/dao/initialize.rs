@@ -1,4 +1,7 @@
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token;
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token;
 use anchor_spl::token::*;
 
 use crate::state::*;
@@ -18,23 +21,45 @@ pub struct InitializeDao<'info> {
         bump
     )]
     pub dao: Account<'info, Dao>,
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + 32 + 1,
+        seeds = [dao.key().as_ref()],
+        bump
+    )]
+    pub dao_treasury: Account<'info, DaoTreasury>,
     #[account(mint::decimals = 9)]
     pub meta_mint: Account<'info, Mint>,
     #[account(mint::decimals = 6)]
     pub usdc_mint: Account<'info, Mint>,
+    #[account(address = associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
-    let dao = &mut ctx.accounts.dao;
+    let InitializeDao {
+        payer: _,
+        dao,
+        dao_treasury,
+        meta_mint,
+        usdc_mint,
+        associated_token_program: _,
+        token_program: _,
+        system_program: _,
+    } = ctx.accounts;
 
-    let (treasury_pubkey, treasury_bump) =
-        Pubkey::find_program_address(&[dao.key().as_ref()], ctx.program_id);
-    dao.treasury_pda_bump = treasury_bump;
-    dao.treasury_pda = treasury_pubkey;
+    dao_treasury.dao = dao.key();
+    dao_treasury.bump = ctx.bumps.dao_treasury;
 
-    dao.meta_mint = ctx.accounts.meta_mint.key();
-    dao.usdc_mint = ctx.accounts.usdc_mint.key();
+    dao.treasury_pda_bump = ctx.bumps.dao_treasury;
+    dao.treasury_pda = dao_treasury.key();
+
+    dao.meta_mint = meta_mint.key();
+    dao.usdc_mint = usdc_mint.key();
 
     dao.proposal_count = 10;
 

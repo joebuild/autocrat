@@ -126,9 +126,14 @@ export class InstructionHandler<ProgramType, Type extends Client<ProgramType> = 
         }
     }
 
-    async rpc(opts?: ConfirmOptions) {
-        let blockhash = (await this.client.provider.connection.getLatestBlockhash()).blockhash
-        const tx = await this.getVersionedTransaction(blockhash);
-        return await this.client.provider.sendAndConfirm(tx, undefined, opts)
+    async rpc(opts: ConfirmOptions = { skipPreflight: true }) {
+        try {
+            let blockhash = (await this.client.provider.connection.getLatestBlockhash()).blockhash
+            const tx = await this.getVersionedTransaction(blockhash);
+            return await this.client.provider.sendAndConfirm(tx, undefined, opts)
+        } catch (e) {
+            console.log(e)
+            throw e
+        }
     }
 }

@@ -1,10 +1,12 @@
 use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 
 pub use dao::*;
+pub use dao_treasury::*;
 pub use proposal::*;
 pub use proposal_vault::*;
 
 pub mod dao;
+pub mod dao_treasury;
 pub mod proposal;
 pub mod proposal_vault;
 
