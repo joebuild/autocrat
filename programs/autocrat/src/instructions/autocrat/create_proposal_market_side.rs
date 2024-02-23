@@ -15,7 +15,7 @@ use amm::instructions::create_amm::CreateAmmParams;
 use amm::program::Amm;
 
 use crate::error::ErrorCode;
-use crate::generate_treasury_seeds;
+use crate::generate_proposal_vault_seeds;
 use crate::program::Autocrat;
 use crate::state::*;
 use crate::utils::*;
@@ -189,7 +189,7 @@ pub fn handler(
 
     // mint the proposer's conditional tokens
     let proposal_vault_key = proposal_vault.key();
-    let seeds = generate_treasury_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
+    let seeds = generate_proposal_vault_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
     let signer = &[&seeds[..]];
 
     token_mint_signed(

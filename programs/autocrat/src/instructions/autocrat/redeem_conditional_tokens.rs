@@ -5,7 +5,7 @@ use anchor_spl::token;
 use anchor_spl::token::*;
 
 use crate::error::ErrorCode;
-use crate::generate_treasury_seeds;
+use crate::generate_proposal_vault_seeds;
 use crate::state::*;
 use crate::utils::token::*;
 
@@ -134,7 +134,7 @@ pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
     );
 
     let proposal_vault_key = proposal_vault.key();
-    let seeds = generate_treasury_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
+    let seeds = generate_proposal_vault_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
     let signer = &[&seeds[..]];
 
     token_burn(
