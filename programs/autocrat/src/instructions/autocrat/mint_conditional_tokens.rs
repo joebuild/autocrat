@@ -5,6 +5,7 @@ use anchor_spl::token;
 use anchor_spl::token::*;
 
 use crate::error::ErrorCode;
+use crate::generate_treasury_seeds;
 use crate::state::*;
 use crate::utils::token::*;
 
@@ -22,8 +23,10 @@ pub struct MintConditionalTokens<'info> {
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
+        signer,
         mut,
         seeds = [
+            b"proposal_vault",
             proposal.key().as_ref(),
         ],
         bump
@@ -123,17 +126,17 @@ pub fn handler(
     } = ctx.accounts;
 
     let proposal_vault_key = proposal_vault.key();
-    let seeds = &[proposal_vault_key.as_ref(), &[ctx.bumps.proposal_vault]];
+    let seeds = generate_treasury_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
+    let signer = &[&seeds[..]];
 
     if meta_amount > 0 {
         // transfer user meta to vault
-        token_transfer_signed(
+        token_transfer(
             meta_amount,
             token_program,
             meta_user_ata.as_ref(),
             meta_vault_ata.as_ref(),
             user.as_ref(),
-            seeds,
         )?;
 
         // mint conditional on-pass meta to user
@@ -142,7 +145,7 @@ pub fn handler(
             token_program,
             conditional_on_pass_meta_mint.as_ref(),
             conditional_on_pass_meta_user_ata.as_ref(),
-            proposal.as_ref(),
+            proposal_vault.as_ref(),
             seeds,
         )?;
 
@@ -152,20 +155,19 @@ pub fn handler(
             token_program,
             conditional_on_fail_meta_mint.as_ref(),
             conditional_on_fail_meta_user_ata.as_ref(),
-            proposal.as_ref(),
+            proposal_vault.as_ref(),
             seeds,
         )?;
     }
 
     if usdc_amount > 0 {
         // transfer user usdc to vault
-        token_transfer_signed(
+        token_transfer(
             usdc_amount,
             token_program,
             usdc_user_ata.as_ref(),
             usdc_vault_ata.as_ref(),
             user.as_ref(),
-            seeds,
         )?;
 
         // mint conditional on-pass usdc to user
@@ -174,7 +176,7 @@ pub fn handler(
             token_program,
             conditional_on_pass_usdc_mint.as_ref(),
             conditional_on_pass_usdc_user_ata.as_ref(),
-            proposal.as_ref(),
+            proposal_vault.as_ref(),
             seeds,
         )?;
 
@@ -184,7 +186,7 @@ pub fn handler(
             token_program,
             conditional_on_fail_usdc_mint.as_ref(),
             conditional_on_fail_usdc_user_ata.as_ref(),
-            proposal.as_ref(),
+            proposal_vault.as_ref(),
             seeds,
         )?;
     }

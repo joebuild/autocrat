@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
-import { getATA, getDaoAddr } from '../../utils';
+import { getATA, getDaoAddr, getProposalVaultAddr } from '../../utils';
 import BN from 'bn.js';
 
 export const mintConditionalTokensHandler = async (
@@ -12,11 +12,14 @@ export const mintConditionalTokensHandler = async (
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     const proposal = await client.program.account.proposal.fetch(proposalAddr);
 
+    let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
+
     let ix = await client.program.methods
         .mintConditionalTokens(metaAmount, usdcAmount)
         .accounts({
             user: client.provider.publicKey,
             proposal: proposalAddr,
+            proposalVault: proposalVaultAddr,
             metaMint: proposal.metaMint,
             usdcMint: proposal.usdcMint,
             conditionalOnPassMetaMint: proposal.conditionalOnPassMetaMint,
@@ -29,8 +32,8 @@ export const mintConditionalTokensHandler = async (
             conditionalOnPassUsdcUserAta: getATA(proposal.conditionalOnPassUsdcMint, client.provider.publicKey)[0],
             conditionalOnFailMetaUserAta: getATA(proposal.conditionalOnFailMetaMint, client.provider.publicKey)[0],
             conditionalOnFailUsdcUserAta: getATA(proposal.conditionalOnFailUsdcMint, client.provider.publicKey)[0],
-            metaVaultAta: getATA(proposal.metaMint, proposalAddr)[0],
-            usdcVaultAta: getATA(proposal.usdcMint, proposalAddr)[0],
+            metaVaultAta: getATA(proposal.metaMint, proposalVaultAddr)[0],
+            usdcVaultAta: getATA(proposal.usdcMint, proposalVaultAddr)[0],
         })
         .instruction()
 

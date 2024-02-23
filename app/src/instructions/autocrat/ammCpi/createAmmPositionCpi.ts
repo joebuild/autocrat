@@ -5,15 +5,19 @@ import { getAmmPositionAddr } from '../../../utils';
 
 export const createAmmPositionCpiHandler = async (
     client: AutocratClient,
+    proposalAddr: PublicKey,
     amm: PublicKey,
+    ammProgram: PublicKey,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     let ix = await client.program.methods
         .createPosition()
         .accounts({
             user: client.provider.publicKey,
+            proposal: proposalAddr,
             amm,
-            ammPosition: getAmmPositionAddr(client.program.programId, amm, client.provider.publicKey)[0],
-            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
+            ammPosition: getAmmPositionAddr(ammProgram, amm, client.provider.publicKey)[0],
+            ammProgram,
+            instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
         })
         .instruction()
 

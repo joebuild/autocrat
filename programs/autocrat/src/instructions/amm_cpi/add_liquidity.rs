@@ -23,15 +23,17 @@ pub struct AddLiquidity<'info> {
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        mut,
         seeds = [
+            b"proposal_vault",
             proposal.key().as_ref(),
         ],
         bump
     )]
     pub proposal_vault: Box<Account<'info, ProposalVault>>,
+    #[account(mut)]
     /// CHECK:
     pub amm: UncheckedAccount<'info>,
+    #[account(mut)]
     /// CHECK
     pub amm_position: UncheckedAccount<'info>,
     pub meta_mint: Box<Account<'info, Mint>>,

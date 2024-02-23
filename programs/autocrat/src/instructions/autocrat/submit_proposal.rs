@@ -19,48 +19,50 @@ pub struct SubmitProposal<'info> {
         has_one = meta_mint,
         has_one = usdc_mint,
     )]
-    pub proposal: Account<'info, Proposal>,
+    pub proposal: Box<Account<'info, Proposal>>,
     #[account(
+        signer,
         mut,
         seeds = [
+            b"proposal_vault",
             proposal.key().as_ref(),
         ],
         bump
     )]
-    pub proposal_vault: Account<'info, ProposalVault>,
+    pub proposal_vault: Box<Account<'info, ProposalVault>>,
     #[account(
         mut,
         has_one = proposer,
     )]
-    pub proposal_instructions: Account<'info, ProposalInstructions>,
-    pub meta_mint: Account<'info, Mint>,
-    pub usdc_mint: Account<'info, Mint>,
+    pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
+    pub meta_mint: Box<Account<'info, Mint>>,
+    pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(
         mut,
         associated_token::mint = meta_mint,
         associated_token::authority = proposer,
     )]
-    pub meta_proposer_ata: Account<'info, TokenAccount>,
+    pub meta_proposer_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = usdc_mint,
         associated_token::authority = proposer,
     )]
-    pub usdc_proposer_ata: Account<'info, TokenAccount>,
+    pub usdc_proposer_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         init_if_needed,
         payer = proposer,
         associated_token::mint = meta_mint,
         associated_token::authority = proposal_vault,
     )]
-    pub meta_vault_ata: Account<'info, TokenAccount>,
+    pub meta_vault_ata: Box<Account<'info, TokenAccount>>,
     #[account(
         init_if_needed,
         payer = proposer,
         associated_token::mint = usdc_mint,
         associated_token::authority = proposal_vault,
     )]
-    pub usdc_vault_ata: Account<'info, TokenAccount>,
+    pub usdc_vault_ata: Box<Account<'info, TokenAccount>>,
     #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
@@ -93,6 +95,8 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
     assert_eq!(proposal.state, ProposalState::Initialize);
     proposal.state = ProposalState::Pending;
 
+    assert!(description_url.len() <= 50);
+
     proposal.description_url = description_url;
     proposal.proposal_vault = proposal_vault.key();
     proposal.instructions = proposal_instructions.key();
@@ -104,8 +108,8 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
     token_transfer(
         proposal.proposer_inititial_conditional_meta_minted,
         token_program,
-        meta_proposer_ata,
-        meta_vault_ata,
+        meta_proposer_ata.as_ref(),
+        meta_vault_ata.as_ref(),
         proposer,
     )?;
 
@@ -113,8 +117,8 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
     token_transfer(
         proposal.proposer_inititial_conditional_usdc_minted,
         token_program,
-        usdc_proposer_ata,
-        usdc_vault_ata,
+        usdc_proposer_ata.as_ref(),
+        usdc_vault_ata.as_ref(),
         proposer,
     )?;
 

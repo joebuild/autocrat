@@ -23,6 +23,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { InstructionHandler } from "../app/src/InstructionHandler";
 import { BankrunProvider } from "anchor-bankrun";
 import { fastForward } from "./utils";
+import { AMM_PROGRAM_ID } from "../app/src/constants";
 
 describe("autocrat", async function () {
     let provider,
@@ -234,142 +235,162 @@ describe("autocrat", async function () {
             assert.equal(proposalAcc.proposerInititialConditionalMetaMinted.toNumber(), 1_000_000_000);
             assert.equal(proposalAcc.proposerInititialConditionalUsdcMinted.toNumber(), 1_000_000_000);
         });
-
-        // it("creates a proposal [fail] market", async function () {
-
-        //     let ixh = await autocratClient.createProposalMarketSide(
-        //         proposalKeypair,
-        //         false,
-        //         new BN(1_000_000_000),
-        //         new BN(1_000_000_000),
-        //         new BN(1_000_000_000),
-        //         new BN(1_000_000_000),
-        //     )
-        //     await ixh
-        //         .setComputeUnits(400_000)
-        //         .bankrun(banksClient);
-
-        //     const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
-
-        //     assert.equal(proposalAcc.isFailMarketCreated, true);
-        // });
     });
 
-    // describe("#submit_proposal", async function () {
-    //     it("submit_proposal", async function () {
+    describe("#create_proposal_market_side", async function () {
+        it("creates a proposal [fail] market", async function () {
 
-    //         await sleep(5000)
+            let ixh = await autocratClient.createProposalMarketSide(
+                proposalKeypair,
+                false,
+                new BN(1_000_000_000),
+                new BN(1_000_000_000),
+                new BN(1_000_000_000),
+                new BN(1_000_000_000),
+            )
+            await ixh
+                .setComputeUnits(400_000)
+                .bankrun(banksClient);
 
-    //         let ixh = await autocratClient.submitProposal(
-    //             proposalKeypair,
-    //             proposalInstructionsAddr,
-    //             "https://based-proposals.com/10"
-    //         );
-    //         await ixh
-    //             .setComputeUnits(400_000)
-    //             .bankrun(banksClient);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
 
-    //         const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            assert.equal(proposalAcc.isFailMarketCreated, true);
+        });
+    });
 
-    //         // TODO
-    //     });
-    // });
+    describe("#submit_proposal", async function () {
+        it("submit_proposal", async function () {
 
-    // describe("#mint_conditional_tokens", async function () {
-    //     it("mint conditional tokens for proposal", async function () {
+            let ixh = await autocratClient.submitProposal(
+                proposalKeypair,
+                proposalInstructionsAddr,
+                "https://based-proposals.com/10"
+            );
+            await ixh
+                .setComputeUnits(400_000)
+                .bankrun(banksClient);
 
-    //         let ixh = await autocratClient.mintConditionalTokens(
-    //             new BN(10 * 10 ** 9),
-    //             new BN(100 * 10 ** 6),
-    //             proposalNumber
-    //         );
-    //         await ixh.bankrun(banksClient);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
 
-    //         let conditionalOnPassMetaMint = getConditionalOnPassMetaMintAddr(autocratClient.program.programId, proposalNumber)[0]
-    //         let conditionalOnPassUsdcMint = getConditionalOnPassUsdcMintAddr(autocratClient.program.programId, proposalNumber)[0]
-    //         let conditionalOnFailMetaMint = getConditionalOnFailMetaMintAddr(autocratClient.program.programId, proposalNumber)[0]
-    //         let conditionalOnFailUsdcMint = getConditionalOnFailUsdcMintAddr(autocratClient.program.programId, proposalNumber)[0]
+            // TODO
+        });
+    });
 
-    //         let conditionalOnPassMetaUserATA = getATA(conditionalOnPassMetaMint, autocratClient.provider.publicKey)[0]
-    //         let conditionalOnPassUsdcUserATA = getATA(conditionalOnPassUsdcMint, autocratClient.provider.publicKey)[0]
-    //         let conditionalOnFailMetaUserATA = getATA(conditionalOnFailMetaMint, autocratClient.provider.publicKey)[0]
-    //         let conditionalOnFailUsdcUserATA = getATA(conditionalOnFailUsdcMint, autocratClient.provider.publicKey)[0]
+    describe("#mint_conditional_tokens", async function () {
+        it("mint conditional tokens for proposal", async function () {
 
-    //         assert.isAbove(Number((await getAccount(banksClient, conditionalOnPassMetaUserATA)).amount), 0);
-    //         assert.isAbove(Number((await getAccount(banksClient, conditionalOnPassUsdcUserATA)).amount), 0);
-    //         assert.isAbove(Number((await getAccount(banksClient, conditionalOnFailMetaUserATA)).amount), 0);
-    //         assert.isAbove(Number((await getAccount(banksClient, conditionalOnFailUsdcUserATA)).amount), 0);
-    //     });
-    // });
+            let ixh = await autocratClient.mintConditionalTokens(
+                proposalKeypair.publicKey,
+                new BN(10 * 10 ** 9),
+                new BN(100 * 10 ** 6),
+            );
+            await ixh.bankrun(banksClient);
 
-    // describe("#add_liquidity", async function () {
-    //     it("add liquidity to an amm/amm position", async function () {
+            // TODO
+        });
+    });
 
-    //         let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
-    //         const passMarketAmmStart = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
+    describe("#create_amm_position", async function () {
+        it("create an amm position", async function () {
 
-    //         let passMarketPositionAddr = getAmmPositionAddr(autocratClient.program.programId, passMarketAmmAddr, payer.publicKey)[0]
-    //         const passMarketPositionStart = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const passMarketAmmAddr = proposalAcc.passMarketAmm
 
-    //         let ixh = await autocratClient.addLiquidity(
-    //             new BN(10 * 10 * 9),
-    //             new BN(100 * 10 ** 6),
-    //             true,
-    //             proposalNumber
-    //         );
-    //         await ixh.bankrun(banksClient);
+            let ixh = await autocratClient.createAmmPositionCpi(
+                proposalKeypair.publicKey,
+                passMarketAmmAddr
+            );
+            await ixh.bankrun(banksClient);
 
-    //         const passMarketAmmEnd = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
-    //         const passMarketPositionEnd = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
+            // TODO
+        });
+    });
 
-    //         assert.isAbove(passMarketAmmEnd.totalOwnership.toNumber(), passMarketAmmStart.totalOwnership.toNumber());
-    //         assert.isAbove(passMarketPositionEnd.ownership.toNumber(), passMarketPositionStart.ownership.toNumber());
+    describe("#add_liquidity", async function () {
+        it("add liquidity to an amm/amm position", async function () {
 
-    //         assert.isAbove(passMarketAmmEnd.conditionalBaseAmount.toNumber(), passMarketAmmStart.conditionalBaseAmount.toNumber());
-    //         assert.isAbove(passMarketAmmEnd.conditionalQuoteAmount.toNumber(), passMarketAmmStart.conditionalQuoteAmount.toNumber());
-    //     });
-    // });
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const passMarketAmmAddr = proposalAcc.passMarketAmm
 
-    // describe("#remove_liquidity", async function () {
-    //     it("remove liquidity from an amm/amm position", async function () {
+            let ixh = await autocratClient.addLiquidityCpi(
+                proposalKeypair.publicKey,
+                passMarketAmmAddr,
+                new BN(10 * 10 * 9),
+                new BN(100 * 10 ** 6),
+            );
+            await ixh.bankrun(banksClient);
 
-    //         let [passMarketAmmAddr] = getPassMarketAmmAddr(autocratClient.program.programId, proposalNumber);
-    //         const passMarketAmmStart = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
+            // TODO
+        });
+    });
 
-    //         let passMarketPositionAddr = getAmmPositionAddr(autocratClient.program.programId, passMarketAmmAddr, payer.publicKey)[0]
-    //         const passMarketPositionStart = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
+    describe("#swap", async function () {
+        it("swap", async function () {
 
-    //         let [proposalAddr] = getProposalAddr(autocratClient.program.programId, proposalNumber);
-    //         const proposal = await autocratClient.program.account.proposal.fetch(proposalAddr);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const passMarketAmmAddr = proposalAcc.passMarketAmm
 
-    //         // change clock time to be after proposal is over, so that liquidity can be withdrawn 
-    //         const currentClock = await banksClient.getClock();
-    //         context.setClock(
-    //             new Clock(
-    //                 BigInt(proposal.slotEnqueued.toNumber() + dao.slotsPerProposal.toNumber() + 1),
-    //                 currentClock.epochStartTimestamp,
-    //                 currentClock.epoch,
-    //                 currentClock.leaderScheduleEpoch,
-    //                 50n,
-    //             ),
-    //         );
+            let ixh = await autocratClient.swapCpi(
+                proposalKeypair.publicKey,
+                passMarketAmmAddr,
+                true,
+                new BN(10 * 10 ** 6),
+                new BN(1),
+            );
+            await ixh.bankrun(banksClient);
 
-    //         let ixh = await autocratClient.removeLiquidity(
-    //             new BN(10_000), // 10_000 removes all liquidity
-    //             true,
-    //             proposalNumber
-    //         );
-    //         await ixh.bankrun(banksClient);
+            // TODO
+        });
+    });
 
-    //         const passMarketAmmEnd = await autocratClient.program.account.amm.fetch(passMarketAmmAddr);
-    //         const passMarketPositionEnd = await autocratClient.program.account.ammPosition.fetch(passMarketPositionAddr);
+    describe("#remove_liquidity", async function () {
+        it("remove liquidity from an amm/amm position", async function () {
 
-    //         assert.isBelow(passMarketAmmEnd.totalOwnership.toNumber(), passMarketAmmStart.totalOwnership.toNumber());
-    //         assert.isBelow(passMarketPositionEnd.ownership.toNumber(), passMarketPositionStart.ownership.toNumber());
-    //         assert.equal(passMarketPositionEnd.ownership.toNumber(), 0);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const passMarketAmmAddr = proposalAcc.passMarketAmm
 
-    //         assert.isBelow(passMarketAmmEnd.conditionalBaseAmount.toNumber(), passMarketAmmStart.conditionalBaseAmount.toNumber());
-    //         assert.isBelow(passMarketAmmEnd.conditionalQuoteAmount.toNumber(), passMarketAmmStart.conditionalQuoteAmount.toNumber());
-    //     });
-    // });
+            await fastForward(context, BigInt(dao.slotsPerProposal.toNumber() + 1))
+
+            let ixh = await autocratClient.removeLiquidityCpi(
+                proposalKeypair.publicKey,
+                passMarketAmmAddr,
+                new BN(10_000), // 10_000 removes all liquidity
+            );
+            await ixh.bankrun(banksClient);
+
+            // TODO
+        });
+    });
+
+    describe("#finalize_proposal", async function () {
+        it("finalize proposal", async function () {
+            let accounts = [{
+                pubkey: MEMO_PROGRAM_ID,
+                isSigner: false,
+                isWritable: true,
+            }]
+
+            let ixh = await autocratClient.finalizeProposal(
+                proposalKeypair.publicKey,
+                accounts
+            );
+            await ixh.bankrun(banksClient);
+
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+
+            // TODO
+        });
+    });
+
+    describe("#redeem_conditional_tokens", async function () {
+        it("redeem conditional tokens from proposal", async function () {
+
+            let ixh = await autocratClient.redeemConditionalTokens(
+                proposalKeypair.publicKey,
+            );
+            await ixh.bankrun(banksClient);
+
+            // TODO
+        });
+    });
 });

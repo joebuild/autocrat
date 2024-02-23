@@ -1,3 +1,4 @@
+import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
 import { getATA, getProposalVaultAddr } from '../../utils';
@@ -21,14 +22,14 @@ export const submitProposalHandler = async (
         .accounts({
             proposer: client.provider.publicKey,
             proposal: proposalAddr,
-            // proposalVault: proposalVaultAddr,
+            proposalVault: proposalVaultAddr,
             proposalInstructions,
             metaMint: proposal.metaMint,
             usdcMint: proposal.usdcMint,
             metaProposerAta: getATA(proposal.metaMint, client.provider.publicKey)[0],
             usdcProposerAta: getATA(proposal.usdcMint, client.provider.publicKey)[0],
-            // metaVaultAta: getATA(proposal.metaMint, proposalAddr)[0],
-            // usdcVaultAta: getATA(proposal.usdcMint, proposalAddr)[0],
+            metaVaultAta: getATA(proposal.metaMint, proposalVaultAddr)[0],
+            usdcVaultAta: getATA(proposal.usdcMint, proposalVaultAddr)[0],
         })
         .instruction()
 

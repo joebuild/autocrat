@@ -413,7 +413,6 @@ dependencies = [
  "anchor-spl",
  "num-derive 0.4.1",
  "num-traits",
- "solana-program",
  "solana-security-txt",
 ]
 

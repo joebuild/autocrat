@@ -1,7 +1,7 @@
 import { PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { AutocratClient } from "../../../AutocratClient";
 import { InstructionHandler } from "../../../InstructionHandler";
-import { getATA } from '../../../utils';
+import { getATA, getProposalVaultAddr } from '../../../utils';
 import BN from "bn.js";
 
 export const swapCpiHandler = async (
@@ -11,8 +11,10 @@ export const swapCpiHandler = async (
     isQuoteToBase: boolean,
     inputAmount: BN,
     minOutputAmount: BN,
+    ammProgram: PublicKey,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     const proposal = await client.program.account.proposal.fetch(proposalAddr);
+    let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
 
     if (proposal.passMarketAmm.toBase58() !== ammAddr.toBase58() && proposal.failMarketAmm.toBase58() !== ammAddr.toBase58()) {
         throw new Error("the amm address passed in swapCpiHandler does not correspond to either the pass or fail market");
@@ -43,6 +45,8 @@ export const swapCpiHandler = async (
         )
         .accounts({
             user: client.provider.publicKey,
+            proposal: proposalAddr,
+            proposalVault: proposalVaultAddr,
             amm: ammAddr,
             metaMint: proposal.metaMint,
             usdcMint: proposal.usdcMint,
@@ -52,6 +56,7 @@ export const swapCpiHandler = async (
             conditionalUsdcUserAta: userAtaQuote,
             conditionalMetaVaultAta: vaultAtaBase,
             conditionalUsdcVaultAta: vaultAtaQuote,
+            ammProgram,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         })
         .instruction()

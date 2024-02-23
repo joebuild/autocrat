@@ -22,25 +22,27 @@ pub struct Swap<'info> {
         has_one = usdc_mint,
     )]
     pub proposal: Box<Account<'info, Proposal>>,
+    #[account(
+        mut,
+        seeds = [
+            b"proposal_vault",
+            proposal.key().as_ref(),
+        ],
+        bump
+    )]
+    pub proposal_vault: Box<Account<'info, ProposalVault>>,
+    #[account(mut)]
     /// CHECK:
     pub amm: UncheckedAccount<'info>,
-    /// CHECK
-    pub amm_position: UncheckedAccount<'info>,
-    #[account(
-        constraint = meta_mint.key() == proposal.meta_mint.key()
-    )]
     pub meta_mint: Box<Account<'info, Mint>>,
-    #[account(
-        constraint = usdc_mint.key() == proposal.usdc_mint.key()
-    )]
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(
-        mint::authority = proposal,
+        mint::authority = proposal_vault,
         mint::decimals = meta_mint.decimals,
     )]
     pub conditional_meta_mint: Box<Account<'info, Mint>>,
     #[account(
-        mint::authority = proposal,
+        mint::authority = proposal_vault,
         mint::decimals = usdc_mint.decimals,
     )]
     pub conditional_usdc_mint: Box<Account<'info, Mint>>,
@@ -89,8 +91,8 @@ pub fn handler(
     let Swap {
         user: _,
         proposal,
+        proposal_vault: _,
         amm,
-        amm_position: _,
         meta_mint: _,
         usdc_mint: _,
         conditional_meta_mint: _,

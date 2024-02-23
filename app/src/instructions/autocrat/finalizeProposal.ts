@@ -1,11 +1,12 @@
-import { PublicKey } from "@solana/web3.js";
+import { AccountMeta, PublicKey } from "@solana/web3.js";
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
 import { getDaoAddr, getDaoTreasuryAddr } from '../../utils';
 
 export const finalizeProposalHandler = async (
     client: AutocratClient,
-    proposalAddr: PublicKey
+    proposalAddr: PublicKey,
+    accounts: AccountMeta[]
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     const proposalAcc = await client.program.account.proposal.fetch(proposalAddr);
 
@@ -19,6 +20,7 @@ export const finalizeProposalHandler = async (
             passMarketAmm: proposalAcc.passMarketAmm,
             failMarketAmm: proposalAcc.failMarketAmm,
         })
+        .remainingAccounts(accounts)
         .instruction()
 
     return new InstructionHandler([ix], [], client)

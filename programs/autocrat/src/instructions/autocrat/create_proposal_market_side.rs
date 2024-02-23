@@ -28,7 +28,7 @@ pub struct CreateProposalMarketSide<'info> {
     #[account(
         init_if_needed,
         payer = proposer,
-        space = 8 + std::mem::size_of::<Proposal>(),
+        space = 8 + Proposal::INIT_SPACE,
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
@@ -63,7 +63,6 @@ pub struct CreateProposalMarketSide<'info> {
         init,
         payer = proposer,
         mint::authority = proposal_vault,
-        mint::freeze_authority = proposal_vault,
         mint::decimals = meta_mint.decimals,
     )]
     pub conditional_meta_mint: Box<Account<'info, Mint>>,
@@ -71,7 +70,6 @@ pub struct CreateProposalMarketSide<'info> {
         init,
         payer = proposer,
         mint::authority = proposal_vault,
-        mint::freeze_authority = proposal_vault,
         mint::decimals = usdc_mint.decimals,
     )]
     pub conditional_usdc_mint: Box<Account<'info, Mint>>,
@@ -194,30 +192,22 @@ pub fn handler(
     let seeds = generate_treasury_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
     let signer = &[&seeds[..]];
 
-    token::mint_to(
-        CpiContext::new_with_signer(
-            token_program.to_account_info(),
-            MintTo {
-                mint: conditional_meta_mint.to_account_info(),
-                to: conditional_meta_proposer_ata.to_account_info(),
-                authority: proposal_vault.to_account_info(),
-            },
-            signer,
-        ),
+    token_mint_signed(
         proposal.proposer_inititial_conditional_meta_minted,
+        token_program,
+        conditional_meta_mint.as_ref(),
+        conditional_meta_proposer_ata.as_ref(),
+        proposal_vault.as_ref(),
+        seeds,
     )?;
 
-    token::mint_to(
-        CpiContext::new_with_signer(
-            token_program.to_account_info(),
-            MintTo {
-                mint: conditional_usdc_mint.to_account_info(),
-                to: conditional_usdc_proposer_ata.to_account_info(),
-                authority: proposal_vault.to_account_info(),
-            },
-            signer,
-        ),
+    token_mint_signed(
         proposal.proposer_inititial_conditional_usdc_minted,
+        token_program,
+        conditional_usdc_mint.as_ref(),
+        conditional_usdc_proposer_ata.as_ref(),
+        proposal_vault.as_ref(),
+        seeds,
     )?;
 
     // make sure the quote amount meets liquidity requirements

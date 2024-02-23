@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::instruction::Instruction;
 
-#[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq, InitSpace)]
 pub enum ProposalState {
     Initialize,
     Pending,
@@ -10,9 +10,11 @@ pub enum ProposalState {
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct Proposal {
     pub number: u64,
     pub proposer: Pubkey,
+    #[max_len(50)]
     pub description_url: String,
     pub slot_enqueued: u64,
     pub state: ProposalState,

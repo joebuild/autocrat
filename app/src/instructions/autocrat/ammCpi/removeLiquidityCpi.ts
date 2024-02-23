@@ -1,7 +1,7 @@
 import { PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { AutocratClient } from "../../../AutocratClient";
 import { InstructionHandler } from "../../../InstructionHandler";
-import { getATA } from '../../../utils';
+import { getATA, getAmmPositionAddr, getProposalVaultAddr } from '../../../utils';
 import BN from "bn.js";
 
 export const removeLiquidityCpiHandler = async (
@@ -9,29 +9,27 @@ export const removeLiquidityCpiHandler = async (
     proposalAddr: PublicKey,
     ammAddr: PublicKey,
     removeBps: BN,
+    ammProgram: PublicKey,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     const proposal = await client.program.account.proposal.fetch(proposalAddr);
+    let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
 
     if (proposal.passMarketAmm.toBase58() !== ammAddr.toBase58() && proposal.failMarketAmm.toBase58() !== ammAddr.toBase58()) {
         throw new Error("the amm address passed in removeLiquidityCpiHandler does not correspond to either the pass or fail market");
     }
 
-    let baseMint: PublicKey;
-    let quoteMint: PublicKey;
+    let conditionalMetaMint: PublicKey;
+    let conditionalUsdcMint: PublicKey;
 
     if (proposal.passMarketAmm.toBase58() === ammAddr.toBase58()) {
-        baseMint = proposal.conditionalOnPassMetaMint
-        quoteMint = proposal.conditionalOnPassUsdcMint
+        conditionalMetaMint = proposal.conditionalOnPassMetaMint
+        conditionalUsdcMint = proposal.conditionalOnPassUsdcMint
     } else {
-        baseMint = proposal.conditionalOnFailMetaMint
-        quoteMint = proposal.conditionalOnFailUsdcMint
+        conditionalMetaMint = proposal.conditionalOnFailMetaMint
+        conditionalUsdcMint = proposal.conditionalOnFailUsdcMint
     }
 
-    let userAtaBase = getATA(baseMint, client.provider.publicKey)[0]
-    let userAtaQuote = getATA(quoteMint, client.provider.publicKey)[0]
-
-    let vaultAtaBase = getATA(baseMint, ammAddr)[0]
-    let vaultAtaQuote = getATA(quoteMint, ammAddr)[0]
+    let ammPositionAddr = getAmmPositionAddr(ammProgram, ammAddr, client.provider.publicKey)[0]
 
     let ix = await client.program.methods
         .removeLiquidity(
@@ -39,15 +37,19 @@ export const removeLiquidityCpiHandler = async (
         )
         .accounts({
             user: client.provider.publicKey,
+            proposal: proposalAddr,
+            proposalVault: proposalVaultAddr,
             amm: ammAddr,
+            ammPosition: ammPositionAddr,
             metaMint: proposal.metaMint,
             usdcMint: proposal.usdcMint,
-            conditionalMetaMint: baseMint,
-            conditionalUsdcMint: quoteMint,
-            conditionalMetaUserAta: userAtaBase,
-            conditionalUsdcUserAta: userAtaQuote,
-            conditionalMetaVaultAta: vaultAtaBase,
-            conditionalUsdcVaultAta: vaultAtaQuote,
+            conditionalMetaMint,
+            conditionalUsdcMint,
+            conditionalMetaUserAta: getATA(conditionalMetaMint, client.provider.publicKey)[0],
+            conditionalUsdcUserAta: getATA(conditionalUsdcMint, client.provider.publicKey)[0],
+            conditionalMetaVaultAta: getATA(conditionalMetaMint, ammAddr)[0],
+            conditionalUsdcVaultAta: getATA(conditionalUsdcMint, ammAddr)[0],
+            ammProgram,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         })
         .instruction()

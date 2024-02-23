@@ -1,5 +1,6 @@
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import {
+    AccountMeta,
     AddressLookupTableAccount,
     Keypair,
     PublicKey,
@@ -132,11 +133,13 @@ export class AutocratClient {
     }
 
     async finalizeProposal(
-        proposalAddr: PublicKey
+        proposalAddr: PublicKey,
+        accounts: AccountMeta[]
     ) {
         return ixs.finalizeProposalHandler(
             this,
             proposalAddr,
+            accounts
         )
     }
 
@@ -163,26 +166,32 @@ export class AutocratClient {
     }
 
     async createAmmPositionCpi(
-        amm: PublicKey
+        proposalAddr: PublicKey,
+        amm: PublicKey,
+        ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.createAmmPositionCpiHandler(
             this,
-            amm
+            proposalAddr,
+            amm,
+            ammProgram
         )
     }
 
     async addLiquidityCpi(
+        proposalAddr: PublicKey,
         ammAddr: PublicKey,
-        ammPositionAddr: PublicKey,
         maxBaseAmount: BN,
         maxQuoteAmount: BN,
+        ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.addLiquidityCpiHandler(
             this,
+            proposalAddr,
             ammAddr,
-            ammPositionAddr,
             maxBaseAmount,
-            maxQuoteAmount
+            maxQuoteAmount,
+            ammProgram
         )
     }
 
@@ -190,12 +199,14 @@ export class AutocratClient {
         proposalAddr: PublicKey,
         ammAddr: PublicKey,
         removeBps: BN,
+        ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.removeLiquidityCpiHandler(
             this,
             proposalAddr,
             ammAddr,
-            removeBps
+            removeBps,
+            ammProgram
         )
     }
 
@@ -205,6 +216,7 @@ export class AutocratClient {
         isQuoteToBase: boolean,
         inputAmount: BN,
         minOutputAmount: BN,
+        ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.swapCpiHandler(
             this,
@@ -213,6 +225,7 @@ export class AutocratClient {
             isQuoteToBase,
             inputAmount,
             minOutputAmount,
+            ammProgram
         )
     }
 }

@@ -14,6 +14,7 @@ pub struct CreatePosition<'info> {
     pub proposal: Box<Account<'info, Proposal>>,
     /// CHECK:
     pub amm: UncheckedAccount<'info>,
+    #[account(mut)]
     /// CHECK
     pub amm_position: UncheckedAccount<'info>,
     #[account(address = amm::ID)]
