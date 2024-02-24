@@ -10,6 +10,7 @@ pub struct Dao {
     pub usdc_mint: Pubkey,
 
     pub proposal_count: u64,
+    pub proposals_active: u32,
 
     // the percentage, in basis points, the pass price needs to be above the
     // fail price in order for the proposal to pass

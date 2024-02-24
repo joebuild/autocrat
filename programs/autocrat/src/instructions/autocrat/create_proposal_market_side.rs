@@ -20,21 +20,22 @@ use crate::state::*;
 use crate::utils::*;
 
 #[derive(Accounts)]
-#[instruction(is_pass_market: bool)]
 pub struct CreateProposalMarketSide<'info> {
     #[account(mut)]
     pub proposer: Signer<'info>,
     #[account(
-        init_if_needed,
-        payer = proposer,
-        space = 8 + Proposal::INIT_SPACE,
+        mut,
+        seeds = [
+            b"proposal",
+            proposal.proposer.as_ref(),
+            proposal.number.to_le_bytes().as_ref(),
+        ],
+        bump
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         signer,
-        init_if_needed,
-        payer = proposer,
-        space = 8 + std::mem::size_of::<ProposalVault>(),
+        mut,
         seeds = [
             b"proposal_vault",
             proposal.key().as_ref(),
@@ -115,8 +116,6 @@ pub struct CreateProposalMarketSide<'info> {
 pub fn handler(
     ctx: Context<CreateProposalMarketSide>,
     is_pass_market: bool,
-    mint_cond_meta: u64, // only needed for the first market 'side'
-    mint_cond_usdc: u64, // only needed for the first market 'side'
     amm_cond_meta_deposit: u64,
     amm_cond_usdc_deposit: u64,
 ) -> Result<()> {
@@ -142,28 +141,8 @@ pub fn handler(
         system_program: _,
     } = ctx.accounts;
 
-    // verify proposal submission steps are correct
-    if proposal.is_pass_market_created || proposal.is_fail_market_created {
-        assert_eq!(proposal.proposer, proposer.key());
-    } else {
-        proposal.proposer = proposer.key();
-    }
-
-    // if the proposal account was just created, then set some initial values and transfer the meta + usdc
-    if !proposal.is_pass_market_created && !proposal.is_fail_market_created {
-        proposal.state = ProposalState::Initialize;
-
-        proposal.meta_mint = dao.meta_mint;
-        proposal.usdc_mint = dao.usdc_mint;
-
-        proposal_vault.proposal = proposal.key();
-
-        proposal.proposer_inititial_conditional_meta_minted = mint_cond_meta;
-        proposal.proposer_inititial_conditional_usdc_minted = mint_cond_usdc;
-    } else {
-        // and if it wasn't just created, make sure we're still in the initialize state
-        assert_eq!(proposal.state, ProposalState::Initialize);
-    }
+    assert_eq!(proposal.proposer, proposer.key());
+    assert_eq!(proposal.state, ProposalState::Initialize);
 
     // set the corresponding pass/fail parameters
     if is_pass_market {

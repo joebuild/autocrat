@@ -1,15 +1,13 @@
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
-import { getATA, getAmmAddr, getAmmPositionAddr, getDaoAddr, getProposalVaultAddr } from '../../utils';
+import { getATA, getAmmAddr, getAmmPositionAddr, getDaoAddr, getProposalAddr, getProposalVaultAddr } from '../../utils';
 import BN from "bn.js";
 import { Keypair, PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 
 export const createProposalMarketSideHandler = async (
     client: AutocratClient,
-    proposalKeypair: Keypair,
+    proposalNumber: number,
     isPassMarket: boolean,
-    condMetaToMint: BN,
-    condUsdcToMint: BN,
     ammBaseAmountDeposit: BN,
     ammQuoteAmountDeposit: BN,
     ammProgram: PublicKey,
@@ -17,7 +15,7 @@ export const createProposalMarketSideHandler = async (
     let daoAddr = getDaoAddr(client.program.programId)[0]
     let dao = await client.program.account.dao.fetch(daoAddr)
 
-    let proposalAddr = proposalKeypair.publicKey
+    let proposalAddr = getProposalAddr(client.program.programId, client.provider.publicKey, proposalNumber)[0]
     let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
 
     let conditionalMetaMintKeypair = Keypair.generate()
@@ -31,8 +29,6 @@ export const createProposalMarketSideHandler = async (
     let ix = await client.program.methods
         .createProposalMarketSide(
             isPassMarket,
-            condMetaToMint,
-            condUsdcToMint,
             ammBaseAmountDeposit,
             ammQuoteAmountDeposit,
         )
@@ -56,5 +52,5 @@ export const createProposalMarketSideHandler = async (
         })
         .instruction()
 
-    return new InstructionHandler([ix], [proposalKeypair, conditionalMetaMintKeypair, conditionalUsdcMintKeypair], client)
+    return new InstructionHandler([ix], [conditionalMetaMintKeypair, conditionalUsdcMintKeypair], client)
 };

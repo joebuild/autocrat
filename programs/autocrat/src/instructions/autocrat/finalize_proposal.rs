@@ -15,6 +15,12 @@ pub struct FinalizeProposal<'info> {
         mut,
         has_one = pass_market_amm,
         has_one = fail_market_amm,
+        seeds = [
+            b"proposal",
+            proposal.proposer.as_ref(),
+            proposal.number.to_le_bytes().as_ref()
+        ],
+        bump
     )]
     pub proposal: Account<'info, Proposal>,
     #[account(
@@ -61,6 +67,8 @@ pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
         proposal.state == ProposalState::Pending,
         ErrorCode::ProposalAlreadyFinalized
     );
+
+    dao.proposals_active = dao.proposals_active.checked_sub(1).unwrap();
 
     // if the proposal has not been finalized within the `findalize_window_slots`, then fail it
     // this is important if there is a bug in the proposal instructions

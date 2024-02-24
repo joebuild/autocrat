@@ -18,7 +18,7 @@ import {
 import { assert } from "chai";
 
 import { AutocratClient } from "../app/src/AutocratClient";
-import { getATA, getAmmPositionAddr, getDaoAddr, getDaoTreasuryAddr, sleep } from "../app/src/utils";
+import { getATA, getAmmPositionAddr, getDaoAddr, getDaoTreasuryAddr, getProposalAddr, sleep } from "../app/src/utils";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AmmClient } from "../app/src/AmmClient";
 import { InstructionHandler } from "../app/src/InstructionHandler";
@@ -43,7 +43,7 @@ describe("autocrat", async function () {
         userMetaAccount,
         userUsdcAccount,
         proposalNumber,
-        proposalKeypair;
+        proposalAddr;
 
     before(async function () {
         context = await startAnchor(
@@ -74,8 +74,6 @@ describe("autocrat", async function () {
             payer.publicKey,
             6
         );
-
-        proposalKeypair = Keypair.generate()
     });
 
     beforeEach(async function () {
@@ -159,7 +157,9 @@ describe("autocrat", async function () {
 
             let [daoAddr] = getDaoAddr(autocratClient.program.programId);
             dao = await autocratClient.program.account.dao.fetch(daoAddr);
+
             proposalNumber = dao.proposalCount
+            proposalAddr = getProposalAddr(autocratClient.program.programId, autocratClient.provider.publicKey, proposalNumber)[0]
 
             assert.equal(dao.passThresholdBps, 123);
             assert.equal(dao.proposalDurationSlots, 69_420);
@@ -167,6 +167,38 @@ describe("autocrat", async function () {
             assert.equal(dao.ammInitialQuoteLiquidityAmount, 100_000_005);
             assert.equal(dao.ammSwapFeeBps, 600);
             assert.equal(dao.ammLtwapDecimals, 9);
+        });
+    });
+
+    describe("#create_proposal", async function () {
+        it("creates a proposal", async function () {
+
+            const proposalDescription = "https://based-proposals.com/10"
+
+            let daoAddr = getDaoAddr(autocratClient.program.programId)[0];
+            const daoAccStart = await autocratClient.program.account.dao.fetch(daoAddr);
+
+            let ixh = await autocratClient.createProposal(
+                proposalNumber,
+                proposalDescription,
+                new BN(10 * 10 ** 9),
+                new BN(10_000 * 10 ** 6),
+            )
+            await ixh
+                .bankrun(banksClient);
+
+            const daoAccEnd = await autocratClient.program.account.dao.fetch(daoAddr);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
+
+            assert.equal(proposalAcc.proposer.toBase58(), payer.publicKey);
+
+            assert.equal(proposalAcc.proposerInititialConditionalMetaMinted.toNumber(), 10 * 10 ** 9);
+            assert.equal(proposalAcc.proposerInititialConditionalUsdcMinted.toNumber(), 10_000 * 10 ** 6);
+
+            assert(proposalAcc.state['initialize'])
+            assert.equal(proposalAcc.descriptionUrl, proposalDescription);
+
+            assert.equal(daoAccStart.proposalCount.toNumber() + 1, daoAccEnd.proposalCount.toNumber())
         });
     });
 
@@ -221,10 +253,8 @@ describe("autocrat", async function () {
         it("creates a proposal [pass] market", async function () {
 
             let ixh = await autocratClient.createProposalMarketSide(
-                proposalKeypair,
+                proposalNumber,
                 true,
-                new BN(10 * 10 ** 9),
-                new BN(10_000 * 10 ** 6),
                 new BN(10 * 10 ** 9),
                 new BN(10_000 * 10 ** 6),
             )
@@ -232,7 +262,7 @@ describe("autocrat", async function () {
                 .setComputeUnits(400_000)
                 .bankrun(banksClient);
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
 
             assert.equal(proposalAcc.isPassMarketCreated, true);
             assert.equal(proposalAcc.isFailMarketCreated, false);
@@ -257,10 +287,8 @@ describe("autocrat", async function () {
         it("creates a proposal [fail] market", async function () {
 
             let ixh = await autocratClient.createProposalMarketSide(
-                proposalKeypair,
+                proposalNumber,
                 false,
-                new BN(10 * 10 ** 9),
-                new BN(10_000 * 10 ** 6),
                 new BN(10 * 10 ** 9),
                 new BN(10_000 * 10 ** 6),
             )
@@ -268,7 +296,7 @@ describe("autocrat", async function () {
                 .setComputeUnits(400_000)
                 .bankrun(banksClient);
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
 
             assert.equal(proposalAcc.isFailMarketCreated, true);
 
@@ -288,36 +316,25 @@ describe("autocrat", async function () {
 
             const currentClock = await context.banksClient.getClock();
 
-            const proposalDescription = "https://based-proposals.com/10"
-
-            let [daoAddr] = getDaoAddr(autocratClient.program.programId);
-            const daoAccStart = await autocratClient.program.account.dao.fetch(daoAddr);
-
             let ixh = await autocratClient.submitProposal(
-                proposalKeypair,
+                proposalNumber,
                 proposalInstructionsAddr,
-                proposalDescription
             );
             await ixh
                 .setComputeUnits(400_000)
                 .bankrun(banksClient);
 
-            const daoAccEnd = await autocratClient.program.account.dao.fetch(daoAddr);
-
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
 
             assert(proposalAcc.state['pending'])
             assert(BigInt(proposalAcc.slotEnqueued.toNumber()) >= currentClock.slot);
-            assert.equal(proposalAcc.descriptionUrl, proposalDescription);
-
-            assert.equal(daoAccStart.proposalCount.toNumber() + 1, daoAccEnd.proposalCount.toNumber())
         });
     });
 
     describe("#mint_conditional_tokens", async function () {
         it("mint conditional tokens for proposal", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
 
             const metaToMint = 100 * 10 ** 9
             const usdcToMint = 100_000 * 10 ** 6
@@ -331,7 +348,7 @@ describe("autocrat", async function () {
             let startCondFailUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
 
             let ixh = await autocratClient.mintConditionalTokens(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 new BN(metaToMint),
                 new BN(usdcToMint),
             );
@@ -358,7 +375,7 @@ describe("autocrat", async function () {
     describe("#merge_conditional_tokens", async function () {
         it("merge conditional tokens for proposal", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
 
             const metaToMerge = 1 * 10 ** 9
             const usdcToMerge = 1_000 * 10 ** 6
@@ -372,7 +389,7 @@ describe("autocrat", async function () {
             let startCondFailUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
 
             let ixh = await autocratClient.mergeConditionalTokens(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 new BN(metaToMerge),
                 new BN(usdcToMerge),
             );
@@ -399,11 +416,11 @@ describe("autocrat", async function () {
     describe("#add_liquidity", async function () {
         it("add liquidity to an amm/amm position (pass)", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const passMarketAmmAddr = proposalAcc.passMarketAmm
 
             let ixh = await autocratClient.addLiquidityCpi(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 passMarketAmmAddr,
                 new BN(1 * 10 * 9),
                 new BN(1_000 * 10 ** 6),
@@ -419,11 +436,11 @@ describe("autocrat", async function () {
 
         it("add liquidity to an amm/amm position (fail)", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const failMarketAmmAddr = proposalAcc.failMarketAmm
 
             let ixh = await autocratClient.addLiquidityCpi(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 failMarketAmmAddr,
                 new BN(1 * 10 * 9),
                 new BN(1_000 * 10 ** 6),
@@ -441,14 +458,14 @@ describe("autocrat", async function () {
     describe("#swap", async function () {
         it("swap quote to base (pass)", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const passMarketAmmAddr = proposalAcc.passMarketAmm
 
             let startCondPassMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassMetaMint, payer.publicKey)[0])).amount
             let startCondPassUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassUsdcMint, payer.publicKey)[0])).amount
 
             let ixh = await autocratClient.swapCpi(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 passMarketAmmAddr,
                 true,
                 new BN(1_000 * 10 ** 6),
@@ -465,14 +482,14 @@ describe("autocrat", async function () {
 
         it("swap base to quote (pass)", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const passMarketAmmAddr = proposalAcc.passMarketAmm
 
             let startCondPassMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassMetaMint, payer.publicKey)[0])).amount
             let startCondPassUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassUsdcMint, payer.publicKey)[0])).amount
 
             let ixh = await autocratClient.swapCpi(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 passMarketAmmAddr,
                 false,
                 new BN(1 * 10 ** 9),
@@ -489,14 +506,14 @@ describe("autocrat", async function () {
 
         it("swap quote to base (fail)", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const failMarketAmmAddr = proposalAcc.failMarketAmm
 
             let startCondFailMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, payer.publicKey)[0])).amount
             let startCondFailUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
 
             let ixh = await autocratClient.swapCpi(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 failMarketAmmAddr,
                 true,
                 new BN(1_000 * 10 ** 6),
@@ -513,14 +530,14 @@ describe("autocrat", async function () {
 
         it("swap base to quote (fail)", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const failMarketAmmAddr = proposalAcc.failMarketAmm
 
             let startCondFailMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, payer.publicKey)[0])).amount
             let startCondFailUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
 
             let ixh = await autocratClient.swapCpi(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 failMarketAmmAddr,
                 false,
                 new BN(1 * 10 ** 9),
@@ -548,12 +565,12 @@ describe("autocrat", async function () {
             }]
 
             let ixh = await autocratClient.finalizeProposal(
-                proposalKeypair.publicKey,
+                proposalNumber,
                 accounts
             );
             await ixh.bankrun(banksClient);
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             console.log(proposalAcc.state)
 
             assert(!proposalAcc.state['pending'])
@@ -577,11 +594,11 @@ describe("autocrat", async function () {
     describe("#remove_liquidity", async function () {
         it("remove liquidity from an amm/amm position (pass)", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const passMarketAmmAddr = proposalAcc.passMarketAmm
 
             let ixh = await autocratClient.removeLiquidityCpi(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 passMarketAmmAddr,
                 new BN(10_000), // 10_000 removes all liquidity
             );
@@ -598,11 +615,11 @@ describe("autocrat", async function () {
 
         it("remove liquidity from an amm/amm position (fail)", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const failMarketAmmAddr = proposalAcc.failMarketAmm
 
             let ixh = await autocratClient.removeLiquidityCpi(
-                proposalKeypair.publicKey,
+                proposalAddr,
                 failMarketAmmAddr,
                 new BN(10_000), // 10_000 removes all liquidity
             );
@@ -621,7 +638,7 @@ describe("autocrat", async function () {
     describe("#redeem_conditional_tokens", async function () {
         it("redeem conditional tokens from proposal", async function () {
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
 
             let startMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.metaMint, payer.publicKey)[0])).amount
             let startUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.usdcMint, payer.publicKey)[0])).amount
@@ -632,9 +649,8 @@ describe("autocrat", async function () {
             let startCondFailMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, payer.publicKey)[0])).amount
             let startCondFailUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
 
-
             let ixh = await autocratClient.redeemConditionalTokens(
-                proposalKeypair.publicKey,
+                proposalAddr,
             );
             await ixh.bankrun(banksClient);
 

@@ -3,31 +3,34 @@ import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
 import { getATA, getDaoAddr, getProposalAddr, getProposalVaultAddr } from '../../utils';
 import { Keypair, PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
+import BN from "bn.js";
 
-export const submitProposalHandler = async (
+export const createProposalHandler = async (
     client: AutocratClient,
     proposalNumber: number,
-    proposalInstructions: PublicKey,
-    ammProgram: PublicKey,
+    descriptionUrl: string,
+    condMetaToMint: BN,
+    condUsdcToMint: BN,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     let daoAddr = getDaoAddr(client.program.programId)[0]
+    let dao = await client.program.account.dao.fetch(daoAddr)
 
     let proposalAddr = getProposalAddr(client.program.programId, client.provider.publicKey, proposalNumber)[0]
-    let proposal = await client.program.account.proposal.fetch(proposalAddr)
-
     let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
 
     let ix = await client.program.methods
-        .submitProposal()
+        .createProposal(descriptionUrl, condMetaToMint, condUsdcToMint)
         .accounts({
             proposer: client.provider.publicKey,
             dao: daoAddr,
             proposal: proposalAddr,
             proposalVault: proposalVaultAddr,
-            proposalInstructions,
-            passMarketAmm: proposal.passMarketAmm,
-            failMarketAmm: proposal.failMarketAmm,
-            ammProgram,
+            metaMint: dao.metaMint,
+            usdcMint: dao.usdcMint,
+            metaProposerAta: getATA(dao.metaMint, client.provider.publicKey)[0],
+            usdcProposerAta: getATA(dao.usdcMint, client.provider.publicKey)[0],
+            metaVaultAta: getATA(dao.metaMint, proposalVaultAddr)[0],
+            usdcVaultAta: getATA(dao.usdcMint, proposalVaultAddr)[0],
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         })
         .instruction()

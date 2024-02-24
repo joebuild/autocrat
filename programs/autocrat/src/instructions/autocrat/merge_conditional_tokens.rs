@@ -20,11 +20,19 @@ pub struct MergeConditionalTokens<'info> {
         has_one = conditional_on_pass_usdc_mint,
         has_one = conditional_on_fail_meta_mint,
         has_one = conditional_on_fail_usdc_mint,
+        seeds = [
+            b"proposal",
+            proposal.proposer.as_ref(),
+            proposal.number.to_le_bytes().as_ref()
+        ],
+        bump
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         signer,
         mut,
+        has_one = meta_vault_ata,
+        has_one = usdc_vault_ata,
         seeds = [
             b"proposal_vault",
             proposal.key().as_ref(),

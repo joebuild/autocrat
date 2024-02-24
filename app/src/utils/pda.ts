@@ -22,6 +22,17 @@ export const getDaoTreasuryAddr = (
     );
 };
 
+export const getProposalAddr = (
+    programId: PublicKey,
+    proposer: PublicKey,
+    proposalNumber: number,
+): [PublicKey, number] => {
+    return PublicKey.findProgramAddressSync(
+        [utils.bytes.utf8.encode("proposal"), proposer.toBuffer(), numToBytes64LE(proposalNumber)],
+        programId,
+    );
+};
+
 export const getProposalVaultAddr = (
     programId: PublicKey,
     proposal: PublicKey

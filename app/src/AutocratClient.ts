@@ -98,21 +98,32 @@ export class AutocratClient {
         )
     }
 
-    async createProposalMarketSide(
-        proposalKeypair: Keypair,
-        isPassMarket: boolean,
+    async createProposal(
+        proposalNumber: number,
+        descriptionUrl: string,
         condMetaToMint: BN,
         condUsdcToMint: BN,
+    ) {
+        return ixs.createProposalHandler(
+            this,
+            proposalNumber,
+            descriptionUrl,
+            condMetaToMint,
+            condUsdcToMint,
+        )
+    }
+
+    async createProposalMarketSide(
+        proposalNumber: number,
+        isPassMarket: boolean,
         ammBaseAmountDeposit: BN,
         ammQuoteAmountDeposit: BN,
         ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.createProposalMarketSideHandler(
             this,
-            proposalKeypair,
+            proposalNumber,
             isPassMarket,
-            condMetaToMint,
-            condUsdcToMint,
             ammBaseAmountDeposit,
             ammQuoteAmountDeposit,
             ammProgram
@@ -120,27 +131,25 @@ export class AutocratClient {
     }
 
     async submitProposal(
-        proposalKeypair: Keypair,
+        proposalNumber: number,
         proposalInstructions: PublicKey,
-        descriptionUrl: string,
         ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.submitProposalHandler(
             this,
-            proposalKeypair,
+            proposalNumber,
             proposalInstructions,
-            descriptionUrl,
             ammProgram
         )
     }
 
     async finalizeProposal(
-        proposalAddr: PublicKey,
+        proposalNumber: number,
         accounts: AccountMeta[]
     ) {
         return ixs.finalizeProposalHandler(
             this,
-            proposalAddr,
+            proposalNumber,
             accounts
         )
     }

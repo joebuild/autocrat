@@ -1,4 +1,5 @@
 pub use add_proposal_instructions::*;
+pub use create_proposal::*;
 pub use create_proposal_instructions::*;
 pub use create_proposal_market_side::*;
 pub use finalize_proposal::*;
@@ -8,6 +9,7 @@ pub use redeem_conditional_tokens::*;
 pub use submit_proposal::*;
 
 pub mod add_proposal_instructions;
+pub mod create_proposal;
 pub mod create_proposal_instructions;
 pub mod create_proposal_market_side;
 pub mod finalize_proposal;

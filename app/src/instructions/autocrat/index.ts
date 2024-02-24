@@ -1,6 +1,7 @@
 export * from './ammCpi/addLiquidityCpi'
 export * from './addProposalInstructions'
 export * from './ammCpi/createAmmPositionCpi'
+export * from './createProposal'
 export * from './createProposalMarketSide'
 export * from './submitProposal'
 export * from './createProposalInstructions'
