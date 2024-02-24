@@ -152,8 +152,6 @@ pub fn handler(
     // if the proposal account was just created, then set some initial values and transfer the meta + usdc
     if !proposal.is_pass_market_created && !proposal.is_fail_market_created {
         proposal.state = ProposalState::Initialize;
-        proposal.number = dao.proposal_count;
-        dao.proposal_count += 1;
 
         proposal.meta_mint = dao.meta_mint;
         proposal.usdc_mint = dao.usdc_mint;

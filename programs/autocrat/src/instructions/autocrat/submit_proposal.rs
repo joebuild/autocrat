@@ -22,7 +22,11 @@ pub struct SubmitProposal<'info> {
         mut,
         has_one = meta_mint,
         has_one = usdc_mint,
+        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        bump
     )]
+    pub dao: Box<Account<'info, Dao>>,
+    #[account(mut)]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         signer,
@@ -88,6 +92,7 @@ pub struct SubmitProposal<'info> {
 pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<()> {
     let SubmitProposal {
         proposer,
+        dao,
         proposal,
         proposal_vault,
         proposal_instructions,
@@ -120,6 +125,9 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
     proposal.proposal_vault = proposal_vault.key();
     proposal.instructions = proposal_instructions.key();
     proposal.slot_enqueued = Clock::get()?.slot;
+
+    proposal.number = dao.proposal_count;
+    dao.proposal_count += 1;
 
     proposal_instructions.proposal_instructions_frozen = true;
 

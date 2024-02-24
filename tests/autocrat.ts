@@ -290,6 +290,9 @@ describe("autocrat", async function () {
 
             const proposalDescription = "https://based-proposals.com/10"
 
+            let [daoAddr] = getDaoAddr(autocratClient.program.programId);
+            const daoAccStart = await autocratClient.program.account.dao.fetch(daoAddr);
+
             let ixh = await autocratClient.submitProposal(
                 proposalKeypair,
                 proposalInstructionsAddr,
@@ -299,11 +302,15 @@ describe("autocrat", async function () {
                 .setComputeUnits(400_000)
                 .bankrun(banksClient);
 
+            const daoAccEnd = await autocratClient.program.account.dao.fetch(daoAddr);
+
             const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
 
             assert(proposalAcc.state['pending'])
             assert(BigInt(proposalAcc.slotEnqueued.toNumber()) >= currentClock.slot);
             assert.equal(proposalAcc.descriptionUrl, proposalDescription);
+
+            assert.equal(daoAccStart.proposalCount.toNumber() + 1, daoAccEnd.proposalCount.toNumber())
         });
     });
 
