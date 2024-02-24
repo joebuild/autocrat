@@ -89,10 +89,12 @@ pub fn handler(
     max_base_amount: u64,
     max_quote_amount: u64,
 ) -> Result<()> {
-    assert!(
+    require!(
         ctx.accounts.proposal.pass_market_amm == ctx.accounts.amm.key()
-            || ctx.accounts.proposal.fail_market_amm == ctx.accounts.amm.key()
+            || ctx.accounts.proposal.fail_market_amm == ctx.accounts.amm.key(),
+        ErrorCode::AmmProposalMismatch
     );
+
     assert_eq!(ctx.accounts.proposal.state, ProposalState::Pending);
 
     assert!(max_base_amount > 0);

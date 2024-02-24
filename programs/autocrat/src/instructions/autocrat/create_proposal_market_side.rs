@@ -4,7 +4,6 @@ use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::Mint;
-use anchor_spl::token::MintTo;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
 
@@ -190,7 +189,6 @@ pub fn handler(
     // mint the proposer's conditional tokens
     let proposal_vault_key = proposal_vault.key();
     let seeds = generate_proposal_vault_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
-    let signer = &[&seeds[..]];
 
     token_mint_signed(
         proposal.proposer_inititial_conditional_meta_minted,

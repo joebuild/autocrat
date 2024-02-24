@@ -86,14 +86,23 @@ pub struct RemoveLiquidity<'info> {
 }
 
 pub fn handler(ctx: Context<RemoveLiquidity>, remove_bps: u64) -> Result<()> {
-    assert!(
+    require!(
         ctx.accounts.proposal.pass_market_amm == ctx.accounts.amm.key()
-            || ctx.accounts.proposal.fail_market_amm == ctx.accounts.amm.key()
+            || ctx.accounts.proposal.fail_market_amm == ctx.accounts.amm.key(),
+        ErrorCode::AmmProposalMismatch
     );
-    assert_eq!(ctx.accounts.proposal.state, ProposalState::Pending);
 
-    assert!(remove_bps > 0);
-    assert!(remove_bps <= BPS_SCALE);
+    require!(
+        remove_bps <= BPS_SCALE && remove_bps > 0,
+        ErrorCode::RemoveLiquidityBpsOutOfRange
+    );
+
+    // stop the proposer from rugging liqudity before the proposal is concluded
+    if ctx.accounts.proposal.proposer == ctx.accounts.user.key()
+        && ctx.accounts.proposal.state == ProposalState::Pending
+    {
+        return err!(ErrorCode::ProposerCannotPullLiquidityWhileMarketIsPending);
+    }
 
     // remove liquidity from LP position
     let add_liquidity_ctx = ctx.accounts.into_remove_liquidity_context();

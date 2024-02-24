@@ -91,8 +91,8 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
         proposal,
         proposal_vault,
         proposal_instructions,
-        pass_market_amm,
-        fail_market_amm,
+        pass_market_amm: _,
+        fail_market_amm: _,
         meta_mint: _,
         usdc_mint: _,
         meta_proposer_ata,
@@ -102,7 +102,7 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
         amm_program: _,
         associated_token_program: _,
         token_program,
-        instructions,
+        instructions: _,
         system_program: _,
     } = ctx.accounts;
 

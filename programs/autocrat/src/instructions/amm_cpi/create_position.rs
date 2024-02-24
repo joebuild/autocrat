@@ -26,11 +26,16 @@ pub struct CreatePosition<'info> {
 }
 
 pub fn handler(ctx: Context<CreatePosition>) -> Result<()> {
-    assert!(
+    require!(
         ctx.accounts.proposal.pass_market_amm == ctx.accounts.amm.key()
-            || ctx.accounts.proposal.fail_market_amm == ctx.accounts.amm.key()
+            || ctx.accounts.proposal.fail_market_amm == ctx.accounts.amm.key(),
+        ErrorCode::AmmProposalMismatch
     );
-    assert_eq!(ctx.accounts.proposal.state, ProposalState::Pending);
+
+    require!(
+        ctx.accounts.proposal.state == ProposalState::Pending,
+        ErrorCode::ProposalIsNoLongerPending
+    );
 
     // create proposer LP position
     let create_amm_position_ctx = ctx.accounts.into_create_amm_position_context();

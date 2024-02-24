@@ -108,8 +108,15 @@ pub fn handler(
         system_program: _,
     } = ctx.accounts;
 
-    assert!(proposal.pass_market_amm == amm.key() || proposal.fail_market_amm == amm.key());
-    assert_eq!(proposal.state, ProposalState::Pending);
+    require!(
+        proposal.pass_market_amm == amm.key() || proposal.fail_market_amm == amm.key(),
+        ErrorCode::AmmProposalMismatch
+    );
+
+    require!(
+        proposal.state == ProposalState::Pending,
+        ErrorCode::ProposalIsNoLongerPending
+    );
 
     assert!(input_amount > 0);
     assert!(output_amount_min > 0);

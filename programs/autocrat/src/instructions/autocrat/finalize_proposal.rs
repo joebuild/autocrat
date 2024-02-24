@@ -40,7 +40,7 @@ pub struct FinalizeProposal<'info> {
 
 pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
     let FinalizeProposal {
-        user,
+        user: _,
         proposal,
         proposal_instructions,
         dao,

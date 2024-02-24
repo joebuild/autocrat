@@ -2,6 +2,12 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
+    #[msg("The proposal is no longer pending")]
+    ProposalIsNoLongerPending,
+    #[msg("The provided amm does not match the pass or fail market for this proposal")]
+    AmmProposalMismatch,
+    #[msg("Remove liquidity BPS is out of range")]
+    RemoveLiquidityBpsOutOfRange,
     #[msg(
         "Either the `pass_market` or the `fail_market`'s tokens doesn't match the vaults supplied"
     )]

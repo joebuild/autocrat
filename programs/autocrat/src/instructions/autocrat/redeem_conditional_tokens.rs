@@ -135,7 +135,6 @@ pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
 
     let proposal_vault_key = proposal_vault.key();
     let seeds = generate_proposal_vault_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
-    let signer = &[&seeds[..]];
 
     token_burn(
         c_pass_meta_user_balance,
