@@ -1,10 +1,14 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
+
+use amm::cpi::accounts::UpdateLtwap;
+use amm::program::Amm;
 
 use crate::error::ErrorCode;
 use crate::state::*;
@@ -35,6 +39,12 @@ pub struct SubmitProposal<'info> {
         has_one = proposer,
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
+    #[account(mut)]
+    /// CHECK:
+    pub pass_market_amm: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK:
+    pub fail_market_amm: UncheckedAccount<'info>,
     pub meta_mint: Box<Account<'info, Mint>>,
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(
@@ -63,10 +73,15 @@ pub struct SubmitProposal<'info> {
         associated_token::authority = proposal_vault,
     )]
     pub usdc_vault_ata: Box<Account<'info, TokenAccount>>,
+    #[account(address = amm::ID)]
+    pub amm_program: Program<'info, Amm>,
     #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
+    #[account(address = tx_instructions::ID)]
+    /// CHECK:
+    pub instructions: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -76,14 +91,18 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
         proposal,
         proposal_vault,
         proposal_instructions,
+        pass_market_amm,
+        fail_market_amm,
         meta_mint: _,
         usdc_mint: _,
         meta_proposer_ata,
         usdc_proposer_ata,
         meta_vault_ata,
         usdc_vault_ata,
+        amm_program: _,
         associated_token_program: _,
         token_program,
+        instructions,
         system_program: _,
     } = ctx.accounts;
 
@@ -122,5 +141,40 @@ pub fn handler(ctx: Context<SubmitProposal>, description_url: String) -> Result<
         proposer,
     )?;
 
+    // start LTWAP
+    let update_pass_market_ltwap_ctx = ctx.accounts.into_update_pass_market_ltwap_context();
+    amm::cpi::update_ltwap(update_pass_market_ltwap_ctx)?;
+
+    let update_fail_market_ltwap_ctx = ctx.accounts.into_update_fail_market_ltwap_context();
+    amm::cpi::update_ltwap(update_fail_market_ltwap_ctx)?;
+
     Ok(())
+}
+
+impl<'info> SubmitProposal<'info> {
+    fn into_update_pass_market_ltwap_context(
+        &self,
+    ) -> CpiContext<'_, '_, '_, 'info, UpdateLtwap<'info>> {
+        let cpi_accounts = UpdateLtwap {
+            user: self.proposer.to_account_info(),
+            amm: self.pass_market_amm.to_account_info(),
+            instructions: self.instructions.to_account_info(),
+            system_program: self.system_program.to_account_info(),
+        };
+        let cpi_program = self.amm_program.to_account_info();
+        CpiContext::new(cpi_program, cpi_accounts)
+    }
+
+    fn into_update_fail_market_ltwap_context(
+        &self,
+    ) -> CpiContext<'_, '_, '_, 'info, UpdateLtwap<'info>> {
+        let cpi_accounts = UpdateLtwap {
+            user: self.proposer.to_account_info(),
+            amm: self.fail_market_amm.to_account_info(),
+            instructions: self.instructions.to_account_info(),
+            system_program: self.system_program.to_account_info(),
+        };
+        let cpi_program = self.amm_program.to_account_info();
+        CpiContext::new(cpi_program, cpi_accounts)
+    }
 }

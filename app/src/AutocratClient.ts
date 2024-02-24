@@ -122,13 +122,15 @@ export class AutocratClient {
     async submitProposal(
         proposalKeypair: Keypair,
         proposalInstructions: PublicKey,
-        descriptionUrl: string
+        descriptionUrl: string,
+        ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.submitProposalHandler(
             this,
             proposalKeypair,
             proposalInstructions,
             descriptionUrl,
+            ammProgram
         )
     }
 

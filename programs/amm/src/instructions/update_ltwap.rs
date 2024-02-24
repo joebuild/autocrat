@@ -15,9 +15,6 @@ pub struct UpdateLtwap<'info> {
     pub system_program: Program<'info, System>,
 }
 
-/**
- * This function is really not necessary, since the LTWAP is updated on every add/swap/remove. It's just here for testing.
- */
 pub fn handler(ctx: Context<UpdateLtwap>) -> Result<()> {
     let UpdateLtwap {
         user: _,

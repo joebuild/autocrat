@@ -182,7 +182,7 @@ pub fn handler(
 
         // mint conditional on-fail usdc to user
         token_mint_signed(
-            meta_amount,
+            usdc_amount,
             token_program,
             conditional_on_fail_usdc_mint.as_ref(),
             conditional_on_fail_usdc_user_ata.as_ref(),

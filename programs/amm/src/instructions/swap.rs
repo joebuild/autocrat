@@ -190,7 +190,6 @@ pub fn handler(
         .unwrap();
 
     assert!(new_k >= k); // with non-zero fees, k should always increase
-
     assert!(output_amount >= output_amount_min);
 
     Ok(())
