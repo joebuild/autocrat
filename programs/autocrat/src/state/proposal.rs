@@ -44,12 +44,13 @@ pub struct Proposal {
 #[account]
 pub struct ProposalInstructions {
     pub proposer: Pubkey,
+    pub proposal: Pubkey,
     pub proposal_instructions_frozen: bool,
     pub instructions: Vec<ProposalInstruction>,
 }
 
 impl ProposalInstructions {
-    pub const SERIALIZED_LEN: usize = 4 + 32 + 1 + 4;
+    pub const SERIALIZED_LEN: usize = 4 + 32 + 32 + 1 + 4;
 }
 
 #[derive(Clone, AnchorSerialize, AnchorDeserialize)]

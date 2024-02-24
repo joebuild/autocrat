@@ -18,7 +18,7 @@ import {
 import { assert } from "chai";
 
 import { AutocratClient } from "../app/src/AutocratClient";
-import { getATA, getAmmPositionAddr, getDaoAddr, getDaoTreasuryAddr, getProposalAddr, sleep } from "../app/src/utils";
+import { getATA, getAmmPositionAddr, getDaoAddr, getDaoTreasuryAddr, getProposalAddr, getProposalInstructionsAddr, sleep } from "../app/src/utils";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AmmClient } from "../app/src/AmmClient";
 import { InstructionHandler } from "../app/src/InstructionHandler";
@@ -159,7 +159,7 @@ describe("autocrat", async function () {
             dao = await autocratClient.program.account.dao.fetch(daoAddr);
 
             proposalNumber = dao.proposalCount
-            proposalAddr = getProposalAddr(autocratClient.program.programId, autocratClient.provider.publicKey, proposalNumber)[0]
+            proposalAddr = getProposalAddr(autocratClient.program.programId, proposalNumber)[0]
 
             assert.equal(dao.passThresholdBps, 123);
             assert.equal(dao.proposalDurationSlots, 69_420);
@@ -217,12 +217,10 @@ describe("autocrat", async function () {
                 accounts: [],
             };
 
-            let proposalInstructionsKeypair = Keypair.generate()
-            proposalInstructionsAddr = proposalInstructionsKeypair.publicKey
-
-            let ixh = await autocratClient.createProposalInstructions([memoInstruction], proposalInstructionsKeypair);
+            let ixh = await autocratClient.createProposalInstructions(proposalNumber, [memoInstruction]);
             await ixh.bankrun(banksClient);
 
+            proposalInstructionsAddr = getProposalInstructionsAddr(autocratClient.program.programId, proposalAddr)[0]
             const instructionsAcc = await autocratClient.program.account.proposalInstructions.fetch(proposalInstructionsAddr);
 
             assert.equal(instructionsAcc.proposer.toBase58(), autocratClient.provider.publicKey.toBase58());
@@ -240,7 +238,7 @@ describe("autocrat", async function () {
                 accounts: [],
             };
 
-            let ixh = await autocratClient.addProposalInstructions([memoInstruction, memoInstruction], proposalInstructionsAddr);
+            let ixh = await autocratClient.addProposalInstructions(proposalNumber, [memoInstruction, memoInstruction]);
             await ixh.bankrun(banksClient);
 
             const instructionsAcc = await autocratClient.program.account.proposalInstructions.fetch(proposalInstructionsAddr);

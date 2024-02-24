@@ -12,7 +12,7 @@ export const submitProposalHandler = async (
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     let daoAddr = getDaoAddr(client.program.programId)[0]
 
-    let proposalAddr = getProposalAddr(client.program.programId, client.provider.publicKey, proposalNumber)[0]
+    let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
     let proposal = await client.program.account.proposal.fetch(proposalAddr)
 
     let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]

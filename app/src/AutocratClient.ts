@@ -77,24 +77,24 @@ export class AutocratClient {
     }
 
     async createProposalInstructions(
+        proposalNumber: number,
         instructions: ProposalInstruction[],
-        proposalInstructionsKeypair: Keypair,
     ) {
         return ixs.createProposalInstructionsHandler(
             this,
+            proposalNumber,
             instructions,
-            proposalInstructionsKeypair
         )
     }
 
     async addProposalInstructions(
+        proposalNumber: number,
         instructions: ProposalInstruction[],
-        proposalInstructionsAddr: PublicKey,
     ) {
         return ixs.addProposalInstructionsHandler(
             this,
+            proposalNumber,
             instructions,
-            proposalInstructionsAddr
         )
     }
 

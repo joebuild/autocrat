@@ -9,7 +9,7 @@ export const finalizeProposalHandler = async (
     accounts: AccountMeta[],
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
 
-    let proposalAddr = getProposalAddr(client.program.programId, client.provider.publicKey, proposalNumber)[0]
+    let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
     const proposalAcc = await client.program.account.proposal.fetch(proposalAddr);
 
     let ix = await client.program.methods

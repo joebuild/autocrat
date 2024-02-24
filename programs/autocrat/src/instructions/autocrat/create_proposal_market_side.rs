@@ -27,7 +27,6 @@ pub struct CreateProposalMarketSide<'info> {
         mut,
         seeds = [
             b"proposal",
-            proposal.proposer.as_ref(),
             proposal.number.to_le_bytes().as_ref(),
         ],
         bump

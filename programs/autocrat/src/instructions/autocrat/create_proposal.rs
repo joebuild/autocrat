@@ -32,7 +32,6 @@ pub struct CreateProposal<'info> {
         space = 8 + Proposal::INIT_SPACE,
         seeds = [
             b"proposal",
-            proposer.key().as_ref(),
             dao.proposal_count.to_le_bytes().as_ref(),
         ],
         bump

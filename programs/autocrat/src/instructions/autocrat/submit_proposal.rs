@@ -28,7 +28,6 @@ pub struct SubmitProposal<'info> {
         mut,
         seeds = [
             b"proposal",
-            proposal.proposer.as_ref(),
             proposal.number.to_le_bytes().as_ref()
         ],
         bump
@@ -86,7 +85,6 @@ pub fn handler(ctx: Context<SubmitProposal>) -> Result<()> {
     proposal.state = ProposalState::Pending;
     dao.proposals_active = dao.proposals_active.checked_add(1).unwrap();
 
-    proposal.instructions = proposal_instructions.key();
     proposal.slot_enqueued = Clock::get()?.slot;
     proposal_instructions.proposal_instructions_frozen = true;
 

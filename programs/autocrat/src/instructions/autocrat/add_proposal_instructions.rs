@@ -10,10 +10,25 @@ pub struct AddProposalInstructions<'info> {
     pub proposer: Signer<'info>,
     #[account(
         mut,
+        has_one = proposer,
+        seeds = [
+            b"proposal",
+            proposal.number.to_le_bytes().as_ref()
+        ],
+        bump
+    )]
+    pub proposal: Box<Account<'info, Proposal>>,
+    #[account(
+        mut,
         constraint = proposal_instructions.proposer == proposer.key(),
         realloc = proposal_instructions.to_account_info().data_len() + get_instructions_size(&instructions),
         realloc::payer = proposer,
         realloc::zero = false,
+        seeds = [
+            b"proposal_instructions",
+            proposal.key().as_ref()
+        ],
+        bump
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     pub rent: Sysvar<'info, Rent>,
@@ -25,11 +40,14 @@ pub fn handler(
     instructions: Vec<ProposalInstruction>,
 ) -> Result<()> {
     let AddProposalInstructions {
-        proposer: _,
+        proposer,
+        proposal,
         proposal_instructions,
         rent: _,
         system_program: _,
     } = ctx.accounts;
+
+    assert_eq!(proposal_instructions.key(), proposal.instructions);
 
     assert!(!proposal_instructions.proposal_instructions_frozen);
 

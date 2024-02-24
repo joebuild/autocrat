@@ -15,7 +15,7 @@ export const createProposalHandler = async (
     let daoAddr = getDaoAddr(client.program.programId)[0]
     let dao = await client.program.account.dao.fetch(daoAddr)
 
-    let proposalAddr = getProposalAddr(client.program.programId, client.provider.publicKey, proposalNumber)[0]
+    let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
     let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
 
     let ix = await client.program.methods

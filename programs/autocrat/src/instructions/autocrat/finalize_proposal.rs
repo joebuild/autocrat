@@ -17,7 +17,6 @@ pub struct FinalizeProposal<'info> {
         has_one = fail_market_amm,
         seeds = [
             b"proposal",
-            proposal.proposer.as_ref(),
             proposal.number.to_le_bytes().as_ref()
         ],
         bump

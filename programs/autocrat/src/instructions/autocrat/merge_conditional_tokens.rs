@@ -22,7 +22,6 @@ pub struct MergeConditionalTokens<'info> {
         has_one = conditional_on_fail_usdc_mint,
         seeds = [
             b"proposal",
-            proposal.proposer.as_ref(),
             proposal.number.to_le_bytes().as_ref()
         ],
         bump
