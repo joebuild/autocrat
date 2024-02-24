@@ -355,6 +355,47 @@ describe("autocrat", async function () {
         });
     });
 
+    describe("#merge_conditional_tokens", async function () {
+        it("merge conditional tokens for proposal", async function () {
+
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+
+            const metaToMerge = 1 * 10 ** 9
+            const usdcToMerge = 1_000 * 10 ** 6
+
+            let startMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.metaMint, payer.publicKey)[0])).amount
+            let startUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.usdcMint, payer.publicKey)[0])).amount
+
+            let startCondPassMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassMetaMint, payer.publicKey)[0])).amount
+            let startCondPassUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassUsdcMint, payer.publicKey)[0])).amount
+            let startCondFailMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, payer.publicKey)[0])).amount
+            let startCondFailUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
+
+            let ixh = await autocratClient.mergeConditionalTokens(
+                proposalKeypair.publicKey,
+                new BN(metaToMerge),
+                new BN(usdcToMerge),
+            );
+            await ixh.bankrun(banksClient);
+
+            let endMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.metaMint, payer.publicKey)[0])).amount
+            let endUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.usdcMint, payer.publicKey)[0])).amount
+
+            let endCondPassMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassMetaMint, payer.publicKey)[0])).amount
+            let endCondPassUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassUsdcMint, payer.publicKey)[0])).amount
+            let endCondFailMetaBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, payer.publicKey)[0])).amount
+            let endCondFailUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
+
+            assert.equal(startCondPassMetaBalance - endCondPassMetaBalance, BigInt(metaToMerge))
+            assert.equal(startCondPassUsdcBalance - endCondPassUsdcBalance, BigInt(usdcToMerge))
+            assert.equal(startCondFailMetaBalance - endCondFailMetaBalance, BigInt(metaToMerge))
+            assert.equal(startCondFailUsdcBalance - endCondFailUsdcBalance, BigInt(usdcToMerge))
+
+            assert.equal(endMetaBalance - startMetaBalance, BigInt(metaToMerge))
+            assert.equal(endUsdcBalance - startUsdcBalance, BigInt(usdcToMerge))
+        });
+    });
+
     describe("#add_liquidity", async function () {
         it("add liquidity to an amm/amm position (pass)", async function () {
 

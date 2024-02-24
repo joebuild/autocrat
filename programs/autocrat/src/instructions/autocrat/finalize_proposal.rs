@@ -62,7 +62,8 @@ pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
         ErrorCode::ProposalAlreadyFinalized
     );
 
-    // if the proposal has, for some reason, not been finalized within the `findalize_window_slots`, then fail it
+    // if the proposal has not been finalized within the `findalize_window_slots`, then fail it
+    // this is important if there is a bug in the proposal instructions
     if clock.slot
         >= proposal.slot_enqueued + dao.proposal_duration_slots + dao.finalize_window_slots
     {

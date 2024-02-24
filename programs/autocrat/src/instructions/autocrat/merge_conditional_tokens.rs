@@ -10,7 +10,7 @@ use crate::state::*;
 use crate::utils::token::*;
 
 #[derive(Accounts)]
-pub struct RedeemConditionalTokens<'info> {
+pub struct MergeConditionalTokens<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
@@ -97,8 +97,12 @@ pub struct RedeemConditionalTokens<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
-    let RedeemConditionalTokens {
+pub fn handler(
+    ctx: Context<MergeConditionalTokens>,
+    meta_amount: u64,
+    usdc_amount: u64,
+) -> Result<()> {
+    let MergeConditionalTokens {
         user,
         proposal,
         proposal_vault,
@@ -121,91 +125,61 @@ pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
         system_program: _,
     } = ctx.accounts;
 
-    let c_pass_meta_user_balance = conditional_on_pass_meta_user_ata.amount;
-    let c_pass_usdc_user_balance = conditional_on_pass_usdc_user_ata.amount;
-    let c_fail_meta_user_balance = conditional_on_fail_meta_user_ata.amount;
-    let c_fail_usdc_user_balance = conditional_on_fail_usdc_user_ata.amount;
-
-    let proposal_state = proposal.state;
-
-    require!(
-        proposal_state == ProposalState::Passed || proposal_state == ProposalState::Failed,
-        ErrorCode::ProposalStillPending
-    );
-
     let proposal_vault_key = proposal_vault.key();
     let seeds = generate_proposal_vault_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
 
-    token_burn(
-        c_pass_meta_user_balance,
-        token_program,
-        conditional_on_pass_meta_mint.as_ref(),
-        conditional_on_pass_meta_user_ata.as_ref(),
-        user,
-    )?;
+    if meta_amount > 0 {
+        token_burn(
+            meta_amount,
+            token_program,
+            conditional_on_pass_meta_mint.as_ref(),
+            conditional_on_pass_meta_user_ata.as_ref(),
+            user,
+        )?;
 
-    token_burn(
-        c_pass_usdc_user_balance,
-        token_program,
-        conditional_on_pass_usdc_mint.as_ref(),
-        conditional_on_pass_usdc_user_ata.as_ref(),
-        user,
-    )?;
+        token_burn(
+            meta_amount,
+            token_program,
+            conditional_on_fail_meta_mint.as_ref(),
+            conditional_on_fail_meta_user_ata.as_ref(),
+            user,
+        )?;
 
-    token_burn(
-        c_fail_meta_user_balance,
-        token_program,
-        conditional_on_fail_meta_mint.as_ref(),
-        conditional_on_fail_meta_user_ata.as_ref(),
-        user,
-    )?;
-
-    token_burn(
-        c_fail_usdc_user_balance,
-        token_program,
-        conditional_on_fail_usdc_mint.as_ref(),
-        conditional_on_fail_usdc_user_ata.as_ref(),
-        user,
-    )?;
-
-    if proposal_state == ProposalState::Passed {
         token_transfer_signed(
-            c_pass_meta_user_balance,
+            meta_amount,
             token_program,
             meta_vault_ata.as_ref(),
             meta_user_ata.as_ref(),
             proposal_vault.as_ref(),
             seeds,
         )?;
+    }
+
+    if usdc_amount > 0 {
+        token_burn(
+            usdc_amount,
+            token_program,
+            conditional_on_pass_usdc_mint.as_ref(),
+            conditional_on_pass_usdc_user_ata.as_ref(),
+            user,
+        )?;
+
+        token_burn(
+            usdc_amount,
+            token_program,
+            conditional_on_fail_usdc_mint.as_ref(),
+            conditional_on_fail_usdc_user_ata.as_ref(),
+            user,
+        )?;
 
         token_transfer_signed(
-            c_pass_usdc_user_balance,
+            usdc_amount,
             token_program,
             usdc_vault_ata.as_ref(),
             usdc_user_ata.as_ref(),
             proposal_vault.as_ref(),
             seeds,
         )?;
-    } else if proposal_state == ProposalState::Failed {
-        token_transfer_signed(
-            c_fail_meta_user_balance,
-            token_program,
-            meta_vault_ata.as_ref(),
-            meta_user_ata.as_ref(),
-            proposal_vault.as_ref(),
-            seeds,
-        )?;
-
-        token_transfer_signed(
-            c_pass_usdc_user_balance,
-            token_program,
-            usdc_vault_ata.as_ref(),
-            usdc_user_ata.as_ref(),
-            proposal_vault.as_ref(),
-            seeds,
-        )?;
-    } else {
-        return err!(ErrorCode::ProposalStillPending); // redundant, for clarity
     }
 
     Ok(())

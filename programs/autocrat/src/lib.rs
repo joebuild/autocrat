@@ -89,6 +89,14 @@ pub mod autocrat {
         instructions::autocrat::mint_conditional_tokens::handler(ctx, meta_amount, usdc_amount)
     }
 
+    pub fn merge_conditional_tokens(
+        ctx: Context<MergeConditionalTokens>,
+        meta_amount: u64,
+        usdc_amount: u64,
+    ) -> Result<()> {
+        instructions::autocrat::merge_conditional_tokens::handler(ctx, meta_amount, usdc_amount)
+    }
+
     pub fn redeem_conditional_tokens(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
         instructions::autocrat::redeem_conditional_tokens::handler(ctx)
     }

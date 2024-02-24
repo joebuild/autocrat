@@ -158,6 +158,19 @@ export class AutocratClient {
         )
     }
 
+    async mergeConditionalTokens(
+        proposalAddr: PublicKey,
+        metaAmount: BN,
+        usdcAmount: BN,
+    ) {
+        return ixs.mergeConditionalTokensHandler(
+            this,
+            proposalAddr,
+            metaAmount,
+            usdcAmount,
+        )
+    }
+
     async redeemConditionalTokens(
         proposalAddr: PublicKey
     ) {
