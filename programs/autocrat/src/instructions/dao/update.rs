@@ -21,7 +21,8 @@ pub struct UpdateDao<'info> {
 #[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
 pub struct UpdateDaoParams {
     pub pass_threshold_bps: Option<u64>,
-    pub slots_per_proposal: Option<u64>,
+    pub proposal_duration_slots: Option<u64>,
+    pub finalize_window_slots: Option<u64>,
     pub amm_initial_quote_liquidity_amount: Option<u64>,
     pub amm_swap_fee_bps: Option<u64>,
     pub amm_ltwap_decimals: Option<u8>,
@@ -34,8 +35,12 @@ pub fn handler(ctx: Context<UpdateDao>, dao_params: UpdateDaoParams) -> Result<(
         dao.pass_threshold_bps = pass_threshold_bps;
     }
 
-    if let Some(slots_per_proposal) = dao_params.slots_per_proposal {
-        dao.slots_per_proposal = slots_per_proposal;
+    if let Some(proposal_duration_slots) = dao_params.proposal_duration_slots {
+        dao.proposal_duration_slots = proposal_duration_slots;
+    }
+
+    if let Some(finalize_window_slots) = dao_params.finalize_window_slots {
+        dao.finalize_window_slots = finalize_window_slots;
     }
 
     if let Some(amm_initial_quote_liquidity_amount) = dao_params.amm_initial_quote_liquidity_amount

@@ -65,7 +65,8 @@ pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
 
     dao.pass_threshold_bps = DEFAULT_PASS_THRESHOLD_BPS;
 
-    dao.slots_per_proposal = PROPOSAL_DURATION_IN_SLOTS;
+    dao.proposal_duration_slots = PROPOSAL_DURATION_SLOTS;
+    dao.finalize_window_slots = FINALIZE_WINDOW_SLOTS;
 
     dao.amm_initial_quote_liquidity_amount = AMM_INITIAL_QUOTE_LIQUIDITY_ATOMS;
 

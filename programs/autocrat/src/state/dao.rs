@@ -15,7 +15,8 @@ pub struct Dao {
     // fail price in order for the proposal to pass
     pub pass_threshold_bps: u64,
 
-    pub slots_per_proposal: u64,
+    pub proposal_duration_slots: u64,
+    pub finalize_window_slots: u64,
 
     // amm
     pub amm_initial_quote_liquidity_amount: u64, // amount of quote liquidity to be deposited per market by the proposer

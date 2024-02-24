@@ -149,7 +149,8 @@ describe("autocrat", async function () {
 
             let ixh = await autocratClient.updateDao({
                 passThresholdBps: new BN(123),
-                slotsPerProposal: new BN(69_420),
+                proposalDurationSlots: new BN(69_420),
+                finalizeWindowSlots: new BN(69_420),
                 ammInitialQuoteLiquidityAmount: new BN(100_000_005),
                 ammSwapFeeBps: new BN(600),
                 ammLtwapDecimals: 9
@@ -161,7 +162,8 @@ describe("autocrat", async function () {
             proposalNumber = dao.proposalCount
 
             assert.equal(dao.passThresholdBps, 123);
-            assert.equal(dao.slotsPerProposal, 69_420);
+            assert.equal(dao.proposalDurationSlots, 69_420);
+            assert.equal(dao.finalizeWindowSlots, 69_420);
             assert.equal(dao.ammInitialQuoteLiquidityAmount, 100_000_005);
             assert.equal(dao.ammSwapFeeBps, 600);
             assert.equal(dao.ammLtwapDecimals, 9);
@@ -486,56 +488,10 @@ describe("autocrat", async function () {
         });
     });
 
-    describe("#remove_liquidity", async function () {
-        it("remove liquidity from an amm/amm position (pass)", async function () {
-
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
-            const passMarketAmmAddr = proposalAcc.passMarketAmm
-
-            await fastForward(context, BigInt(dao.slotsPerProposal.toNumber() + 1))
-
-            let ixh = await autocratClient.removeLiquidityCpi(
-                proposalKeypair.publicKey,
-                passMarketAmmAddr,
-                new BN(10_000), // 10_000 removes all liquidity
-            );
-            await ixh.bankrun(banksClient);
-
-            const ammPositionAddr = getAmmPositionAddr(ammClient.program.programId, passMarketAmmAddr, payer.publicKey)[0]
-
-            let ammPosition = await ammClient.program.account.ammPosition.fetch(ammPositionAddr)
-
-            assert.equal(ammPosition.user.toBase58(), payer.publicKey.toBase58())
-            assert.equal(ammPosition.amm.toBase58(), passMarketAmmAddr.toBase58())
-            assert.equal(ammPosition.ownership.toNumber(), 0)
-        });
-
-        it("remove liquidity from an amm/amm position (fail)", async function () {
-
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
-            const failMarketAmmAddr = proposalAcc.failMarketAmm
-
-            await fastForward(context, BigInt(dao.slotsPerProposal.toNumber() + 1))
-
-            let ixh = await autocratClient.removeLiquidityCpi(
-                proposalKeypair.publicKey,
-                failMarketAmmAddr,
-                new BN(10_000), // 10_000 removes all liquidity
-            );
-            await ixh.bankrun(banksClient);
-
-            const ammPositionAddr = getAmmPositionAddr(ammClient.program.programId, failMarketAmmAddr, payer.publicKey)[0]
-
-            let ammPosition = await ammClient.program.account.ammPosition.fetch(ammPositionAddr)
-
-            assert.equal(ammPosition.user.toBase58(), payer.publicKey.toBase58())
-            assert.equal(ammPosition.amm.toBase58(), failMarketAmmAddr.toBase58())
-            assert.equal(ammPosition.ownership.toNumber(), 0)
-        });
-    });
-
     describe("#finalize_proposal", async function () {
         it("finalize proposal", async function () {
+
+            await fastForward(context, BigInt(dao.proposalDurationSlots.toNumber() + 1))
 
             let accounts = [{
                 pubkey: MEMO_PROGRAM_ID,
@@ -567,6 +523,50 @@ describe("autocrat", async function () {
             } else {
                 assert(proposalAcc.state['failed'])
             }
+        });
+    });
+
+    describe("#remove_liquidity", async function () {
+        it("remove liquidity from an amm/amm position (pass)", async function () {
+
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const passMarketAmmAddr = proposalAcc.passMarketAmm
+
+            let ixh = await autocratClient.removeLiquidityCpi(
+                proposalKeypair.publicKey,
+                passMarketAmmAddr,
+                new BN(10_000), // 10_000 removes all liquidity
+            );
+            await ixh.bankrun(banksClient);
+
+            const ammPositionAddr = getAmmPositionAddr(ammClient.program.programId, passMarketAmmAddr, payer.publicKey)[0]
+
+            let ammPosition = await ammClient.program.account.ammPosition.fetch(ammPositionAddr)
+
+            assert.equal(ammPosition.user.toBase58(), payer.publicKey.toBase58())
+            assert.equal(ammPosition.amm.toBase58(), passMarketAmmAddr.toBase58())
+            assert.equal(ammPosition.ownership.toNumber(), 0)
+        });
+
+        it("remove liquidity from an amm/amm position (fail)", async function () {
+
+            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalKeypair.publicKey);
+            const failMarketAmmAddr = proposalAcc.failMarketAmm
+
+            let ixh = await autocratClient.removeLiquidityCpi(
+                proposalKeypair.publicKey,
+                failMarketAmmAddr,
+                new BN(10_000), // 10_000 removes all liquidity
+            );
+            await ixh.bankrun(banksClient);
+
+            const ammPositionAddr = getAmmPositionAddr(ammClient.program.programId, failMarketAmmAddr, payer.publicKey)[0]
+
+            let ammPosition = await ammClient.program.account.ammPosition.fetch(ammPositionAddr)
+
+            assert.equal(ammPosition.user.toBase58(), payer.publicKey.toBase58())
+            assert.equal(ammPosition.amm.toBase58(), failMarketAmmAddr.toBase58())
+            assert.equal(ammPosition.ownership.toNumber(), 0)
         });
     });
 

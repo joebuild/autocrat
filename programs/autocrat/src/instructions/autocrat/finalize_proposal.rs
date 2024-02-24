@@ -53,7 +53,7 @@ pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
     let clock = Clock::get()?;
 
     require!(
-        clock.slot >= proposal.slot_enqueued + dao.slots_per_proposal,
+        clock.slot >= proposal.slot_enqueued + dao.proposal_duration_slots,
         ErrorCode::ProposalTooYoung
     );
 
@@ -61,6 +61,14 @@ pub fn handler(ctx: Context<FinalizeProposal>) -> Result<()> {
         proposal.state == ProposalState::Pending,
         ErrorCode::ProposalAlreadyFinalized
     );
+
+    // if the proposal has, for some reason, not been finalized within the `findalize_window_slots`, then fail it
+    if clock.slot
+        >= proposal.slot_enqueued + dao.proposal_duration_slots + dao.finalize_window_slots
+    {
+        proposal.state = ProposalState::Failed;
+        return Ok(());
+    }
 
     let dao_pubkey = dao.key();
     let treasury_seeds = &[dao_pubkey.as_ref(), &[dao.treasury_pda_bump]];
