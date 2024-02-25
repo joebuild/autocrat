@@ -20,8 +20,8 @@ pub struct AddProposalInstructions<'info> {
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         mut,
-        constraint = proposal_instructions.proposer == proposer.key(),
-        constraint = proposal_instructions.proposal == proposal.key(),
+        has_one = proposal,
+        has_one = proposer,
         realloc = proposal_instructions.to_account_info().data_len() + get_instructions_size(&instructions),
         realloc::payer = proposer,
         realloc::zero = false,
@@ -51,6 +51,7 @@ pub fn handler(
     assert_eq!(proposal_instructions.key(), proposal.instructions);
 
     assert!(!proposal_instructions.proposal_instructions_frozen);
+    assert_eq!(proposal.state, ProposalState::Initialize);
 
     proposal_instructions
         .instructions

@@ -27,7 +27,7 @@ pub struct SubmitProposal<'info> {
     pub dao: Box<Account<'info, Dao>>,
     #[account(
         seeds = [dao.key().as_ref()],
-        bump
+        bump = dao.treasury_pda_bump,
     )]
     pub dao_treasury: Account<'info, DaoTreasury>,
     #[account(

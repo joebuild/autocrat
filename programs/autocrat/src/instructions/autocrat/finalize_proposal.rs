@@ -24,6 +24,7 @@ pub struct FinalizeProposal<'info> {
     pub proposal: Account<'info, Proposal>,
     #[account(
         mut,
+        has_one = proposal,
         constraint = proposal_instructions.key() == proposal.instructions
     )]
     pub proposal_instructions: Account<'info, ProposalInstructions>,

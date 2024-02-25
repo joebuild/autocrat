@@ -97,7 +97,7 @@ pub fn handler(ctx: Context<RemoveLiquidity>, remove_bps: u64) -> Result<()> {
         ErrorCode::RemoveLiquidityBpsOutOfRange
     );
 
-    // stop the proposer from rugging liqudity before the proposal is concluded
+    // stop the proposer from pulling liquidity before the proposal is concluded
     if ctx.accounts.proposal.proposer == ctx.accounts.user.key()
         && ctx.accounts.proposal.state == ProposalState::Pending
     {

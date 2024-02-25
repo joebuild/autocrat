@@ -45,6 +45,9 @@ pub fn handler(
         system_program: _,
     } = ctx.accounts;
 
+    assert!(!proposal_instructions.proposal_instructions_frozen);
+    assert_eq!(proposal.state, ProposalState::Initialize);
+
     proposal_instructions.proposer = proposer.key();
     proposal_instructions.proposal = proposal.key();
     proposal_instructions.instructions = instructions;

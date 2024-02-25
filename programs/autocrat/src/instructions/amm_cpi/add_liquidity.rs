@@ -95,7 +95,10 @@ pub fn handler(
         ErrorCode::AmmProposalMismatch
     );
 
-    assert_eq!(ctx.accounts.proposal.state, ProposalState::Pending);
+    require!(
+        ctx.accounts.proposal.state == ProposalState::Pending,
+        ErrorCode::ProposalIsNoLongerPending
+    );
 
     assert!(max_base_amount > 0);
     assert!(max_quote_amount > 0);
