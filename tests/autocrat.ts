@@ -149,6 +149,7 @@ describe("autocrat", async function () {
                 passThresholdBps: new BN(123),
                 proposalDurationSlots: new BN(69_420),
                 finalizeWindowSlots: new BN(69_420),
+                proposalFeeUsdc: new BN(1000 * 10 ** 6),
                 ammInitialQuoteLiquidityAmount: new BN(100_000_005),
                 ammSwapFeeBps: new BN(600),
                 ammLtwapDecimals: 9
@@ -313,6 +314,8 @@ describe("autocrat", async function () {
         it("submit_proposal", async function () {
 
             const currentClock = await context.banksClient.getClock();
+            let proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
+            let startUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.usdcMint, payer.publicKey)[0])).amount
 
             let ixh = await autocratClient.submitProposal(
                 proposalNumber,
@@ -322,10 +325,12 @@ describe("autocrat", async function () {
                 .setComputeUnits(400_000)
                 .bankrun(banksClient);
 
-            const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
+            let endUsdcBalance = (await getAccount(banksClient, getATA(proposalAcc.usdcMint, payer.publicKey)[0])).amount
+            proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
 
             assert(proposalAcc.state['pending'])
             assert(BigInt(proposalAcc.slotEnqueued.toNumber()) >= currentClock.slot);
+            assert.equal(startUsdcBalance - endUsdcBalance, BigInt(1000 * 10 ** 6))
         });
     });
 

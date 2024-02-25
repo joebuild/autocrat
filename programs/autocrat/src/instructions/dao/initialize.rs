@@ -62,13 +62,14 @@ pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
     dao.usdc_mint = usdc_mint.key();
 
     dao.proposal_count = 10;
+    dao.proposal_fee_usdc = PROPOSAL_FEE_USDC;
 
     dao.pass_threshold_bps = DEFAULT_PASS_THRESHOLD_BPS;
 
     dao.proposal_duration_slots = PROPOSAL_DURATION_SLOTS;
     dao.finalize_window_slots = FINALIZE_WINDOW_SLOTS;
 
-    dao.amm_initial_quote_liquidity_amount = AMM_INITIAL_QUOTE_LIQUIDITY_ATOMS;
+    dao.amm_initial_quote_liquidity_amount = AMM_INITIAL_QUOTE_LIQUIDITY;
 
     assert!(AMM_SWAP_FEE_BPS <= AMM_SWAP_FEE_BPS_MAX);
     assert!(AMM_SWAP_FEE_BPS >= AMM_SWAP_FEE_BPS_MIN);

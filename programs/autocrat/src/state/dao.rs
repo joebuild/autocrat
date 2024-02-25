@@ -12,6 +12,8 @@ pub struct Dao {
     pub proposal_count: u64,
     pub proposals_active: u32,
 
+    pub proposal_fee_usdc: u64,
+
     // the percentage, in basis points, the pass price needs to be above the
     // fail price in order for the proposal to pass
     pub pass_threshold_bps: u64,
