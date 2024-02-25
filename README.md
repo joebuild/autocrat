@@ -23,13 +23,16 @@ This program has two main functions (which could be broken out into two separate
 This version of the Autocrat supports multiple instructions to be run after a proposal has passed. These instrucitons can be uploaded one at a time to get around the standard stack limit restrictions.
 
 The process for submitting a proposal is as follows:
-1. `create_proposal_instructions`
-2. `add_proposal_instructions` (optional additional instructions)
-3. `create_proposal_market_side` (start with either pass or fail)
-4. `create_proposal_market_side` (the other market)
-5. `submit_proposal`
+1. `create_proposal`
+2. `create_proposal_instructions`
+3. `add_proposal_instructions` (optional additional instructions)
+4. `create_proposal_market_side` (start with either pass or fail)
+5. `create_proposal_market_side` (the other market)
+6. `submit_proposal`
 
-The architecture of `create_proposal_market_side` was inteded to be easily modified to enable multi-choice proposals in the future. Each time this is called, an AMM market is created, and the proposer is minted the conditional tokens (corresponding to their LP deposit). Only when `submit_proposal` is called does the proposer have to actually deposit the comitted META and USDC.
+When `create_proposal` is called the proposer has to deposit the comitted META and USDC up front.
+
+The architecture of `create_proposal_market_side` was inteded to be easily modified to enable multi-choice proposals in the future. Each time this is called, an AMM market is created, and the proposer is minted the conditional tokens (corresponding to their LP deposit). 
 
 The proposer is responsible for setting the initial conditional market prices. If the proposer estimates poorly, then they will lose money after price corrections from savvy analysts.
 

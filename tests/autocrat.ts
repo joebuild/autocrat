@@ -599,6 +599,12 @@ describe("autocrat", async function () {
             const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const passMarketAmmAddr = proposalAcc.passMarketAmm
 
+            let startCondPassMetaUserBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassMetaMint, payer.publicKey)[0])).amount
+            let startCondPassUsdcUserBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassUsdcMint, payer.publicKey)[0])).amount
+
+            let startCondPassMetaAmmBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassMetaMint, passMarketAmmAddr)[0])).amount
+            let startCondPassUsdcAmmBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassUsdcMint, passMarketAmmAddr)[0])).amount
+
             let ixh = await autocratClient.removeLiquidityCpi(
                 proposalAddr,
                 passMarketAmmAddr,
@@ -610,15 +616,31 @@ describe("autocrat", async function () {
 
             let ammPosition = await ammClient.program.account.ammPosition.fetch(ammPositionAddr)
 
-            assert.equal(ammPosition.user.toBase58(), payer.publicKey.toBase58())
-            assert.equal(ammPosition.amm.toBase58(), passMarketAmmAddr.toBase58())
             assert.equal(ammPosition.ownership.toNumber(), 0)
+
+            let endCondPassMetaUserBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassMetaMint, payer.publicKey)[0])).amount
+            let endCondPassUsdcUserBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassUsdcMint, payer.publicKey)[0])).amount
+
+            let endCondPassMetaAmmBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassMetaMint, passMarketAmmAddr)[0])).amount
+            let endCondPassUsdcAmmBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnPassUsdcMint, passMarketAmmAddr)[0])).amount
+
+            assert.equal(endCondPassMetaAmmBalance, BigInt(0))
+            assert.equal(endCondPassUsdcAmmBalance, BigInt(0))
+
+            assert.equal(endCondPassMetaUserBalance, startCondPassMetaUserBalance + startCondPassMetaAmmBalance)
+            assert.equal(endCondPassUsdcUserBalance, startCondPassUsdcUserBalance + startCondPassUsdcAmmBalance)
         });
 
         it("remove liquidity from an amm/amm position (fail)", async function () {
 
             const proposalAcc = await autocratClient.program.account.proposal.fetch(proposalAddr);
             const failMarketAmmAddr = proposalAcc.failMarketAmm
+
+            let startCondFailMetaUserBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, payer.publicKey)[0])).amount
+            let startCondFailUsdcUserBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
+
+            let startCondFailMetaAmmBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, failMarketAmmAddr)[0])).amount
+            let startCondFailUsdcAmmBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, failMarketAmmAddr)[0])).amount
 
             let ixh = await autocratClient.removeLiquidityCpi(
                 proposalAddr,
@@ -631,9 +653,19 @@ describe("autocrat", async function () {
 
             let ammPosition = await ammClient.program.account.ammPosition.fetch(ammPositionAddr)
 
-            assert.equal(ammPosition.user.toBase58(), payer.publicKey.toBase58())
-            assert.equal(ammPosition.amm.toBase58(), failMarketAmmAddr.toBase58())
             assert.equal(ammPosition.ownership.toNumber(), 0)
+
+            let endCondFailMetaUserBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, payer.publicKey)[0])).amount
+            let endCondFailUsdcUserBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, payer.publicKey)[0])).amount
+
+            let endCondFailMetaAmmBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailMetaMint, failMarketAmmAddr)[0])).amount
+            let endCondFailUsdcAmmBalance = (await getAccount(banksClient, getATA(proposalAcc.conditionalOnFailUsdcMint, failMarketAmmAddr)[0])).amount
+
+            assert.equal(endCondFailMetaAmmBalance, BigInt(0))
+            assert.equal(endCondFailUsdcAmmBalance, BigInt(0))
+
+            assert.equal(endCondFailMetaUserBalance, startCondFailMetaUserBalance + startCondFailMetaAmmBalance)
+            assert.equal(endCondFailUsdcUserBalance, startCondFailUsdcUserBalance + startCondFailUsdcAmmBalance)
         });
     });
 
