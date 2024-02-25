@@ -10,6 +10,7 @@ pub struct CreateProposalInstructions<'info> {
     pub proposer: Signer<'info>,
     #[account(
         mut,
+        has_one = proposer,
         seeds = [
             b"proposal",
             proposal.number.to_le_bytes().as_ref()
