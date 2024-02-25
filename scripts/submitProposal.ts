@@ -34,19 +34,18 @@ async function submitProposal() {
     const failMarketInitialPrice = 1000
 
     // ==== calculate LP deposit amounts
-
     const minUsdcLiquidity = daoAccount.ammInitialQuoteLiquidityAmount.toNumber() / 10 ** 6
 
-    const metaForPassMarket = (minUsdcLiquidity / passMarketInitialPrice) * 10 ** 9
-    const metaForFailMarket = (minUsdcLiquidity / failMarketInitialPrice) * 10 ** 9
+    const cMetaForPassMarket = (minUsdcLiquidity / passMarketInitialPrice) * 10 ** 9
+    const cMetaForFailMarket = (minUsdcLiquidity / failMarketInitialPrice) * 10 ** 9
 
-    const totalMetaToMint = Math.max(metaForPassMarket, metaForFailMarket)
+    const cMetaToMint = Math.max(cMetaForPassMarket, cMetaForFailMarket)
 
     // ==== create proposal
     let createPropIxh = await autocratClient.createProposal(
         proposalNumber,
         proposalUrl,
-        new BN(totalMetaToMint),
+        new BN(cMetaToMint),
         daoAccount.ammInitialQuoteLiquidityAmount,
     )
     await createPropIxh
@@ -75,7 +74,7 @@ async function submitProposal() {
     let createPassMarketIxh = await autocratClient.createProposalMarketSide(
         proposalNumber,
         true,
-        new BN(metaForPassMarket),
+        new BN(cMetaForPassMarket),
         daoAccount.ammInitialQuoteLiquidityAmount,
     )
     await createPassMarketIxh
@@ -87,7 +86,7 @@ async function submitProposal() {
     let createFailMarketIxh = await autocratClient.createProposalMarketSide(
         proposalNumber,
         false,
-        new BN(metaForFailMarket),
+        new BN(cMetaForFailMarket),
         daoAccount.ammInitialQuoteLiquidityAmount,
     )
     await createFailMarketIxh

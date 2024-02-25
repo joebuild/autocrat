@@ -110,7 +110,7 @@ pub fn handler(
         system_program: _,
     } = ctx.accounts;
 
-    assert!(description_url.len() <= 50);
+    assert!(description_url.len() <= 100);
 
     assert!(mint_cond_meta > 0);
     assert!(mint_cond_usdc >= dao.amm_initial_quote_liquidity_amount);

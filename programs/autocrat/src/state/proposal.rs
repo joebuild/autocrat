@@ -14,7 +14,7 @@ pub enum ProposalState {
 pub struct Proposal {
     pub number: u64,
     pub proposer: Pubkey,
-    #[max_len(50)]
+    #[max_len(100)]
     pub description_url: String,
     pub slot_enqueued: u64,
     pub state: ProposalState,

@@ -32,6 +32,9 @@ pub struct SubmitProposal<'info> {
     pub dao_treasury: Account<'info, DaoTreasury>,
     #[account(
         mut,
+        has_one = proposer,
+        has_one = pass_market_amm,
+        has_one = fail_market_amm,
         seeds = [
             b"proposal",
             proposal.number.to_le_bytes().as_ref()
@@ -52,6 +55,7 @@ pub struct SubmitProposal<'info> {
     #[account(
         mut,
         has_one = proposer,
+        has_one = proposal,
     )]
     pub proposal_instructions: Box<Account<'info, ProposalInstructions>>,
     pub usdc_mint: Box<Account<'info, Mint>>,

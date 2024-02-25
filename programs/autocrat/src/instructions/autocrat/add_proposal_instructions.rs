@@ -21,6 +21,7 @@ pub struct AddProposalInstructions<'info> {
     #[account(
         mut,
         constraint = proposal_instructions.proposer == proposer.key(),
+        constraint = proposal_instructions.proposal == proposal.key(),
         realloc = proposal_instructions.to_account_info().data_len() + get_instructions_size(&instructions),
         realloc::payer = proposer,
         realloc::zero = false,

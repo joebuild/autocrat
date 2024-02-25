@@ -27,6 +27,11 @@ pub struct FinalizeProposal<'info> {
         constraint = proposal_instructions.key() == proposal.instructions
     )]
     pub proposal_instructions: Account<'info, ProposalInstructions>,
+    #[account(
+        mut,
+        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        bump
+    )]
     pub dao: Box<Account<'info, Dao>>,
     /// CHECK: never read
     #[account(
