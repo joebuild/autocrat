@@ -1,13 +1,12 @@
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
-import { getATA, getDaoAddr, getDaoTreasuryAddr, getProposalAddr, getProposalVaultAddr } from '../../utils';
+import { getATA, getDaoAddr, getDaoTreasuryAddr, getProposalAddr, getProposalInstructionsAddr, getProposalVaultAddr } from '../../utils';
 import { Keypair, PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 
 export const submitProposalHandler = async (
     client: AutocratClient,
     proposalNumber: number,
-    proposalInstructions: PublicKey,
     ammProgram: PublicKey,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     let daoAddr = getDaoAddr(client.program.programId)[0]
@@ -15,6 +14,8 @@ export const submitProposalHandler = async (
 
     let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
     let proposal = await client.program.account.proposal.fetch(proposalAddr)
+
+    let proposalInstructionsAddr = getProposalInstructionsAddr(client.program.programId, proposalAddr)[0]
 
     let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
 
@@ -26,7 +27,7 @@ export const submitProposalHandler = async (
             daoTreasury: daoTreasuryAddr,
             proposal: proposalAddr,
             proposalVault: proposalVaultAddr,
-            proposalInstructions,
+            proposalInstructions: proposalInstructionsAddr,
             usdcMint: proposal.usdcMint,
             usdcProposerAta: getATA(proposal.usdcMint, client.provider.publicKey)[0],
             usdcTreasuryVaultAta: getATA(proposal.usdcMint, daoTreasuryAddr)[0],

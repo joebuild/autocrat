@@ -319,7 +319,6 @@ describe("autocrat", async function () {
 
             let ixh = await autocratClient.submitProposal(
                 proposalNumber,
-                proposalInstructionsAddr,
             );
             await ixh
                 .setComputeUnits(400_000)
