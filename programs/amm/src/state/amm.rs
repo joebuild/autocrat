@@ -2,11 +2,12 @@ use anchor_lang::prelude::*;
 use num_traits::{FromPrimitive, ToPrimitive};
 use rust_decimal::Decimal;
 
-use crate::error::ErrorCode;
 use crate::utils::anchor_decimal::*;
 use crate::utils::*;
-
+use crate::BPS_SCALE;
+use crate::{error::ErrorCode, validate};
 #[account]
+#[derive(Default, Eq, PartialEq, Debug)]
 pub struct Amm {
     pub bump: u8,
 
@@ -121,5 +122,70 @@ impl Amm {
         let quote_decimal_scale_d = Decimal::from_u64(quote_decimal_scale).unwrap();
 
         Ok(quote_amount_d / quote_decimal_scale_d)
+    }
+    pub fn k(&self) -> Result<u128> {
+        Ok((self.base_amount as u128)
+            .checked_mul(self.quote_amount as u128)
+            .unwrap())
+    }
+
+    pub fn swap(&mut self, input_amount: u64, is_quote_to_base: bool) -> Result<u64> {
+        let base_amount_start = self.base_amount as u128;
+        let quote_amount_start = self.quote_amount as u128;
+
+        let k = base_amount_start.checked_mul(quote_amount_start).unwrap();
+
+        let input_amount_minus_fee = input_amount
+            .checked_mul(BPS_SCALE.checked_sub(self.swap_fee_bps).unwrap())
+            .unwrap()
+            .checked_div(BPS_SCALE)
+            .unwrap() as u128;
+
+        let output_amount = if is_quote_to_base {
+            let temp_quote_amount = quote_amount_start
+                .checked_add(input_amount_minus_fee)
+                .unwrap();
+            let temp_base_amount = k.checked_div(temp_quote_amount).unwrap();
+
+            let output_amount_base = base_amount_start
+                .checked_sub(temp_base_amount)
+                .unwrap()
+                .to_u64()
+                .unwrap();
+
+            self.quote_amount = self.quote_amount.checked_add(input_amount).unwrap();
+            self.base_amount = self.base_amount.checked_sub(output_amount_base).unwrap();
+            output_amount_base
+        } else {
+            let temp_base_amount = base_amount_start
+                .checked_add(input_amount_minus_fee)
+                .unwrap();
+            let temp_quote_amount = k.checked_div(temp_base_amount).unwrap();
+
+            let output_amount_quote = quote_amount_start
+                .checked_sub(temp_quote_amount)
+                .unwrap()
+                .to_u64()
+                .unwrap();
+
+            self.base_amount = self.base_amount.checked_add(input_amount).unwrap();
+            self.quote_amount = self.quote_amount.checked_sub(output_amount_quote).unwrap();
+            output_amount_quote
+        };
+
+        let new_k = (self.base_amount as u128)
+            .checked_mul(self.quote_amount as u128)
+            .unwrap();
+
+        // with non-zero fees, k should always increase
+        validate!(
+            new_k >= k,
+            ErrorCode::SwapInvariantError,
+            "new_k={} is smaller than original k={}",
+            new_k,
+            k
+        )?;
+
+        Ok(output_amount)
     }
 }

@@ -1,11 +1,11 @@
-use anchor_lang::prelude::*;
 use crate::error::ErrorCode;
+use anchor_lang::prelude::*;
 
-pub use token::*;
 pub use seeds::*;
+pub use token::*;
 
-pub mod token;
 pub mod seeds;
+pub mod token;
 
 use crate::state::*;
 
@@ -36,7 +36,7 @@ pub fn get_decimal_scale_u64(decimals: u8) -> Result<u64> {
 
 pub fn get_instructions_size(instructions: &Vec<ProposalInstruction>) -> usize {
     instructions.iter().fold(0, |accumulator, ix| {
-        accumulator + 
+        accumulator +
         32 + // program id
         4 + // accounts vec prefix
         ix.accounts.len() * (32 + 1 + 1) + // pubkey + 2 bools per account
