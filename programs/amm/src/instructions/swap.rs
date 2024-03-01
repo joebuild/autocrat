@@ -89,17 +89,6 @@ pub fn handler(
 
     amm.update_ltwap()?;
 
-    let base_amount_start = amm.base_amount as u128;
-    let quote_amount_start = amm.quote_amount as u128;
-
-    let k = base_amount_start.checked_mul(quote_amount_start).unwrap();
-
-    let input_amount_minus_fee = input_amount
-        .checked_mul(BPS_SCALE.checked_sub(amm.swap_fee_bps).unwrap())
-        .unwrap()
-        .checked_div(BPS_SCALE)
-        .unwrap() as u128;
-
     let base_mint_key = base_mint.key();
     let quote_mint_key = quote_mint.key();
     let swap_fee_bps_bytes = amm.swap_fee_bps.to_le_bytes();
@@ -113,21 +102,9 @@ pub fn handler(
         amm.bump
     );
 
-    let output_amount = if is_quote_to_base {
-        let temp_quote_amount = quote_amount_start
-            .checked_add(input_amount_minus_fee)
-            .unwrap();
-        let temp_base_amount = k.checked_div(temp_quote_amount).unwrap();
+    let output_amount = amm.swap(input_amount, is_quote_to_base)?;
 
-        let output_amount_base = base_amount_start
-            .checked_sub(temp_base_amount)
-            .unwrap()
-            .to_u64()
-            .unwrap();
-
-        amm.quote_amount = amm.quote_amount.checked_add(input_amount).unwrap();
-        amm.base_amount = amm.base_amount.checked_sub(output_amount_base).unwrap();
-
+    if is_quote_to_base {
         // send user quote tokens to vault
         token_transfer(
             input_amount,
@@ -139,30 +116,14 @@ pub fn handler(
 
         // send vault base tokens to user
         token_transfer_signed(
-            output_amount_base,
+            output_amount,
             token_program,
             vault_ata_base,
             user_ata_base,
             amm,
             seeds,
         )?;
-
-        output_amount_base
     } else {
-        let temp_base_amount = base_amount_start
-            .checked_add(input_amount_minus_fee)
-            .unwrap();
-        let temp_quote_amount = k.checked_div(temp_base_amount).unwrap();
-
-        let output_amount_quote = quote_amount_start
-            .checked_sub(temp_quote_amount)
-            .unwrap()
-            .to_u64()
-            .unwrap();
-
-        amm.base_amount = amm.base_amount.checked_add(input_amount).unwrap();
-        amm.quote_amount = amm.quote_amount.checked_sub(output_amount_quote).unwrap();
-
         // send user base tokens to vault
         token_transfer(
             input_amount,
@@ -174,22 +135,14 @@ pub fn handler(
 
         // send vault quote tokens to user
         token_transfer_signed(
-            output_amount_quote,
+            output_amount,
             token_program,
             vault_ata_quote,
             user_ata_quote,
             amm,
             seeds,
         )?;
-
-        output_amount_quote
-    };
-
-    let new_k = (amm.base_amount as u128)
-        .checked_mul(amm.quote_amount as u128)
-        .unwrap();
-
-    assert!(new_k >= k); // with non-zero fees, k should always increase
+    }
     assert!(output_amount >= output_amount_min);
 
     Ok(())

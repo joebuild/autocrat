@@ -24,6 +24,10 @@ use crate::error::*;
 use crate::instructions::*;
 use crate::state::*;
 use crate::utils::*;
+use crate::BPS_SCALE;
+
+#[cfg(test)]
+mod tests;
 
 declare_id!("Ens7Gx99whnA8zZm6ZiFnWgGq3x76nXbSmh5gaaJqpAz");
 #[program]
