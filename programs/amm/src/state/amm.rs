@@ -92,10 +92,16 @@ impl Amm {
         let ltwap_decimal_scale = get_decimal_scale_u64(self.ltwap_decimals)?;
 
         if !updated_ltwap_denominator_agg.is_zero() {
-            self.ltwap_latest = ((updated_ltwap_numerator_agg / updated_ltwap_denominator_agg)
+            let ltwap_latest_dec: Decimal =
+                updated_ltwap_numerator_agg / updated_ltwap_denominator_agg;
+
+            self.ltwap_latest = (ltwap_latest_dec
                 * Decimal::from_u64(ltwap_decimal_scale).unwrap())
             .to_u64()
             .unwrap_or(u64::MAX);
+
+            msg!("Price: {:?}", price);
+            msg!("LTWAP: {:?}", ltwap_latest_dec);
         }
 
         self.ltwap_slot_updated = slot;
