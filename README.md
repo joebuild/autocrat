@@ -44,9 +44,7 @@ This repository has an SDK for each program listed above, to enable simple front
 
 ```
 let ixh = await autocratClient.submitProposal(
-    proposalKeypair,
-    proposalInstructionsAddress,
-    "https://proposals.com/10"
+    proposalNumber
 );
 await ixh
     .setComputeUnits(400_000)
