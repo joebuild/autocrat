@@ -1,15 +1,15 @@
 {
   "name": "@themetadao/autocrat-sdk",
-  "version": "0.1.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "version": "0.1.1",
+  "main": "dist/app/src/index.js",
+  "types": "dist/app/src/index.d.ts",
   "files": [
     "/dist"
   ],
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-    "build": "rm -rf ./dist && yarn tsc"
+    "build": "rm -rf ./dist && cp ../target/types/* ./src/types && yarn tsc"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
