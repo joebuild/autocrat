@@ -12,7 +12,7 @@ pub struct UpdateDao<'info> {
     pub dao: Account<'info, Dao>,
     #[account(
         signer,
-        seeds = [dao.key().as_ref()],
+        seeds = [DAO_TREASURY_SEED_PREFIX, dao.key().as_ref()],
         bump = dao.treasury_pda_bump,
     )]
     pub dao_treasury: Signer<'info>,

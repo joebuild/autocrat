@@ -21,7 +21,7 @@ pub struct MintConditionalTokens<'info> {
         has_one = conditional_on_fail_meta_mint,
         has_one = conditional_on_fail_usdc_mint,
         seeds = [
-            b"proposal",
+            PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
         ],
         bump
@@ -33,7 +33,7 @@ pub struct MintConditionalTokens<'info> {
         has_one = meta_vault_ata,
         has_one = usdc_vault_ata,
         seeds = [
-            b"proposal_vault",
+            PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
         bump

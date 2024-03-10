@@ -25,7 +25,7 @@ pub struct RemoveLiquidity<'info> {
     #[account(
         mut,
         seeds = [
-            b"proposal_vault",
+            PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
         bump

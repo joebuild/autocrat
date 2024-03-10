@@ -9,7 +9,6 @@ export const createAmmHandler = async (
     baseMint: PublicKey,
     quoteMint: PublicKey,
     swapFeeBps: number,
-    permissioned: boolean,
     permissionedCaller: PublicKey,
     ltwapDecimals: number,
 ): Promise<InstructionHandler<typeof client.program, AmmClient>> => {
@@ -26,7 +25,6 @@ export const createAmmHandler = async (
 
     let ix = await client.program.methods
         .createAmm({
-            permissioned,
             permissionedCaller,
             swapFeeBps: new BN(swapFeeBps),
             ltwapDecimals

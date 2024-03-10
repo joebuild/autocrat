@@ -16,7 +16,7 @@ pub struct FinalizeProposal<'info> {
         has_one = pass_market_amm,
         has_one = fail_market_amm,
         seeds = [
-            b"proposal",
+            PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
         ],
         bump
@@ -38,7 +38,7 @@ pub struct FinalizeProposal<'info> {
     #[account(
         signer,
         mut,
-        seeds = [dao.key().as_ref()],
+        seeds = [DAO_TREASURY_SEED_PREFIX, dao.key().as_ref()],
         bump = dao.treasury_pda_bump
     )]
     pub dao_treasury: UncheckedAccount<'info>,

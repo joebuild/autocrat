@@ -120,8 +120,16 @@ pub mod autocrat {
         ctx: Context<AddLiquidity>,
         max_base_amount: u64,
         max_quote_amount: u64,
+        min_base_amount: u64,
+        min_quote_amount: u64,
     ) -> Result<()> {
-        instructions::amm_cpi::add_liquidity::handler(ctx, max_base_amount, max_quote_amount)
+        instructions::amm_cpi::add_liquidity::handler(
+            ctx,
+            max_base_amount,
+            max_quote_amount,
+            min_base_amount,
+            min_quote_amount,
+        )
     }
 
     pub fn remove_liquidity(ctx: Context<RemoveLiquidity>, remove_bps: u64) -> Result<()> {

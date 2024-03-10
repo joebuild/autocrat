@@ -12,7 +12,7 @@ pub struct CreateProposalInstructions<'info> {
         mut,
         has_one = proposer,
         seeds = [
-            b"proposal",
+            PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
         ],
         bump
@@ -23,7 +23,7 @@ pub struct CreateProposalInstructions<'info> {
         payer = proposer,
         space = 8 + ProposalInstructions::SERIALIZED_LEN + get_instructions_size(&instructions),
         seeds = [
-            b"proposal_instructions",
+            PROPOSAL_INSTRUCTIONS_SEED_PREFIX,
             proposal.key().as_ref()
         ],
         bump

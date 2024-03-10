@@ -31,7 +31,7 @@ pub struct CreateProposal<'info> {
         payer = proposer,
         space = 8 + Proposal::INIT_SPACE,
         seeds = [
-            b"proposal",
+            PROPOSAL_SEED_PREFIX,
             dao.proposal_count.to_le_bytes().as_ref(),
         ],
         bump
@@ -43,7 +43,7 @@ pub struct CreateProposal<'info> {
         payer = proposer,
         space = 8 + std::mem::size_of::<ProposalVault>(),
         seeds = [
-            b"proposal_vault",
+            PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
         bump

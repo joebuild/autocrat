@@ -26,6 +26,7 @@ pub struct RemoveLiquidity<'info> {
         has_one = user,
         has_one = amm,
         seeds = [
+            AMM_POSITION_SEED_PREFIX,
             amm.key().as_ref(),
             user.key().as_ref(),
         ],
@@ -122,8 +123,11 @@ pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
         .to_u64()
         .unwrap();
 
+    // for rounding up, if we have, a = b / c, we use: a = (b + (c - 1)) / c
     let less_ownership = (amm_position.ownership as u128)
         .checked_mul(withdraw_bps as u128)
+        .unwrap()
+        .checked_add(BPS_SCALE as u128 - 1)
         .unwrap()
         .checked_div(BPS_SCALE as u128)
         .unwrap()

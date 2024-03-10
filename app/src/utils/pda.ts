@@ -17,7 +17,7 @@ export const getDaoTreasuryAddr = (
 ): [PublicKey, number] => {
     let [dao] = getDaoAddr(programId)
     return PublicKey.findProgramAddressSync(
-        [dao.toBuffer()],
+        [utils.bytes.utf8.encode("dao_treasury"), dao.toBuffer()],
         programId,
     );
 };
@@ -27,7 +27,7 @@ export const getProposalAddr = (
     proposalNumber: number,
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("proposal"), numToBytes64LE(proposalNumber)],
+        [utils.bytes.utf8.encode("proposal__"), numToBytes64LE(proposalNumber)],
         programId,
     );
 };
@@ -60,7 +60,7 @@ export const getAmmAddr = (
     permissionedCaller: PublicKey
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [baseMint.toBuffer(), quoteMint.toBuffer(), numToBytes64LE(swapFeeBps), permissionedCaller.toBuffer()],
+        [utils.bytes.utf8.encode("amm__"), baseMint.toBuffer(), quoteMint.toBuffer(), numToBytes64LE(swapFeeBps), permissionedCaller.toBuffer()],
         programId,
     );
 };
@@ -71,7 +71,7 @@ export const getAmmPositionAddr = (
     user: PublicKey
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [amm.toBuffer(), user.toBuffer()],
+        [utils.bytes.utf8.encode("amm_position"), amm.toBuffer(), user.toBuffer()],
         programId,
     );
 };

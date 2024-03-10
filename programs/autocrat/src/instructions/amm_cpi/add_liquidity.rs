@@ -24,7 +24,7 @@ pub struct AddLiquidity<'info> {
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         seeds = [
-            b"proposal_vault",
+            PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
         bump
@@ -88,6 +88,8 @@ pub fn handler(
     ctx: Context<AddLiquidity>,
     max_base_amount: u64,
     max_quote_amount: u64,
+    min_base_amount: u64,
+    min_quote_amount: u64,
 ) -> Result<()> {
     require!(
         ctx.accounts.proposal.pass_market_amm == ctx.accounts.amm.key()
@@ -105,7 +107,13 @@ pub fn handler(
 
     // add liquidity to proposer LP position
     let add_liquidity_ctx = ctx.accounts.into_add_liquidity_context();
-    amm::cpi::add_liquidity(add_liquidity_ctx, max_base_amount, max_quote_amount)?;
+    amm::cpi::add_liquidity(
+        add_liquidity_ctx,
+        max_base_amount,
+        max_quote_amount,
+        min_base_amount,
+        min_quote_amount,
+    )?;
 
     Ok(())
 }

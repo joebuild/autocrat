@@ -10,10 +10,11 @@ pub struct CreatePosition<'info> {
     pub user: Signer<'info>,
     pub amm: Account<'info, Amm>,
     #[account(
-        init_if_needed,
+        init,
         payer = user,
         space = 8 + std::mem::size_of::<AmmPosition>(),
         seeds = [
+            AMM_POSITION_SEED_PREFIX,
             amm.key().as_ref(),
             user.key().as_ref(),
         ],
@@ -44,6 +45,7 @@ pub fn handler(ctx: Context<CreatePosition>) -> Result<()> {
 
     amm_position.user = user.key();
     amm_position.amm = amm.key();
+    amm_position.ownership = 0;
 
     Ok(())
 }

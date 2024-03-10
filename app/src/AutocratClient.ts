@@ -6,9 +6,7 @@ import {
     PublicKey,
 } from "@solana/web3.js";
 
-// @ts-ignore
-import * as AutocratIDL from '../../target/idl/autocrat.json';
-import { Autocrat as AutocratIDLType } from '../../target/types/autocrat';
+import { Autocrat as AutocratIDLType, IDL as AutocratIDL } from './types/autocrat';
 
 import * as ixs from "./instructions/autocrat";
 import BN from "bn.js";
@@ -205,6 +203,8 @@ export class AutocratClient {
         ammAddr: PublicKey,
         maxBaseAmount: BN,
         maxQuoteAmount: BN,
+        minBaseAmount: BN,
+        minQuoteAmount: BN,
         ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.addLiquidityCpiHandler(
@@ -213,6 +213,8 @@ export class AutocratClient {
             ammAddr,
             maxBaseAmount,
             maxQuoteAmount,
+            minBaseAmount,
+            minQuoteAmount,
             ammProgram
         )
     }

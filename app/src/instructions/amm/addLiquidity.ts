@@ -10,6 +10,8 @@ export const addLiquidityHandler = async (
     ammPositionAddr: PublicKey,
     maxBaseAmount: BN,
     maxQuoteAmount: BN,
+    minBaseAmount: BN,
+    minQuoteAmount: BN,
 ): Promise<InstructionHandler<typeof client.program, AmmClient>> => {
     const amm = await client.program.account.amm.fetch(ammAddr);
 
@@ -17,6 +19,8 @@ export const addLiquidityHandler = async (
         .addLiquidity(
             maxBaseAmount,
             maxQuoteAmount,
+            minBaseAmount,
+            minQuoteAmount
         )
         .accounts({
             user: client.provider.publicKey,

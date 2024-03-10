@@ -30,3 +30,12 @@ pub const AMM_SWAP_FEE_BPS_MIN: u64 = 100; // 1%
 pub const AMM_SWAP_FEE_BPS_MAX: u64 = 1000; // 10%
 
 pub const BPS_SCALE: u64 = 100 * 100;
+
+pub const AMM_SEED_PREFIX: &[u8] = b"amm__";
+pub const AMM_POSITION_SEED_PREFIX: &[u8] = b"amm_position";
+
+pub const DAO_TREASURY_SEED_PREFIX: &[u8] = b"dao_treasury";
+
+pub const PROPOSAL_SEED_PREFIX: &[u8] = b"proposal__";
+pub const PROPOSAL_INSTRUCTIONS_SEED_PREFIX: &[u8] = b"proposal_instructions";
+pub const PROPOSAL_VAULT_SEED_PREFIX: &[u8] = b"proposal_vault";

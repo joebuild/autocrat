@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use num_traits::{FromPrimitive, ToPrimitive};
-use rust_decimal::Decimal;
+use rust_decimal::{Decimal, MathematicalOps};
 
 use crate::error::ErrorCode;
 use crate::utils::anchor_decimal::*;
@@ -61,19 +61,15 @@ impl Amm {
         let slot_difference_u64 = slot.checked_sub(self.ltwap_slot_updated).unwrap();
         let slot_difference = Decimal::from_u64(slot_difference_u64).unwrap();
 
-        /*
-            to calculate the liquidity of the whole pool, it would be:
-                >> quote_units + price * base_units
-                    or, when replacing the equation for price in an amm:
-                >> quote_units + (quote_units / base_units) * base_units
-                    which equals
-                >> quote_units + quote_units = 2 * quote_units
-                    so we can just use the quote_units instead, since this is a weighted average
-        */
-        let quote_liquidity_units = self.get_quote_liquidity_units()?;
-        let liquidity_x_slot_diff = quote_liquidity_units * slot_difference;
-
         let base_liquidity_units = self.get_base_liquidity_units()?;
+        let quote_liquidity_units = self.get_quote_liquidity_units()?;
+
+        // for liquidity: use sqrt(quote_liquidity * base_liquidity)
+        let liquidity = (base_liquidity_units * quote_liquidity_units)
+            .sqrt()
+            .unwrap();
+        let liquidity_x_slot_diff = liquidity * slot_difference;
+
         let price = if base_liquidity_units.is_zero() {
             Decimal::ZERO
         } else {
@@ -100,6 +96,7 @@ impl Amm {
             .to_u64()
             .unwrap_or(u64::MAX);
 
+            // logs for data ingestion
             msg!("Price: {:?}", price);
             msg!("LTWAP: {:?}", ltwap_latest_dec);
         }

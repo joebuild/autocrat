@@ -10,6 +10,8 @@ export const addLiquidityCpiHandler = async (
     ammAddr: PublicKey,
     maxBaseAmount: BN,
     maxQuoteAmount: BN,
+    minBaseAmount: BN,
+    minQuoteAmount: BN,
     ammProgram: PublicKey,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
 
@@ -37,6 +39,8 @@ export const addLiquidityCpiHandler = async (
         .addLiquidity(
             maxBaseAmount,
             maxQuoteAmount,
+            minBaseAmount,
+            minQuoteAmount
         )
         .accounts({
             user: client.provider.publicKey,

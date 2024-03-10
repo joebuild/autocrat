@@ -25,6 +25,7 @@ pub struct AddLiquidity<'info> {
         has_one = user,
         has_one = amm,
         seeds = [
+            AMM_POSITION_SEED_PREFIX,
             amm.key().as_ref(),
             user.key().as_ref(),
         ],
@@ -71,6 +72,8 @@ pub fn handler(
     ctx: Context<AddLiquidity>,
     max_base_amount: u64,
     max_quote_amount: u64,
+    min_base_amount: u64,
+    min_quote_amount: u64,
 ) -> Result<()> {
     let AddLiquidity {
         user,
@@ -138,13 +141,24 @@ pub fn handler(
             }
         }
 
-        let additional_ownership = temp_base_amount
+        let additional_ownership_base = temp_base_amount
             .checked_mul(amm.total_ownership as u128)
             .unwrap()
             .checked_div(amm.base_amount as u128)
             .unwrap()
             .to_u64()
             .unwrap();
+
+        let additional_ownership_quote = temp_quote_amount
+            .checked_mul(amm.total_ownership as u128)
+            .unwrap()
+            .checked_div(amm.quote_amount as u128)
+            .unwrap()
+            .to_u64()
+            .unwrap();
+
+        let additional_ownership =
+            std::cmp::min(additional_ownership_base, additional_ownership_quote);
 
         amm_position.ownership = amm_position
             .ownership
@@ -155,6 +169,9 @@ pub fn handler(
             .checked_add(additional_ownership)
             .unwrap();
     }
+
+    assert!(temp_base_amount >= min_base_amount as u128);
+    assert!(temp_quote_amount >= min_quote_amount as u128);
 
     amm.base_amount = amm
         .base_amount

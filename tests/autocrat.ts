@@ -424,8 +424,10 @@ describe("autocrat", async function () {
             let ixh = await autocratClient.addLiquidityCpi(
                 proposalAddr,
                 passMarketAmmAddr,
-                new BN(1 * 10 * 9),
+                new BN(1 * 10 ** 9),
                 new BN(1_000 * 10 ** 6),
+                new BN(1 * 0.95 * 10 ** 9),
+                new BN(1_000 * 0.95 * 10 ** 6),
             );
             await ixh.bankrun(banksClient);
 
@@ -444,8 +446,10 @@ describe("autocrat", async function () {
             let ixh = await autocratClient.addLiquidityCpi(
                 proposalAddr,
                 failMarketAmmAddr,
-                new BN(1 * 10 * 9),
+                new BN(1 * 10 ** 9),
                 new BN(1_000 * 10 ** 6),
+                new BN(1 * 0.95 * 10 ** 9),
+                new BN(1_000 * 0.95 * 10 ** 6),
             );
             await ixh.bankrun(banksClient);
 
@@ -704,5 +708,4 @@ describe("autocrat", async function () {
 
         });
     });
-
 });

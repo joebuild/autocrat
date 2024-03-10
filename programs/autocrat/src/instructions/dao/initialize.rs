@@ -25,7 +25,7 @@ pub struct InitializeDao<'info> {
         init,
         payer = payer,
         space = 8 + 32 + 1,
-        seeds = [dao.key().as_ref()],
+        seeds = [DAO_TREASURY_SEED_PREFIX, dao.key().as_ref()],
         bump
     )]
     pub dao_treasury: Account<'info, DaoTreasury>,

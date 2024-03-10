@@ -18,10 +18,11 @@ pub struct CreateAmm<'info> {
         payer = user,
         space = 8 + std::mem::size_of::<Amm>(),
         seeds = [
+            AMM_SEED_PREFIX,
             base_mint.key().as_ref(),
             quote_mint.key().as_ref(),
             create_amm_params.swap_fee_bps.to_le_bytes().as_ref(),
-            create_amm_params.permissioned_caller.unwrap_or(Pubkey::default()).as_ref()
+            create_amm_params.permissioned_caller.as_ref()
         ],
         bump
     )]
@@ -51,8 +52,7 @@ pub struct CreateAmm<'info> {
 
 #[derive(Debug, Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
 pub struct CreateAmmParams {
-    pub permissioned: bool,
-    pub permissioned_caller: Option<Pubkey>,
+    pub permissioned_caller: Pubkey,
     pub swap_fee_bps: u64,
     pub ltwap_decimals: u8,
 }
@@ -70,15 +70,17 @@ pub fn handler(ctx: Context<CreateAmm>, create_amm_params: CreateAmmParams) -> R
         system_program: _,
     } = ctx.accounts;
 
-    amm.permissioned = create_amm_params.permissioned;
-    if amm.permissioned {
-        amm.permissioned_caller = create_amm_params.permissioned_caller.unwrap();
+    if create_amm_params.permissioned_caller == Pubkey::default() {
+        amm.permissioned = false;
+    } else {
+        amm.permissioned = true;
+        amm.permissioned_caller = create_amm_params.permissioned_caller;
     }
 
     amm.created_at_slot = Clock::get()?.slot;
 
-    assert!((create_amm_params.swap_fee_bps as u64) < BPS_SCALE);
-    assert!((create_amm_params.swap_fee_bps as u64) > 0);
+    assert!(create_amm_params.swap_fee_bps < BPS_SCALE);
+    assert!(create_amm_params.swap_fee_bps > 0);
 
     amm.swap_fee_bps = create_amm_params.swap_fee_bps;
     amm.ltwap_decimals = create_amm_params.ltwap_decimals;

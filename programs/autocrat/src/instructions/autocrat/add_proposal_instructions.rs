@@ -12,7 +12,7 @@ pub struct AddProposalInstructions<'info> {
         mut,
         has_one = proposer,
         seeds = [
-            b"proposal",
+            PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
         ],
         bump
@@ -26,7 +26,7 @@ pub struct AddProposalInstructions<'info> {
         realloc::payer = proposer,
         realloc::zero = false,
         seeds = [
-            b"proposal_instructions",
+            PROPOSAL_INSTRUCTIONS_SEED_PREFIX,
             proposal.key().as_ref()
         ],
         bump

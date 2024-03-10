@@ -27,7 +27,7 @@ pub struct CreateProposalMarketSide<'info> {
         mut,
         has_one = proposer,
         seeds = [
-            b"proposal",
+            PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref(),
         ],
         bump
@@ -37,7 +37,7 @@ pub struct CreateProposalMarketSide<'info> {
         signer,
         mut,
         seeds = [
-            b"proposal_vault",
+            PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
         bump
@@ -196,8 +196,7 @@ pub fn handler(
     amm::cpi::create_amm(
         create_amm_ctx,
         CreateAmmParams {
-            permissioned: true,
-            permissioned_caller: Some(Autocrat::id()),
+            permissioned_caller: Autocrat::id(),
             swap_fee_bps,
             ltwap_decimals,
         },
@@ -211,6 +210,8 @@ pub fn handler(
     let add_liquidity_ctx = ctx.accounts.into_add_liquidity_context();
     amm::cpi::add_liquidity(
         add_liquidity_ctx,
+        amm_cond_meta_deposit,
+        amm_cond_usdc_deposit,
         amm_cond_meta_deposit,
         amm_cond_usdc_deposit,
     )?;

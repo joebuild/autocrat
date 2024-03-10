@@ -4,9 +4,7 @@ import {
     PublicKey,
 } from "@solana/web3.js";
 
-// @ts-ignore
-import * as AmmIDL from '../../target/idl/amm.json';
-import { Amm as AmmIDLType } from '../../target/types/amm';
+import { Amm as AmmIDLType, IDL as AmmIDL } from './types/amm';
 
 import * as ixs from "./instructions/amm";
 import BN from "bn.js";
@@ -48,7 +46,6 @@ export class AmmClient {
         baseMint: PublicKey,
         quoteMint: PublicKey,
         swapFeeBps: number,
-        permissioned: boolean,
         permissionedCaller: PublicKey = PublicKey.default,
         ltwapDecimals = 9
     ) {
@@ -57,7 +54,6 @@ export class AmmClient {
             baseMint,
             quoteMint,
             swapFeeBps,
-            permissioned,
             permissionedCaller,
             ltwapDecimals
         )
@@ -77,13 +73,17 @@ export class AmmClient {
         ammPositionAddr: PublicKey,
         maxBaseAmount: BN,
         maxQuoteAmount: BN,
+        minBaseAmount: BN,
+        minQuoteAmount: BN,
     ) {
         return ixs.addLiquidityHandler(
             this,
             ammAddr,
             ammPositionAddr,
             maxBaseAmount,
-            maxQuoteAmount
+            maxQuoteAmount,
+            minBaseAmount,
+            minQuoteAmount,
         )
     }
 

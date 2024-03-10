@@ -470,14 +470,8 @@ export type Amm = {
         "kind": "struct",
         "fields": [
           {
-            "name": "permissioned",
-            "type": "bool"
-          },
-          {
             "name": "permissionedCaller",
-            "type": {
-              "option": "publicKey"
-            }
+            "type": "publicKey"
           },
           {
             "name": "swapFeeBps",
@@ -994,14 +988,8 @@ export const IDL: Amm = {
         "kind": "struct",
         "fields": [
           {
-            "name": "permissioned",
-            "type": "bool"
-          },
-          {
             "name": "permissionedCaller",
-            "type": {
-              "option": "publicKey"
-            }
+            "type": "publicKey"
           },
           {
             "name": "swapFeeBps",

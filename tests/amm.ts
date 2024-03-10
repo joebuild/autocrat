@@ -102,7 +102,6 @@ describe("amm", async function () {
         META,
         USDC,
         1,
-        false,
       );
       await ixh.bankrun(banksClient);
 
@@ -129,7 +128,6 @@ describe("amm", async function () {
         META,
         USDC,
         300,
-        true,
         ammClient.program.programId,
       );
       await ixh.bankrun(banksClient);
@@ -159,7 +157,6 @@ describe("amm", async function () {
         META,
         USDC,
         200,
-        true,
         randomAuthCaller,
       );
       await ixh.bankrun(banksClient);
@@ -225,6 +222,8 @@ describe("amm", async function () {
         ammPositionAddr,
         new BN(10 * 10 ** 9),
         new BN(100 * 10 ** 6),
+        new BN(10 * 0.95 * 10 ** 9),
+        new BN(100 * 0.95 * 10 ** 6),
       );
       await ixh.bankrun(banksClient);
 
@@ -287,6 +286,8 @@ describe("amm", async function () {
       );
       await ixh1.bankrun(banksClient);
 
+      await fastForward(context, 1n)
+
       const permissionlessAmmMiddle = await ammClient.program.account.amm.fetch(permissionlessAmmAddr);
       let quoteReceived = permissionlessAmmStart.quoteAmount.toNumber() - permissionlessAmmMiddle.quoteAmount.toNumber()
 
@@ -317,6 +318,8 @@ describe("amm", async function () {
         new BN(1),
       );
       await ixh1.bankrun(banksClient);
+
+      await fastForward(context, 1n)
 
       const permissionlessAmmMiddle = await ammClient.program.account.amm.fetch(permissionlessAmmAddr);
       let baseReceived = permissionlessAmmStart.baseAmount.toNumber() - permissionlessAmmMiddle.baseAmount.toNumber()
