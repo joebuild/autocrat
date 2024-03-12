@@ -111,7 +111,7 @@ pub fn handler(
 ) -> Result<()> {
     let MergeConditionalTokens {
         user,
-        proposal,
+        proposal: _,
         proposal_vault,
         meta_mint: _,
         usdc_mint: _,

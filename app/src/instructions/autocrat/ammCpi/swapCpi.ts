@@ -1,7 +1,7 @@
 import { PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { AutocratClient } from "../../../AutocratClient";
 import { InstructionHandler } from "../../../InstructionHandler";
-import { getATA, getProposalVaultAddr } from '../../../utils';
+import { getATA, getAmmAuthAddr, getProposalVaultAddr } from '../../../utils';
 import BN from "bn.js";
 
 export const swapCpiHandler = async (
@@ -37,6 +37,8 @@ export const swapCpiHandler = async (
     let vaultAtaBase = getATA(baseMint, ammAddr)[0]
     let vaultAtaQuote = getATA(quoteMint, ammAddr)[0]
 
+    let ammAuthAddr = getAmmAuthAddr(client.program.programId)[0]
+
     let ix = await client.program.methods
         .swap(
             isQuoteToBase,
@@ -48,6 +50,7 @@ export const swapCpiHandler = async (
             proposal: proposalAddr,
             proposalVault: proposalVaultAddr,
             amm: ammAddr,
+            ammAuthPda: ammAuthAddr,
             metaMint: proposal.metaMint,
             usdcMint: proposal.usdcMint,
             conditionalMetaMint: baseMint,
@@ -57,7 +60,6 @@ export const swapCpiHandler = async (
             conditionalMetaVaultAta: vaultAtaBase,
             conditionalUsdcVaultAta: vaultAtaQuote,
             ammProgram,
-            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         })
         .instruction()
 

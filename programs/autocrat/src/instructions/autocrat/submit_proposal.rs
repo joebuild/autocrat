@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
@@ -7,6 +6,7 @@ use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
 
+use crate::program::Autocrat;
 use amm::cpi::accounts::UpdateLtwap;
 use amm::program::Amm;
 
@@ -78,15 +78,14 @@ pub struct SubmitProposal<'info> {
     #[account(mut)]
     /// CHECK:
     pub fail_market_amm: UncheckedAccount<'info>,
+    /// CHECK
+    pub amm_auth_pda: UncheckedAccount<'info>,
     #[account(address = amm::ID)]
     pub amm_program: Program<'info, Amm>,
     #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
-    #[account(address = tx_instructions::ID)]
-    /// CHECK:
-    pub instructions: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -94,19 +93,19 @@ pub fn handler(ctx: Context<SubmitProposal>) -> Result<()> {
     let SubmitProposal {
         proposer,
         dao,
-        dao_treasury,
+        dao_treasury: _,
         proposal,
-        proposal_vault,
+        proposal_vault: _,
         proposal_instructions,
-        usdc_mint,
+        usdc_mint: _,
         usdc_proposer_ata,
         usdc_treasury_vault_ata,
         pass_market_amm: _,
         fail_market_amm: _,
+        amm_auth_pda: _,
         amm_program: _,
-        associated_token_program,
+        associated_token_program: _,
         token_program,
-        instructions: _,
         system_program: _,
     } = ctx.accounts;
 
@@ -136,40 +135,47 @@ pub fn handler(ctx: Context<SubmitProposal>) -> Result<()> {
     proposal.slot_enqueued = Clock::get()?.slot;
     proposal_instructions.proposal_instructions_frozen = true;
 
+    let (_auth_pda, auth_pda_bump) =
+        Pubkey::find_program_address(&[AMM_AUTH_SEED_PREFIX], &Autocrat::id());
+    let seeds = &[AMM_AUTH_SEED_PREFIX, &[auth_pda_bump]];
+    let signer = [&seeds[..]];
+
     // start LTWAP
-    let update_pass_market_ltwap_ctx = ctx.accounts.into_update_pass_market_ltwap_context();
+    let update_pass_market_ltwap_ctx = ctx.accounts.into_update_pass_market_ltwap_context(&signer);
     amm::cpi::update_ltwap(update_pass_market_ltwap_ctx)?;
 
-    let update_fail_market_ltwap_ctx = ctx.accounts.into_update_fail_market_ltwap_context();
+    let update_fail_market_ltwap_ctx = ctx.accounts.into_update_fail_market_ltwap_context(&signer);
     amm::cpi::update_ltwap(update_fail_market_ltwap_ctx)?;
 
     Ok(())
 }
 
 impl<'info> SubmitProposal<'info> {
-    fn into_update_pass_market_ltwap_context(
-        &self,
+    fn into_update_pass_market_ltwap_context<'a, 'b, 'c>(
+        &'a self,
+        signer_seeds: &'a [&'b [&'c [u8]]],
     ) -> CpiContext<'_, '_, '_, 'info, UpdateLtwap<'info>> {
         let cpi_accounts = UpdateLtwap {
             user: self.proposer.to_account_info(),
             amm: self.pass_market_amm.to_account_info(),
-            instructions: self.instructions.to_account_info(),
             system_program: self.system_program.to_account_info(),
+            auth_pda: Some(self.amm_auth_pda.to_account_info()),
         };
         let cpi_program = self.amm_program.to_account_info();
-        CpiContext::new(cpi_program, cpi_accounts)
+        CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds)
     }
 
-    fn into_update_fail_market_ltwap_context(
-        &self,
+    fn into_update_fail_market_ltwap_context<'a, 'b, 'c>(
+        &'a self,
+        signer_seeds: &'a [&'b [&'c [u8]]],
     ) -> CpiContext<'_, '_, '_, 'info, UpdateLtwap<'info>> {
         let cpi_accounts = UpdateLtwap {
             user: self.proposer.to_account_info(),
             amm: self.fail_market_amm.to_account_info(),
-            instructions: self.instructions.to_account_info(),
             system_program: self.system_program.to_account_info(),
+            auth_pda: Some(self.amm_auth_pda.to_account_info()),
         };
         let cpi_program = self.amm_program.to_account_info();
-        CpiContext::new(cpi_program, cpi_accounts)
+        CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds)
     }
 }

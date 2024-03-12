@@ -11,7 +11,7 @@ export const updateLtwapHandler = async (
         .accounts({
             user: client.provider.publicKey,
             amm: ammAddr,
-            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
+            authPda: null,
         })
         .instruction()
 

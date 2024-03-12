@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
@@ -57,6 +56,8 @@ pub struct CreateProposalMarketSide<'info> {
     #[account(mut)]
     /// CHECK: checked in the AMM program
     pub amm_position: UncheckedAccount<'info>,
+    /// CHECK
+    pub amm_auth_pda: UncheckedAccount<'info>,
     pub meta_mint: Box<Account<'info, Mint>>,
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(
@@ -107,9 +108,6 @@ pub struct CreateProposalMarketSide<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
-    #[account(address = tx_instructions::ID)]
-    /// CHECK:
-    pub instructions: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -126,6 +124,7 @@ pub fn handler(
         dao,
         amm,
         amm_position: _,
+        amm_auth_pda: _,
         meta_mint: _,
         usdc_mint: _,
         conditional_meta_mint,
@@ -137,7 +136,6 @@ pub fn handler(
         amm_program: _,
         associated_token_program: _,
         token_program,
-        instructions: _,
         system_program: _,
     } = ctx.accounts;
 
@@ -189,10 +187,17 @@ pub fn handler(
     assert!(amm_cond_usdc_deposit >= dao.amm_initial_quote_liquidity_amount);
     assert!(amm_cond_meta_deposit > 0);
 
+    let (_auth_pda, auth_pda_bump) =
+        Pubkey::find_program_address(&[AMM_AUTH_SEED_PREFIX], &Autocrat::id());
+    let seeds = &[AMM_AUTH_SEED_PREFIX, &[auth_pda_bump]];
+    let signer = [&seeds[..]];
+
     // create amm
     let swap_fee_bps = dao.amm_swap_fee_bps;
     let ltwap_decimals = dao.amm_ltwap_decimals;
-    let create_amm_ctx = ctx.accounts.into_create_amm_context();
+
+    let create_amm_ctx = ctx.accounts.into_create_amm_context(&signer);
+
     amm::cpi::create_amm(
         create_amm_ctx,
         CreateAmmParams {
@@ -203,11 +208,11 @@ pub fn handler(
     )?;
 
     // create proposer LP position
-    let create_amm_position_ctx = ctx.accounts.into_create_amm_position_context();
+    let create_amm_position_ctx = ctx.accounts.into_create_amm_position_context(&signer);
     amm::cpi::create_position(create_amm_position_ctx)?;
 
     // add liquidity to proposer LP position
-    let add_liquidity_ctx = ctx.accounts.into_add_liquidity_context();
+    let add_liquidity_ctx = ctx.accounts.into_add_liquidity_context(&signer);
     amm::cpi::add_liquidity(
         add_liquidity_ctx,
         amm_cond_meta_deposit,
@@ -220,7 +225,10 @@ pub fn handler(
 }
 
 impl<'info> CreateProposalMarketSide<'info> {
-    fn into_create_amm_context(&self) -> CpiContext<'_, '_, '_, 'info, CreateAmm<'info>> {
+    fn into_create_amm_context<'a, 'b, 'c>(
+        &'a self,
+        signer_seeds: &'a [&'b [&'c [u8]]],
+    ) -> CpiContext<'_, '_, '_, 'info, CreateAmm<'info>> {
         let cpi_accounts = CreateAmm {
             user: self.proposer.to_account_info(),
             amm: self.amm.to_account_info(),
@@ -231,30 +239,35 @@ impl<'info> CreateProposalMarketSide<'info> {
             associated_token_program: self.associated_token_program.to_account_info(),
             token_program: self.token_program.to_account_info(),
             system_program: self.system_program.to_account_info(),
+            auth_pda: Some(self.amm_auth_pda.to_account_info()),
         };
         let cpi_program = self.amm_program.to_account_info();
-        CpiContext::new(cpi_program, cpi_accounts)
+        CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds)
     }
 }
 
 impl<'info> CreateProposalMarketSide<'info> {
-    fn into_create_amm_position_context(
-        &self,
+    fn into_create_amm_position_context<'a, 'b, 'c>(
+        &'a self,
+        signer_seeds: &'a [&'b [&'c [u8]]],
     ) -> CpiContext<'_, '_, '_, 'info, CreatePosition<'info>> {
         let cpi_accounts = CreatePosition {
             user: self.proposer.to_account_info(),
             amm: self.amm.to_account_info(),
             amm_position: self.amm_position.to_account_info(),
-            instructions: self.instructions.to_account_info(),
             system_program: self.system_program.to_account_info(),
+            auth_pda: Some(self.amm_auth_pda.to_account_info()),
         };
         let cpi_program = self.amm_program.to_account_info();
-        CpiContext::new(cpi_program, cpi_accounts)
+        CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds)
     }
 }
 
 impl<'info> CreateProposalMarketSide<'info> {
-    fn into_add_liquidity_context(&self) -> CpiContext<'_, '_, '_, 'info, AddLiquidity<'info>> {
+    fn into_add_liquidity_context<'a, 'b, 'c>(
+        &'a self,
+        signer_seeds: &'a [&'b [&'c [u8]]],
+    ) -> CpiContext<'_, '_, 'a, 'info, AddLiquidity<'info>> {
         let cpi_accounts = AddLiquidity {
             user: self.proposer.to_account_info(),
             amm: self.amm.to_account_info(),
@@ -267,10 +280,11 @@ impl<'info> CreateProposalMarketSide<'info> {
             vault_ata_quote: self.conditional_usdc_amm_vault_ata.to_account_info(),
             associated_token_program: self.associated_token_program.to_account_info(),
             token_program: self.token_program.to_account_info(),
-            instructions: self.instructions.to_account_info(),
             system_program: self.system_program.to_account_info(),
+            auth_pda: Some(self.amm_auth_pda.to_account_info()),
         };
+
         let cpi_program = self.amm_program.to_account_info();
-        CpiContext::new(cpi_program, cpi_accounts)
+        CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds)
     }
 }

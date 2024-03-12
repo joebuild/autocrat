@@ -11,7 +11,8 @@ pub struct Amm {
     pub bump: u8,
 
     pub permissioned: bool,
-    pub permissioned_caller: Pubkey,
+    pub auth_program: Pubkey,
+    pub auth_pda_bump: u8,
 
     pub created_at_slot: u64,
 

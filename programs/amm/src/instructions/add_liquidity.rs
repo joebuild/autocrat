@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
@@ -62,10 +61,13 @@ pub struct AddLiquidity<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
-    /// CHECK:
-    #[account(address = tx_instructions::ID)]
-    pub instructions: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
+    #[account(
+        seeds = [AMM_AUTH_SEED_PREFIX],
+        bump = amm.auth_pda_bump,
+        seeds::program = amm.auth_program
+    )]
+    pub auth_pda: Option<Signer<'info>>,
 }
 
 pub fn handler(
@@ -87,18 +89,15 @@ pub fn handler(
         vault_ata_quote,
         associated_token_program: _,
         token_program,
-        instructions,
         system_program: _,
+        auth_pda,
     } = ctx.accounts;
 
     assert!(max_base_amount > 0);
     assert!(max_quote_amount > 0);
 
     if amm.permissioned {
-        let ixns = instructions.to_account_info();
-        let current_index = tx_instructions::load_current_index_checked(&ixns)? as usize;
-        let current_ixn = tx_instructions::load_instruction_at_checked(current_index, &ixns)?;
-        assert!(amm.permissioned_caller == current_ixn.program_id);
+        assert!(auth_pda.is_some());
     }
 
     amm.update_ltwap()?;

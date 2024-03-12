@@ -49,6 +49,12 @@ export type Amm = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "authPda",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -79,14 +85,15 @@ export type Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": []
@@ -150,14 +157,15 @@ export type Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -238,14 +246,15 @@ export type Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -309,14 +318,15 @@ export type Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -348,14 +358,15 @@ export type Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": []
@@ -396,8 +407,12 @@ export type Amm = {
             "type": "bool"
           },
           {
-            "name": "permissionedCaller",
+            "name": "authProgram",
             "type": "publicKey"
+          },
+          {
+            "name": "authPdaBump",
+            "type": "u8"
           },
           {
             "name": "createdAtSlot",
@@ -567,6 +582,12 @@ export const IDL: Amm = {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "authPda",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -597,14 +618,15 @@ export const IDL: Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": []
@@ -668,14 +690,15 @@ export const IDL: Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -756,14 +779,15 @@ export const IDL: Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -827,14 +851,15 @@ export const IDL: Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": [
@@ -866,14 +891,15 @@ export const IDL: Amm = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "authPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true,
+          "isOptional": true
         }
       ],
       "args": []
@@ -914,8 +940,12 @@ export const IDL: Amm = {
             "type": "bool"
           },
           {
-            "name": "permissionedCaller",
+            "name": "authProgram",
             "type": "publicKey"
+          },
+          {
+            "name": "authPdaBump",
+            "type": "u8"
           },
           {
             "name": "createdAtSlot",

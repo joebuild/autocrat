@@ -1,7 +1,7 @@
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
-import { getATA, getDaoAddr, getDaoTreasuryAddr, getProposalAddr, getProposalInstructionsAddr, getProposalVaultAddr } from '../../utils';
+import { getATA, getAmmAuthAddr, getDaoAddr, getDaoTreasuryAddr, getProposalAddr, getProposalInstructionsAddr, getProposalVaultAddr } from '../../utils';
 import { Keypair, PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 
 export const submitProposalHandler = async (
@@ -19,6 +19,8 @@ export const submitProposalHandler = async (
 
     let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
 
+    let ammAuthAddr = getAmmAuthAddr(client.program.programId)[0]
+
     let ix = await client.program.methods
         .submitProposal()
         .accounts({
@@ -33,8 +35,8 @@ export const submitProposalHandler = async (
             usdcTreasuryVaultAta: getATA(proposal.usdcMint, daoTreasuryAddr)[0],
             passMarketAmm: proposal.passMarketAmm,
             failMarketAmm: proposal.failMarketAmm,
+            ammAuthPda: ammAuthAddr,
             ammProgram,
-            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         })
         .instruction()
 

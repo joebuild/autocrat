@@ -274,6 +274,14 @@ export type Autocrat = {
           "isSigner": false
         },
         {
+          "name": "ammAuthPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
           "name": "metaMint",
           "isMut": false,
           "isSigner": false
@@ -325,11 +333,6 @@ export type Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -413,6 +416,14 @@ export type Autocrat = {
           "isSigner": false
         },
         {
+          "name": "ammAuthPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
           "name": "ammProgram",
           "isMut": false,
           "isSigner": false
@@ -424,11 +435,6 @@ export type Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -849,12 +855,15 @@ export type Autocrat = {
           ]
         },
         {
-          "name": "ammProgram",
+          "name": "ammAuthPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
         },
         {
-          "name": "instructions",
+          "name": "ammProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -892,6 +901,14 @@ export type Autocrat = {
         {
           "name": "ammPosition",
           "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
+          "name": "ammAuthPda",
+          "isMut": false,
           "isSigner": false,
           "docs": [
             "CHECK"
@@ -949,11 +966,6 @@ export type Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -1014,6 +1026,14 @@ export type Autocrat = {
           ]
         },
         {
+          "name": "ammAuthPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
           "name": "metaMint",
           "isMut": false,
           "isSigner": false
@@ -1065,11 +1085,6 @@ export type Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -1110,6 +1125,14 @@ export type Autocrat = {
           "isSigner": false
         },
         {
+          "name": "ammAuthPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
           "name": "metaMint",
           "isMut": false,
           "isSigner": false
@@ -1161,11 +1184,6 @@ export type Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -1913,6 +1931,14 @@ export const IDL: Autocrat = {
           "isSigner": false
         },
         {
+          "name": "ammAuthPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
           "name": "metaMint",
           "isMut": false,
           "isSigner": false
@@ -1964,11 +1990,6 @@ export const IDL: Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -2052,6 +2073,14 @@ export const IDL: Autocrat = {
           "isSigner": false
         },
         {
+          "name": "ammAuthPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
           "name": "ammProgram",
           "isMut": false,
           "isSigner": false
@@ -2063,11 +2092,6 @@ export const IDL: Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -2488,12 +2512,15 @@ export const IDL: Autocrat = {
           ]
         },
         {
-          "name": "ammProgram",
+          "name": "ammAuthPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
         },
         {
-          "name": "instructions",
+          "name": "ammProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2531,6 +2558,14 @@ export const IDL: Autocrat = {
         {
           "name": "ammPosition",
           "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
+          "name": "ammAuthPda",
+          "isMut": false,
           "isSigner": false,
           "docs": [
             "CHECK"
@@ -2588,11 +2623,6 @@ export const IDL: Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -2653,6 +2683,14 @@ export const IDL: Autocrat = {
           ]
         },
         {
+          "name": "ammAuthPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
           "name": "metaMint",
           "isMut": false,
           "isSigner": false
@@ -2704,11 +2742,6 @@ export const IDL: Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },
@@ -2749,6 +2782,14 @@ export const IDL: Autocrat = {
           "isSigner": false
         },
         {
+          "name": "ammAuthPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
           "name": "metaMint",
           "isMut": false,
           "isSigner": false
@@ -2800,11 +2841,6 @@ export const IDL: Autocrat = {
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "instructions",
           "isMut": false,
           "isSigner": false
         },

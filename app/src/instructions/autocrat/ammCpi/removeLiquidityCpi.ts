@@ -1,7 +1,7 @@
 import { PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { AutocratClient } from "../../../AutocratClient";
 import { InstructionHandler } from "../../../InstructionHandler";
-import { getATA, getAmmPositionAddr, getProposalVaultAddr } from '../../../utils';
+import { getATA, getAmmAuthAddr, getAmmPositionAddr, getProposalVaultAddr } from '../../../utils';
 import BN from "bn.js";
 
 export const removeLiquidityCpiHandler = async (
@@ -30,6 +30,7 @@ export const removeLiquidityCpiHandler = async (
     }
 
     let ammPositionAddr = getAmmPositionAddr(ammProgram, ammAddr, client.provider.publicKey)[0]
+    let ammAuthAddr = getAmmAuthAddr(client.program.programId)[0]
 
     let ix = await client.program.methods
         .removeLiquidity(
@@ -41,6 +42,7 @@ export const removeLiquidityCpiHandler = async (
             proposalVault: proposalVaultAddr,
             amm: ammAddr,
             ammPosition: ammPositionAddr,
+            ammAuthPda: ammAuthAddr,
             metaMint: proposal.metaMint,
             usdcMint: proposal.usdcMint,
             conditionalMetaMint,
@@ -50,7 +52,6 @@ export const removeLiquidityCpiHandler = async (
             conditionalMetaVaultAta: getATA(conditionalMetaMint, ammAddr)[0],
             conditionalUsdcVaultAta: getATA(conditionalUsdcMint, ammAddr)[0],
             ammProgram,
-            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         })
         .instruction()
 

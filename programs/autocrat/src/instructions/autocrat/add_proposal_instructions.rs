@@ -41,7 +41,7 @@ pub fn handler(
     instructions: Vec<ProposalInstruction>,
 ) -> Result<()> {
     let AddProposalInstructions {
-        proposer,
+        proposer: _,
         proposal,
         proposal_instructions,
         rent: _,

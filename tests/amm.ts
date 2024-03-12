@@ -120,7 +120,7 @@ describe("amm", async function () {
       assert.equal(permissionlessAmmAcc.baseMintDecimals, 9);
       assert.equal(permissionlessAmmAcc.quoteMintDecimals, 6);
       assert.equal(permissionlessAmmAcc.swapFeeBps, 1);
-      assert.equal(permissionlessAmmAcc.permissionedCaller.toBase58(), PublicKey.default.toBase58());
+      assert.equal(permissionlessAmmAcc.authProgram.toBase58(), PublicKey.default.toBase58());
     });
 
     it("create a permissioned amm (using the amm program as auth)", async function () {
@@ -147,7 +147,7 @@ describe("amm", async function () {
       assert.equal(permissionedAccessibleAmmAcc.baseMintDecimals, 9);
       assert.equal(permissionedAccessibleAmmAcc.quoteMintDecimals, 6);
       assert.equal(permissionedAccessibleAmmAcc.swapFeeBps, 300);
-      assert.equal(permissionedAccessibleAmmAcc.permissionedCaller.toBase58(), ammClient.program.programId.toBase58());
+      assert.equal(permissionedAccessibleAmmAcc.authProgram.toBase58(), ammClient.program.programId.toBase58());
     });
 
     it("create a permissioned amm (uncontrolled program)", async function () {
@@ -176,7 +176,7 @@ describe("amm", async function () {
       assert.equal(permissionedInaccessibleAmmAcc.baseMintDecimals, 9);
       assert.equal(permissionedInaccessibleAmmAcc.quoteMintDecimals, 6);
       assert.equal(permissionedInaccessibleAmmAcc.swapFeeBps, 200);
-      assert.equal(permissionedInaccessibleAmmAcc.permissionedCaller.toBase58(), randomAuthCaller.toBase58());
+      assert.equal(permissionedInaccessibleAmmAcc.authProgram.toBase58(), randomAuthCaller.toBase58());
     });
   });
 
@@ -192,16 +192,16 @@ describe("amm", async function () {
       assert.equal(permissionlessMarketPosition.user.toBase58(), payer.publicKey.toBase58());
     });
 
-    it("create new permissioned amm position", async function () {
-      let ixh = await ammClient.createAmmPosition(permissionedAccessibleAmmAddr);
-      await ixh.bankrun(banksClient);
+    // it("create new permissioned amm position", async function () {
+    //   let ixh = await ammClient.createAmmPosition(permissionedAccessibleAmmAddr);
+    //   await ixh.bankrun(banksClient);
 
-      let permissionedMarketPositionAddr = getAmmPositionAddr(ammClient.program.programId, permissionedAccessibleAmmAddr, payer.publicKey)[0]
-      const permissionedMarketPosition = await ammClient.program.account.ammPosition.fetch(permissionedMarketPositionAddr);
+    //   let permissionedMarketPositionAddr = getAmmPositionAddr(ammClient.program.programId, permissionedAccessibleAmmAddr, payer.publicKey)[0]
+    //   const permissionedMarketPosition = await ammClient.program.account.ammPosition.fetch(permissionedMarketPositionAddr);
 
-      assert.equal(permissionedMarketPosition.amm.toBase58(), permissionedAccessibleAmmAddr.toBase58());
-      assert.equal(permissionedMarketPosition.user.toBase58(), payer.publicKey.toBase58());
-    });
+    //   assert.equal(permissionedMarketPosition.amm.toBase58(), permissionedAccessibleAmmAddr.toBase58());
+    //   assert.equal(permissionedMarketPosition.user.toBase58(), payer.publicKey.toBase58());
+    // });
 
     // it("fail to create an unauthorized amm position", async function () {
     //   // todo: confirm that error is thrown

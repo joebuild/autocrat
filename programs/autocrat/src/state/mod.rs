@@ -33,6 +33,7 @@ pub const BPS_SCALE: u64 = 100 * 100;
 
 pub const AMM_SEED_PREFIX: &[u8] = b"amm__";
 pub const AMM_POSITION_SEED_PREFIX: &[u8] = b"amm_position";
+pub const AMM_AUTH_SEED_PREFIX: &[u8] = b"amm_auth";
 
 pub const DAO_TREASURY_SEED_PREFIX: &[u8] = b"dao_treasury";
 

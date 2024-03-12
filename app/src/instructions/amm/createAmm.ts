@@ -36,6 +36,7 @@ export const createAmmHandler = async (
             quoteMint,
             vaultAtaBase,
             vaultAtaQuote,
+            authPda: null
         })
         .instruction()
 

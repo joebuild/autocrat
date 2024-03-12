@@ -7,9 +7,6 @@ use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
 
-use amm::cpi::accounts::UpdateLtwap;
-use amm::program::Amm;
-
 use crate::error::ErrorCode;
 use crate::state::*;
 use crate::utils::*;

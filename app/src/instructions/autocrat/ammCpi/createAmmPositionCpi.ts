@@ -1,7 +1,7 @@
 import { PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { AutocratClient } from "../../../AutocratClient";
 import { InstructionHandler } from "../../../InstructionHandler";
-import { getAmmPositionAddr } from '../../../utils';
+import { getAmmAuthAddr, getAmmPositionAddr } from '../../../utils';
 
 export const createAmmPositionCpiHandler = async (
     client: AutocratClient,
@@ -9,6 +9,8 @@ export const createAmmPositionCpiHandler = async (
     amm: PublicKey,
     ammProgram: PublicKey,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
+    let ammAuthAddr = getAmmAuthAddr(client.program.programId)[0]
+
     let ix = await client.program.methods
         .createPosition()
         .accounts({
@@ -16,8 +18,8 @@ export const createAmmPositionCpiHandler = async (
             proposal: proposalAddr,
             amm,
             ammPosition: getAmmPositionAddr(ammProgram, amm, client.provider.publicKey)[0],
+            ammAuthPda: ammAuthAddr,
             ammProgram,
-            instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
         })
         .instruction()
 

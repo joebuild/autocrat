@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
@@ -7,6 +6,7 @@ use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
 
+use crate::program::Autocrat;
 use amm::cpi::accounts::RemoveLiquidity as AmmRemoveLiquidity;
 use amm::program::Amm;
 
@@ -37,6 +37,8 @@ pub struct RemoveLiquidity<'info> {
     #[account(mut)]
     /// CHECK
     pub amm_position: UncheckedAccount<'info>,
+    /// CHECK
+    pub amm_auth_pda: UncheckedAccount<'info>,
     pub meta_mint: Box<Account<'info, Mint>>,
     pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(
@@ -79,9 +81,6 @@ pub struct RemoveLiquidity<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
-    #[account(address = tx_instructions::ID)]
-    /// CHECK:
-    pub instructions: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -105,15 +104,21 @@ pub fn handler(ctx: Context<RemoveLiquidity>, remove_bps: u64) -> Result<()> {
     }
 
     // remove liquidity from LP position
-    let add_liquidity_ctx = ctx.accounts.into_remove_liquidity_context();
+    let (_auth_pda, auth_pda_bump) =
+        Pubkey::find_program_address(&[AMM_AUTH_SEED_PREFIX], &Autocrat::id());
+    let seeds = &[AMM_AUTH_SEED_PREFIX, &[auth_pda_bump]];
+    let signer = [&seeds[..]];
+
+    let add_liquidity_ctx = ctx.accounts.into_remove_liquidity_context(&signer);
     amm::cpi::remove_liquidity(add_liquidity_ctx, remove_bps)?;
 
     Ok(())
 }
 
 impl<'info> RemoveLiquidity<'info> {
-    fn into_remove_liquidity_context(
-        &self,
+    fn into_remove_liquidity_context<'a, 'b, 'c>(
+        &'a self,
+        signer_seeds: &'a [&'b [&'c [u8]]],
     ) -> CpiContext<'_, '_, '_, 'info, AmmRemoveLiquidity<'info>> {
         let cpi_accounts = AmmRemoveLiquidity {
             user: self.user.to_account_info(),
@@ -127,10 +132,10 @@ impl<'info> RemoveLiquidity<'info> {
             vault_ata_quote: self.conditional_usdc_vault_ata.to_account_info(),
             associated_token_program: self.associated_token_program.to_account_info(),
             token_program: self.token_program.to_account_info(),
-            instructions: self.instructions.to_account_info(),
             system_program: self.system_program.to_account_info(),
+            auth_pda: Some(self.amm_auth_pda.to_account_info()),
         };
         let cpi_program = self.amm_program.to_account_info();
-        CpiContext::new(cpi_program, cpi_accounts)
+        CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds)
     }
 }
