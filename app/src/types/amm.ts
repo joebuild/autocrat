@@ -369,7 +369,14 @@ export type Amm = {
           "isOptional": true
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "finalSlot",
+          "type": {
+            "option": "u64"
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -473,6 +480,10 @@ export type Amm = {
           {
             "name": "ltwapLatest",
             "type": "u64"
+          },
+          {
+            "name": "ltwapFrozen",
+            "type": "bool"
           }
         ]
       }
@@ -902,7 +913,14 @@ export const IDL: Amm = {
           "isOptional": true
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "finalSlot",
+          "type": {
+            "option": "u64"
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1006,6 +1024,10 @@ export const IDL: Amm = {
           {
             "name": "ltwapLatest",
             "type": "u64"
+          },
+          {
+            "name": "ltwapFrozen",
+            "type": "bool"
           }
         ]
       }

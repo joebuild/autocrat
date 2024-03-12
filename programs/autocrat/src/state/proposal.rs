@@ -17,6 +17,7 @@ pub struct Proposal {
     #[max_len(100)]
     pub description_url: String,
     pub slot_enqueued: u64,
+    pub slots_duration: u64,
     pub state: ProposalState,
     pub instructions: Pubkey,
 

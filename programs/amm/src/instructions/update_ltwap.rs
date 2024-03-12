@@ -17,7 +17,7 @@ pub struct UpdateLtwap<'info> {
     pub auth_pda: Option<Signer<'info>>,
 }
 
-pub fn handler(ctx: Context<UpdateLtwap>) -> Result<()> {
+pub fn handler(ctx: Context<UpdateLtwap>, final_slot: Option<u64>) -> Result<()> {
     let UpdateLtwap {
         user: _,
         amm,
@@ -29,7 +29,11 @@ pub fn handler(ctx: Context<UpdateLtwap>) -> Result<()> {
         assert!(auth_pda.is_some());
     }
 
-    amm.update_ltwap()?;
+    if final_slot.is_some() {
+        assert!(amm.permissioned);
+    }
+
+    amm.update_ltwap(final_slot)?;
 
     Ok(())
 }

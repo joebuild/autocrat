@@ -133,19 +133,20 @@ pub fn handler(ctx: Context<SubmitProposal>) -> Result<()> {
     dao.proposals_active = dao.proposals_active.checked_add(1).unwrap();
 
     proposal.slot_enqueued = Clock::get()?.slot;
+    proposal.slots_duration = dao.proposal_duration_slots;
     proposal_instructions.proposal_instructions_frozen = true;
 
+    // start LTWAP
     let (_auth_pda, auth_pda_bump) =
         Pubkey::find_program_address(&[AMM_AUTH_SEED_PREFIX], &Autocrat::id());
     let seeds = &[AMM_AUTH_SEED_PREFIX, &[auth_pda_bump]];
     let signer = [&seeds[..]];
 
-    // start LTWAP
     let update_pass_market_ltwap_ctx = ctx.accounts.into_update_pass_market_ltwap_context(&signer);
-    amm::cpi::update_ltwap(update_pass_market_ltwap_ctx)?;
+    amm::cpi::update_ltwap(update_pass_market_ltwap_ctx, None)?;
 
     let update_fail_market_ltwap_ctx = ctx.accounts.into_update_fail_market_ltwap_context(&signer);
-    amm::cpi::update_ltwap(update_fail_market_ltwap_ctx)?;
+    amm::cpi::update_ltwap(update_fail_market_ltwap_ctx, None)?;
 
     Ok(())
 }

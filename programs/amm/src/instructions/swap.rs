@@ -86,7 +86,7 @@ pub fn handler(
         assert!(auth_pda.is_some());
     }
 
-    amm.update_ltwap()?;
+    amm.update_ltwap(None)?;
 
     let base_amount_start = amm.base_amount as u128;
     let quote_amount_start = amm.quote_amount as u128;

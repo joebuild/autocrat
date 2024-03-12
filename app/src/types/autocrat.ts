@@ -1332,6 +1332,10 @@ export type Autocrat = {
             "type": "u64"
           },
           {
+            "name": "slotsDuration",
+            "type": "u64"
+          },
+          {
             "name": "state",
             "type": {
               "defined": "ProposalState"
@@ -2986,6 +2990,10 @@ export const IDL: Autocrat = {
           },
           {
             "name": "slotEnqueued",
+            "type": "u64"
+          },
+          {
+            "name": "slotsDuration",
             "type": "u64"
           },
           {

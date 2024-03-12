@@ -8,6 +8,7 @@ use anchor_spl::token::TokenAccount;
 
 use crate::program::Autocrat;
 use amm::cpi::accounts::RemoveLiquidity as AmmRemoveLiquidity;
+use amm::cpi::accounts::UpdateLtwap;
 use amm::program::Amm;
 
 use crate::error::ErrorCode;
@@ -103,12 +104,23 @@ pub fn handler(ctx: Context<RemoveLiquidity>, remove_bps: u64) -> Result<()> {
         return err!(ErrorCode::ProposerCannotPullLiquidityWhileMarketIsPending);
     }
 
-    // remove liquidity from LP position
     let (_auth_pda, auth_pda_bump) =
         Pubkey::find_program_address(&[AMM_AUTH_SEED_PREFIX], &Autocrat::id());
     let seeds = &[AMM_AUTH_SEED_PREFIX, &[auth_pda_bump]];
     let signer = [&seeds[..]];
 
+    // update LTWAP and pass the final slot, so that it will freeze in case the proposal duration has passed
+    let final_slot = ctx
+        .accounts
+        .proposal
+        .slot_enqueued
+        .checked_add(ctx.accounts.proposal.slots_duration)
+        .unwrap();
+
+    let update_ltwap_ctx = ctx.accounts.into_update_ltwap_context(&signer);
+    amm::cpi::update_ltwap(update_ltwap_ctx, Some(final_slot))?;
+
+    // remove liquidity from LP position
     let add_liquidity_ctx = ctx.accounts.into_remove_liquidity_context(&signer);
     amm::cpi::remove_liquidity(add_liquidity_ctx, remove_bps)?;
 
@@ -132,6 +144,20 @@ impl<'info> RemoveLiquidity<'info> {
             vault_ata_quote: self.conditional_usdc_vault_ata.to_account_info(),
             associated_token_program: self.associated_token_program.to_account_info(),
             token_program: self.token_program.to_account_info(),
+            system_program: self.system_program.to_account_info(),
+            auth_pda: Some(self.amm_auth_pda.to_account_info()),
+        };
+        let cpi_program = self.amm_program.to_account_info();
+        CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds)
+    }
+
+    fn into_update_ltwap_context<'a, 'b, 'c>(
+        &'a self,
+        signer_seeds: &'a [&'b [&'c [u8]]],
+    ) -> CpiContext<'_, '_, '_, 'info, UpdateLtwap<'info>> {
+        let cpi_accounts = UpdateLtwap {
+            user: self.user.to_account_info(),
+            amm: self.amm.to_account_info(),
             system_program: self.system_program.to_account_info(),
             auth_pda: Some(self.amm_auth_pda.to_account_info()),
         };

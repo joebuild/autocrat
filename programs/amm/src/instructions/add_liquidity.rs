@@ -100,7 +100,7 @@ pub fn handler(
         assert!(auth_pda.is_some());
     }
 
-    amm.update_ltwap()?;
+    amm.update_ltwap(None)?;
 
     let mut temp_base_amount: u128;
     let mut temp_quote_amount: u128;

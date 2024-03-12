@@ -36,6 +36,11 @@ pub fn handler(ctx: Context<CreatePosition>) -> Result<()> {
         ErrorCode::ProposalIsNoLongerPending
     );
 
+    let clock = Clock::get()?;
+    assert!(
+        clock.slot < ctx.accounts.proposal.slot_enqueued + ctx.accounts.proposal.slots_duration
+    );
+
     // create proposer LP position
     let (_auth_pda, auth_pda_bump) =
         Pubkey::find_program_address(&[AMM_AUTH_SEED_PREFIX], &Autocrat::id());

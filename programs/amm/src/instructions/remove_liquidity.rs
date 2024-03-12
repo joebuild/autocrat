@@ -96,7 +96,7 @@ pub fn handler(ctx: Context<RemoveLiquidity>, withdraw_bps: u64) -> Result<()> {
         assert!(auth_pda.is_some());
     }
 
-    amm.update_ltwap()?;
+    amm.update_ltwap(None)?;
 
     let base_to_withdraw = (amm.base_amount as u128)
         .checked_mul(amm_position.ownership as u128)

@@ -117,6 +117,11 @@ pub fn handler(
         ErrorCode::ProposalIsNoLongerPending
     );
 
+    let clock = Clock::get()?;
+    assert!(
+        clock.slot < ctx.accounts.proposal.slot_enqueued + ctx.accounts.proposal.slots_duration
+    );
+
     assert!(input_amount > 0);
     assert!(output_amount_min > 0);
 

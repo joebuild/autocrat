@@ -7,7 +7,7 @@ export const updateLtwapHandler = async (
     ammAddr: PublicKey,
 ): Promise<InstructionHandler<typeof client.program, AmmClient>> => {
     let ix = await client.program.methods
-        .updateLtwap()
+        .updateLtwap(null)
         .accounts({
             user: client.provider.publicKey,
             amm: ammAddr,
