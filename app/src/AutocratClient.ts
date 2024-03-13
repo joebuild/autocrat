@@ -11,7 +11,8 @@ import { Autocrat as AutocratIDLType, IDL as AutocratIDL } from './types/autocra
 import * as ixs from "./instructions/autocrat";
 import BN from "bn.js";
 import { AMM_PROGRAM_ID, AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
-import { ProposalInstruction, UpdateDaoParams } from "./types";
+import { ProposalInstruction, UpdateDaoParams, Dao, DaoTreasury, Proposal, ProposalWrapper, ProposalVault, ProposalInstructions } from "./types";
+import { getDaoAddr, getDaoTreasuryAddr, getProposalAddr, getProposalVaultAddr } from "./utils";
 
 export type CreateAutocratClientParams = {
     provider: AnchorProvider,
@@ -185,6 +186,8 @@ export class AutocratClient {
         )
     }
 
+    // amm cpi functions
+
     async createAmmPositionCpi(
         proposalAddr: PublicKey,
         amm: PublicKey,
@@ -252,5 +255,29 @@ export class AutocratClient {
             ammProgram
         )
     }
+
+    // getter functions
+
+    async getDao(): Promise<Dao> {
+        return await this.program.account.dao.fetch(getDaoAddr(this.program.programId)[0]);
+    }
+
+    async getDaoTreasury(): Promise<DaoTreasury> {
+        return await this.program.account.daoTreasury.fetch(getDaoTreasuryAddr(this.program.programId)[0]);
+    }
+
+    async getAllProposals(): Promise<ProposalWrapper[]> {
+        return await this.program.account.proposal.all();
+    }
+
+    async getProposalByNumber(proposalNumber: number): Promise<Proposal> {
+        return await this.program.account.proposal.fetch(getProposalAddr(this.program.programId, proposalNumber)[0]);
+    }
+
+    async getProposalInstructionsByNumber(proposalNumber: number): Promise<ProposalInstructions> {
+        const proposal = await this.getProposalByNumber(proposalNumber)
+        return await this.program.account.proposalInstructions.fetch(proposal.instructions);
+    }
+
 }
 
