@@ -4,6 +4,7 @@ import {
     ConfirmOptions,
     Keypair,
     Signer,
+    Transaction,
     TransactionInstruction,
     TransactionMessage,
     VersionedTransaction,
@@ -95,7 +96,6 @@ export class InstructionHandler<ProgramType, Type extends Client<ProgramType> = 
         }).compileToV0Message(this.client.luts);
 
         let tx = new VersionedTransaction(message)
-        tx = await this.client.provider.wallet.signTransaction(tx)
 
         let signersArray = Array.from(this.signers)
         if (this.signers.size) {
@@ -129,8 +129,9 @@ export class InstructionHandler<ProgramType, Type extends Client<ProgramType> = 
     async rpc(opts: ConfirmOptions = { skipPreflight: true }) {
         try {
             let blockhash = (await this.client.provider.connection.getLatestBlockhash()).blockhash
-            const tx = await this.getVersionedTransaction(blockhash);
-            return await this.client.provider.sendAndConfirm(tx, undefined, opts)
+            let tx = await this.getVersionedTransaction(blockhash);
+            tx = await this.client.provider.wallet.signTransaction(tx)
+            return await this.client.provider.connection.sendRawTransaction(tx.serialize(), opts)
         } catch (e) {
             console.log(e)
             throw e

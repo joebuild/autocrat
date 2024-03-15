@@ -31,7 +31,6 @@ export const createProposalHandler = async (
             usdcProposerAta: getATA(dao.usdcMint, client.provider.publicKey)[0],
             metaVaultAta: getATA(dao.metaMint, proposalVaultAddr)[0],
             usdcVaultAta: getATA(dao.usdcMint, proposalVaultAddr)[0],
-            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
         })
         .instruction()
 

@@ -33,7 +33,6 @@ pub struct CreateProposalMarketSide<'info> {
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        signer,
         mut,
         seeds = [
             PROPOSAL_VAULT_SEED_PREFIX,
@@ -162,8 +161,8 @@ pub fn handler(
     assert!(proposal.proposer_inititial_conditional_usdc_minted >= amm_cond_usdc_deposit);
 
     // mint the proposer's conditional tokens
-    let proposal_vault_key = proposal_vault.key();
-    let seeds = generate_proposal_vault_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
+    let proposal_key = proposal.key();
+    let mint_seeds = generate_proposal_vault_seeds!(proposal_key, ctx.bumps.proposal_vault);
 
     token_mint_signed(
         proposal.proposer_inititial_conditional_meta_minted,
@@ -171,7 +170,7 @@ pub fn handler(
         conditional_meta_mint.as_ref(),
         conditional_meta_proposer_ata.as_ref(),
         proposal_vault.as_ref(),
-        seeds,
+        mint_seeds,
     )?;
 
     token_mint_signed(
@@ -180,7 +179,7 @@ pub fn handler(
         conditional_usdc_mint.as_ref(),
         conditional_usdc_proposer_ata.as_ref(),
         proposal_vault.as_ref(),
-        seeds,
+        mint_seeds,
     )?;
 
     // make sure the quote amount meets liquidity requirements
@@ -189,14 +188,14 @@ pub fn handler(
 
     let (_auth_pda, auth_pda_bump) =
         Pubkey::find_program_address(&[AMM_AUTH_SEED_PREFIX], &Autocrat::id());
-    let seeds = &[AMM_AUTH_SEED_PREFIX, &[auth_pda_bump]];
-    let signer = [&seeds[..]];
+    let amm_auth_seeds = &[AMM_AUTH_SEED_PREFIX, &[auth_pda_bump]];
+    let amm_auth_signer = [&amm_auth_seeds[..]];
 
     // create amm
     let swap_fee_bps = dao.amm_swap_fee_bps;
     let ltwap_decimals = dao.amm_ltwap_decimals;
 
-    let create_amm_ctx = ctx.accounts.into_create_amm_context(&signer);
+    let create_amm_ctx = ctx.accounts.into_create_amm_context(&amm_auth_signer);
 
     amm::cpi::create_amm(
         create_amm_ctx,
@@ -208,11 +207,13 @@ pub fn handler(
     )?;
 
     // create proposer LP position
-    let create_amm_position_ctx = ctx.accounts.into_create_amm_position_context(&signer);
+    let create_amm_position_ctx = ctx
+        .accounts
+        .into_create_amm_position_context(&amm_auth_signer);
     amm::cpi::create_position(create_amm_position_ctx)?;
 
     // add liquidity to proposer LP position
-    let add_liquidity_ctx = ctx.accounts.into_add_liquidity_context(&signer);
+    let add_liquidity_ctx = ctx.accounts.into_add_liquidity_context(&amm_auth_signer);
     amm::cpi::add_liquidity(
         add_liquidity_ctx,
         amm_cond_meta_deposit,

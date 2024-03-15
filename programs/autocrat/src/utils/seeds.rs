@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! generate_proposal_vault_seeds {
-    ($proposal_vault:expr, $bump:expr) => {{
-        &[$proposal_vault.as_ref(), &[$bump]]
+    ($proposal:expr, $bump:expr) => {{
+        &[PROPOSAL_VAULT_SEED_PREFIX, $proposal.as_ref(), &[$bump]]
     }};
 }

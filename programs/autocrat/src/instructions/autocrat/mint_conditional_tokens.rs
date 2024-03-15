@@ -111,7 +111,7 @@ pub fn handler(
 ) -> Result<()> {
     let MintConditionalTokens {
         user,
-        proposal: _,
+        proposal,
         proposal_vault,
         meta_mint: _,
         usdc_mint: _,
@@ -132,8 +132,8 @@ pub fn handler(
         system_program: _,
     } = ctx.accounts;
 
-    let proposal_vault_key = proposal_vault.key();
-    let seeds = generate_proposal_vault_seeds!(proposal_vault_key, ctx.bumps.proposal_vault);
+    let proposal_key = proposal.key();
+    let seeds = generate_proposal_vault_seeds!(proposal_key, ctx.bumps.proposal_vault);
 
     if meta_amount > 0 {
         // transfer user meta to vault

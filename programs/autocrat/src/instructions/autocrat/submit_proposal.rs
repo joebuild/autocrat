@@ -43,7 +43,6 @@ pub struct SubmitProposal<'info> {
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        signer,
         mut,
         seeds = [
             PROPOSAL_VAULT_SEED_PREFIX,

@@ -6,8 +6,8 @@ import { META_MINT, USDC_MINT } from '../../constants';
 
 export const initializeDaoHandler = async (
     client: AutocratClient,
-    metaMint?: PublicKey,
-    usdcMint?: PublicKey
+    metaMint: PublicKey,
+    usdcMint: PublicKey
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
     let daoTreasuryAddr = getDaoTreasuryAddr(client.program.programId)[0]
 
@@ -17,8 +17,8 @@ export const initializeDaoHandler = async (
             payer: client.provider.wallet.publicKey,
             dao: getDaoAddr(client.program.programId)[0],
             daoTreasury: daoTreasuryAddr,
-            metaMint: metaMint || META_MINT,
-            usdcMint: usdcMint || USDC_MINT,
+            metaMint: metaMint,
+            usdcMint: usdcMint,
         })
         .instruction()
 

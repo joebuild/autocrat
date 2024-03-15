@@ -55,8 +55,8 @@ export class AutocratClient {
     }
 
     async initializeDao(
-        metaMint?: PublicKey,
-        usdcMint?: PublicKey
+        metaMint: PublicKey,
+        usdcMint: PublicKey
     ) {
         return ixs.initializeDaoHandler(
             this,

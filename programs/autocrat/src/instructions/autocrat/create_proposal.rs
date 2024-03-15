@@ -35,7 +35,6 @@ pub struct CreateProposal<'info> {
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        signer,
         init,
         payer = proposer,
         space = 8 + std::mem::size_of::<ProposalVault>(),
@@ -78,9 +77,6 @@ pub struct CreateProposal<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
-    #[account(address = tx_instructions::ID)]
-    /// CHECK:
-    pub instructions: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -103,7 +99,6 @@ pub fn handler(
         usdc_vault_ata,
         associated_token_program: _,
         token_program,
-        instructions: _,
         system_program: _,
     } = ctx.accounts;
 
