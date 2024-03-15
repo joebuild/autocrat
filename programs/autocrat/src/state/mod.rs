@@ -11,8 +11,8 @@ pub mod proposal;
 pub mod proposal_vault;
 
 pub const SLOTS_PER_10_SECS: u64 = 25;
-pub const PROPOSAL_DURATION_SLOTS: u64 = 3 * 24 * 60 * 6 * SLOTS_PER_10_SECS;
-pub const FINALIZE_WINDOW_SLOTS: u64 = 1 * 24 * 60 * 6 * SLOTS_PER_10_SECS;
+pub const PROPOSAL_DURATION_SLOTS: u64 = 1 * 60 * 6 * SLOTS_PER_10_SECS;
+pub const FINALIZE_WINDOW_SLOTS: u64 = 15 * 6 * SLOTS_PER_10_SECS;
 
 // by default, the pass price needs to be 5% higher than the fail price
 pub const DEFAULT_PASS_THRESHOLD_BPS: u64 = 500;

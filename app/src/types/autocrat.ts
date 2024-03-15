@@ -467,7 +467,7 @@ export type Autocrat = {
         {
           "name": "daoTreasury",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "passMarketAmm",
@@ -503,7 +503,7 @@ export type Autocrat = {
         {
           "name": "proposalVault",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "metaMint",
@@ -618,7 +618,7 @@ export type Autocrat = {
         {
           "name": "proposalVault",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "metaMint",
@@ -733,7 +733,7 @@ export type Autocrat = {
         {
           "name": "proposalVault",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "metaMint",
@@ -2123,7 +2123,7 @@ export const IDL: Autocrat = {
         {
           "name": "daoTreasury",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "passMarketAmm",
@@ -2159,7 +2159,7 @@ export const IDL: Autocrat = {
         {
           "name": "proposalVault",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "metaMint",
@@ -2274,7 +2274,7 @@ export const IDL: Autocrat = {
         {
           "name": "proposalVault",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "metaMint",
@@ -2389,7 +2389,7 @@ export const IDL: Autocrat = {
         {
           "name": "proposalVault",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "metaMint",

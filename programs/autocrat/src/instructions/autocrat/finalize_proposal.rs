@@ -36,7 +36,6 @@ pub struct FinalizeProposal<'info> {
     pub dao: Box<Account<'info, Dao>>,
     /// CHECK: never read
     #[account(
-        signer,
         mut,
         seeds = [DAO_TREASURY_SEED_PREFIX, dao.key().as_ref()],
         bump = dao.treasury_pda_bump

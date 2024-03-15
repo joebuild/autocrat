@@ -28,7 +28,6 @@ pub struct MergeConditionalTokens<'info> {
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
-        signer,
         mut,
         has_one = meta_vault_ata,
         has_one = usdc_vault_ata,

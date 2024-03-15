@@ -166,5 +166,85 @@ export class AmmClient {
         }
     }
 
+    async getSwapPreview(
+        amm: Amm,
+        inputAmount: BN,
+        isBuyBase: boolean
+    ): Promise<SwapPreview> {
+        let quoteAmount = amm.quoteAmount
+        let baseAmount = amm.baseAmount
+
+        let startPrice = (quoteAmount.toNumber() / 10 ** amm.quoteMintDecimals) /
+            (baseAmount.toNumber() / 10 ** amm.baseMintDecimals)
+
+        let k = quoteAmount.mul(baseAmount)
+
+        let inputMinusFee = inputAmount
+            .mul(new BN(10_000).sub(amm.swapFeeBps))
+            .div(new BN(10_000))
+
+        if (isBuyBase) {
+            let tempQuoteAmount = quoteAmount.add(inputMinusFee)
+            let tempBaseAmount = k.div(tempQuoteAmount)
+
+            let finalPrice = (tempQuoteAmount.toNumber() / 10 ** amm.quoteMintDecimals) /
+                (tempBaseAmount.toNumber() / 10 ** amm.baseMintDecimals)
+
+            let outputAmountBase = baseAmount.sub(tempBaseAmount)
+
+            let inputUnits = inputAmount.toNumber() / 10 ** amm.quoteMintDecimals
+            let outputUnits = outputAmountBase.toNumber() / 10 ** amm.baseMintDecimals
+
+            let priceImpact = Math.abs(finalPrice - startPrice) / startPrice
+
+            return {
+                isBuyBase,
+                inputAmount,
+                outputAmount: outputAmountBase,
+                inputUnits,
+                outputUnits,
+                startPrice,
+                finalPrice,
+                avgSwapPrice: inputUnits / outputUnits,
+                priceImpact
+            }
+        } else {
+            let tempBaseAmount = baseAmount.add(inputMinusFee)
+            let tempQuoteAmount = k.div(tempBaseAmount)
+
+            let finalPrice = (tempQuoteAmount.toNumber() / 10 ** amm.quoteMintDecimals) /
+                (tempBaseAmount.toNumber() / 10 ** amm.baseMintDecimals)
+
+            let outputAmountQuote = quoteAmount.sub(tempQuoteAmount)
+
+            let inputUnits = inputAmount.toNumber() / 10 ** amm.baseMintDecimals
+            let outputUnits = outputAmountQuote.toNumber() / 10 ** amm.quoteMintDecimals
+
+            let priceImpact = Math.abs(finalPrice - startPrice) / startPrice
+
+            return {
+                isBuyBase,
+                inputAmount,
+                outputAmount: outputAmountQuote,
+                inputUnits,
+                outputUnits,
+                startPrice,
+                finalPrice,
+                avgSwapPrice: outputUnits / inputUnits,
+                priceImpact
+            }
+        }
+    }
 }
 
+export type SwapPreview = {
+    isBuyBase: boolean,
+    inputAmount: BN,
+    outputAmount: BN,
+    inputUnits: number,
+    outputUnits: number,
+    startPrice: number,
+    finalPrice: number,
+    avgSwapPrice: number,
+    priceImpact: number
+}
