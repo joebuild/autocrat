@@ -157,7 +157,13 @@ pub fn handler(
         let temp_base_amount = base_amount_start
             .checked_add(input_amount_minus_fee)
             .unwrap();
-        let temp_quote_amount = k.checked_div(temp_base_amount).unwrap();
+
+        // for rounding up, if we have, a = b / c, we use: a = (b + (c - 1)) / c
+        let temp_quote_amount = k
+            .checked_add(temp_base_amount.checked_sub(1).unwrap())
+            .unwrap()
+            .checked_div(temp_base_amount)
+            .unwrap();
 
         let output_amount_quote = quote_amount_start
             .checked_sub(temp_quote_amount)

@@ -166,11 +166,11 @@ export class AmmClient {
         }
     }
 
-    async getSwapPreview(
+    getSwapPreview(
         amm: Amm,
         inputAmount: BN,
         isBuyBase: boolean
-    ): Promise<SwapPreview> {
+    ): SwapPreview {
         let quoteAmount = amm.quoteAmount
         let baseAmount = amm.baseAmount
 
