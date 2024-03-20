@@ -1,43 +1,59 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey } from "@solana/web3.js";
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
-import { getATA, getDaoAddr, getProposalVaultAddr } from '../../utils';
-import BN from 'bn.js';
+import { getATA, getDaoAddr, getProposalVaultAddr } from "../../utils";
+import BN from "bn.js";
 
 export const mergeConditionalTokensHandler = async (
-    client: AutocratClient,
-    daoId: PublicKey,
-    proposalAddr: PublicKey,
-    metaAmount: BN,
-    usdcAmount: BN,
+  client: AutocratClient,
+  daoId: PublicKey,
+  proposalAddr: PublicKey,
+  metaAmount: BN,
+  usdcAmount: BN
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
-    const proposal = await client.program.account.proposal.fetch(proposalAddr);
+  const proposal = await client.program.account.proposal.fetch(proposalAddr);
 
-    let daoAddr = getDaoAddr(client.program.programId, daoId)[0]
-    let proposalVaultAddr = getProposalVaultAddr(client.program.programId, daoAddr, proposalAddr)[0]
+  let daoAddr = getDaoAddr(client.program.programId, daoId)[0];
+  let proposalVaultAddr = getProposalVaultAddr(
+    client.program.programId,
+    daoAddr,
+    proposalAddr
+  )[0];
 
-    let ix = await client.program.methods
-        .mergeConditionalTokens(metaAmount, usdcAmount)
-        .accounts({
-            user: client.provider.publicKey,
-            proposal: proposalAddr,
-            proposalVault: proposalVaultAddr,
-            metaMint: proposal.metaMint,
-            usdcMint: proposal.usdcMint,
-            conditionalOnPassMetaMint: proposal.conditionalOnPassMetaMint,
-            conditionalOnPassUsdcMint: proposal.conditionalOnPassUsdcMint,
-            conditionalOnFailMetaMint: proposal.conditionalOnFailMetaMint,
-            conditionalOnFailUsdcMint: proposal.conditionalOnFailUsdcMint,
-            metaUserAta: getATA(proposal.metaMint, client.provider.publicKey)[0],
-            usdcUserAta: getATA(proposal.usdcMint, client.provider.publicKey)[0],
-            conditionalOnPassMetaUserAta: getATA(proposal.conditionalOnPassMetaMint, client.provider.publicKey)[0],
-            conditionalOnPassUsdcUserAta: getATA(proposal.conditionalOnPassUsdcMint, client.provider.publicKey)[0],
-            conditionalOnFailMetaUserAta: getATA(proposal.conditionalOnFailMetaMint, client.provider.publicKey)[0],
-            conditionalOnFailUsdcUserAta: getATA(proposal.conditionalOnFailUsdcMint, client.provider.publicKey)[0],
-            metaVaultAta: getATA(proposal.metaMint, proposalVaultAddr)[0],
-            usdcVaultAta: getATA(proposal.usdcMint, proposalVaultAddr)[0],
-        })
-        .instruction()
+  let ix = await client.program.methods
+    .mergeConditionalTokens(metaAmount, usdcAmount)
+    .accounts({
+      user: client.provider.publicKey,
+      proposal: proposalAddr,
+      proposalVault: proposalVaultAddr,
+      metaMint: proposal.metaMint,
+      usdcMint: proposal.usdcMint,
+      conditionalOnPassMetaMint: proposal.conditionalOnPassMetaMint,
+      conditionalOnPassUsdcMint: proposal.conditionalOnPassUsdcMint,
+      conditionalOnFailMetaMint: proposal.conditionalOnFailMetaMint,
+      conditionalOnFailUsdcMint: proposal.conditionalOnFailUsdcMint,
+      metaUserAta: getATA(proposal.metaMint, client.provider.publicKey)[0],
+      usdcUserAta: getATA(proposal.usdcMint, client.provider.publicKey)[0],
+      conditionalOnPassMetaUserAta: getATA(
+        proposal.conditionalOnPassMetaMint,
+        client.provider.publicKey
+      )[0],
+      conditionalOnPassUsdcUserAta: getATA(
+        proposal.conditionalOnPassUsdcMint,
+        client.provider.publicKey
+      )[0],
+      conditionalOnFailMetaUserAta: getATA(
+        proposal.conditionalOnFailMetaMint,
+        client.provider.publicKey
+      )[0],
+      conditionalOnFailUsdcUserAta: getATA(
+        proposal.conditionalOnFailUsdcMint,
+        client.provider.publicKey
+      )[0],
+      metaVaultAta: getATA(proposal.metaMint, proposalVaultAddr)[0],
+      usdcVaultAta: getATA(proposal.usdcMint, proposalVaultAddr)[0],
+    })
+    .instruction();
 
-    return new InstructionHandler([ix], [], client)
+  return new InstructionHandler([ix], [], client);
 };
