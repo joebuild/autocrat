@@ -12,6 +12,7 @@ pub struct AddProposalInstructions<'info> {
         mut,
         has_one = proposer,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
         ],
@@ -26,6 +27,7 @@ pub struct AddProposalInstructions<'info> {
         realloc::payer = proposer,
         realloc::zero = false,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_INSTRUCTIONS_SEED_PREFIX,
             proposal.key().as_ref()
         ],

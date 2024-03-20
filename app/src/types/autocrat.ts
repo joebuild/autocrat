@@ -46,7 +46,12 @@ export type Autocrat = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "id",
+          "type": "publicKey"
+        }
+      ]
     },
     {
       "name": "updateDao",
@@ -255,7 +260,7 @@ export type Autocrat = {
         },
         {
           "name": "dao",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -1227,6 +1232,10 @@ export type Autocrat = {
         "kind": "struct",
         "fields": [
           {
+            "name": "id",
+            "type": "publicKey"
+          },
+          {
             "name": "treasuryPdaBump",
             "type": "u8"
           },
@@ -1310,6 +1319,10 @@ export type Autocrat = {
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "dao",
+            "type": "publicKey"
+          },
           {
             "name": "number",
             "type": "u64"
@@ -1702,7 +1715,12 @@ export const IDL: Autocrat = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "id",
+          "type": "publicKey"
+        }
+      ]
     },
     {
       "name": "updateDao",
@@ -1911,7 +1929,7 @@ export const IDL: Autocrat = {
         },
         {
           "name": "dao",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -2883,6 +2901,10 @@ export const IDL: Autocrat = {
         "kind": "struct",
         "fields": [
           {
+            "name": "id",
+            "type": "publicKey"
+          },
+          {
             "name": "treasuryPdaBump",
             "type": "u8"
           },
@@ -2966,6 +2988,10 @@ export const IDL: Autocrat = {
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "dao",
+            "type": "publicKey"
+          },
           {
             "name": "number",
             "type": "u64"

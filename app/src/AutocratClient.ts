@@ -12,7 +12,7 @@ import * as ixs from "./instructions/autocrat";
 import BN from "bn.js";
 import { AMM_PROGRAM_ID, AUTOCRAT_LUTS, AUTOCRAT_PROGRAM_ID } from "./constants";
 import { ProposalInstruction, UpdateDaoParams, Dao, DaoTreasury, Proposal, ProposalWrapper, ProposalVault, ProposalInstructions } from "./types";
-import { getDaoAddr, getDaoTreasuryAddr, getProposalAddr, getProposalVaultAddr } from "./utils";
+import { getDaoAddr, getDaoTreasuryAddr, getProposalAddr } from "./utils";
 
 export type CreateAutocratClientParams = {
     provider: AnchorProvider,
@@ -55,11 +55,13 @@ export class AutocratClient {
     }
 
     async initializeDao(
+        daoId: PublicKey,
         metaMint: PublicKey,
         usdcMint: PublicKey
     ) {
         return ixs.initializeDaoHandler(
             this,
+            daoId,
             metaMint,
             usdcMint
         )
@@ -67,37 +69,44 @@ export class AutocratClient {
 
     // this won't ever be called directly (must be called via a proposal), but is here anyway for completeness / testing
     async updateDao(
+        daoId: PublicKey,
         updateDaoParams: UpdateDaoParams
     ) {
         return ixs.updateDaoHandler(
             this,
+            daoId,
             updateDaoParams
         )
     }
 
     async createProposalInstructions(
+        daoId: PublicKey,
         proposalNumber: number,
         instructions: ProposalInstruction[],
     ) {
         return ixs.createProposalInstructionsHandler(
             this,
+            daoId,
             proposalNumber,
             instructions,
         )
     }
 
     async addProposalInstructions(
+        daoId: PublicKey,
         proposalNumber: number,
         instructions: ProposalInstruction[],
     ) {
         return ixs.addProposalInstructionsHandler(
             this,
+            daoId,
             proposalNumber,
             instructions,
         )
     }
 
     async createProposal(
+        daoId: PublicKey,
         proposalNumber: number,
         descriptionUrl: string,
         condMetaToMint: BN,
@@ -105,6 +114,7 @@ export class AutocratClient {
     ) {
         return ixs.createProposalHandler(
             this,
+            daoId,
             proposalNumber,
             descriptionUrl,
             condMetaToMint,
@@ -113,6 +123,7 @@ export class AutocratClient {
     }
 
     async createProposalMarketSide(
+        daoId: PublicKey,
         proposalNumber: number,
         isPassMarket: boolean,
         ammBaseAmountDeposit: BN,
@@ -121,6 +132,7 @@ export class AutocratClient {
     ) {
         return ixs.createProposalMarketSideHandler(
             this,
+            daoId,
             proposalNumber,
             isPassMarket,
             ammBaseAmountDeposit,
@@ -130,34 +142,40 @@ export class AutocratClient {
     }
 
     async submitProposal(
+        daoId: PublicKey,
         proposalNumber: number,
         ammProgram = AMM_PROGRAM_ID,
     ) {
         return ixs.submitProposalHandler(
             this,
+            daoId,
             proposalNumber,
             ammProgram
         )
     }
 
     async finalizeProposal(
+        daoId: PublicKey,
         proposalNumber: number,
         accounts: AccountMeta[]
     ) {
         return ixs.finalizeProposalHandler(
             this,
+            daoId,
             proposalNumber,
             accounts
         )
     }
 
     async mintConditionalTokens(
+        daoId: PublicKey,
         proposalAddr: PublicKey,
         metaAmount: BN,
         usdcAmount: BN,
     ) {
         return ixs.mintConditionalTokensHandler(
             this,
+            daoId,
             proposalAddr,
             metaAmount,
             usdcAmount,
@@ -165,12 +183,14 @@ export class AutocratClient {
     }
 
     async mergeConditionalTokens(
+        daoId: PublicKey,
         proposalAddr: PublicKey,
         metaAmount: BN,
         usdcAmount: BN,
     ) {
         return ixs.mergeConditionalTokensHandler(
             this,
+            daoId,
             proposalAddr,
             metaAmount,
             usdcAmount,
@@ -178,10 +198,12 @@ export class AutocratClient {
     }
 
     async redeemConditionalTokens(
+        daoId: PublicKey,
         proposalAddr: PublicKey
     ) {
         return ixs.redeemConditionalTokensHandler(
             this,
+            daoId,
             proposalAddr,
         )
     }
@@ -202,6 +224,7 @@ export class AutocratClient {
     }
 
     async addLiquidityCpi(
+        daoId: PublicKey,
         proposalAddr: PublicKey,
         ammAddr: PublicKey,
         maxBaseAmount: BN,
@@ -212,6 +235,7 @@ export class AutocratClient {
     ) {
         return ixs.addLiquidityCpiHandler(
             this,
+            daoId,
             proposalAddr,
             ammAddr,
             maxBaseAmount,
@@ -223,6 +247,7 @@ export class AutocratClient {
     }
 
     async removeLiquidityCpi(
+        daoId: PublicKey,
         proposalAddr: PublicKey,
         ammAddr: PublicKey,
         removeBps: BN,
@@ -230,6 +255,7 @@ export class AutocratClient {
     ) {
         return ixs.removeLiquidityCpiHandler(
             this,
+            daoId,
             proposalAddr,
             ammAddr,
             removeBps,
@@ -238,6 +264,7 @@ export class AutocratClient {
     }
 
     async swapCpi(
+        daoId: PublicKey,
         proposalAddr: PublicKey,
         ammAddr: PublicKey,
         isQuoteToBase: boolean,
@@ -247,6 +274,7 @@ export class AutocratClient {
     ) {
         return ixs.swapCpiHandler(
             this,
+            daoId,
             proposalAddr,
             ammAddr,
             isQuoteToBase,
@@ -258,24 +286,26 @@ export class AutocratClient {
 
     // getter functions
 
-    async getDao(): Promise<Dao> {
-        return await this.program.account.dao.fetch(getDaoAddr(this.program.programId)[0]);
+    async getDao(daoId: PublicKey): Promise<Dao> {
+        return await this.program.account.dao.fetch(getDaoAddr(this.program.programId, daoId)[0]);
     }
 
-    async getDaoTreasury(): Promise<DaoTreasury> {
-        return await this.program.account.daoTreasury.fetch(getDaoTreasuryAddr(this.program.programId)[0]);
+    async getDaoTreasury(daoId: PublicKey): Promise<DaoTreasury> {
+        return await this.program.account.daoTreasury.fetch(getDaoTreasuryAddr(this.program.programId, daoId)[0]);
     }
 
     async getAllProposals(): Promise<ProposalWrapper[]> {
         return await this.program.account.proposal.all();
     }
 
-    async getProposalByNumber(proposalNumber: number): Promise<Proposal> {
-        return await this.program.account.proposal.fetch(getProposalAddr(this.program.programId, proposalNumber)[0]);
+    async getProposalByNumber(daoId: PublicKey, proposalNumber: number): Promise<Proposal> {
+        const daoAddr = getDaoAddr(this.program.programId, daoId)[0]
+        return await this.program.account.proposal.fetch(getProposalAddr(this.program.programId, daoAddr, proposalNumber)[0]);
     }
 
-    async getProposalInstructionsByNumber(proposalNumber: number): Promise<ProposalInstructions> {
-        const proposal = await this.getProposalByNumber(proposalNumber)
+    async getProposalInstructionsByNumber(daoId: PublicKey, proposalNumber: number): Promise<ProposalInstructions> {
+        const daoAddr = getDaoAddr(this.program.programId, daoId)[0]
+        const proposal = await this.getProposalByNumber(daoAddr, proposalNumber)
         return await this.program.account.proposalInstructions.fetch(proposal.instructions);
     }
 

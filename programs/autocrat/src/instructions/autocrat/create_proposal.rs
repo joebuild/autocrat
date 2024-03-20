@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
 use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
@@ -7,7 +6,6 @@ use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use anchor_spl::token::TokenAccount;
 
-use crate::error::ErrorCode;
 use crate::state::*;
 use crate::utils::*;
 
@@ -19,7 +17,7 @@ pub struct CreateProposal<'info> {
         mut,
         has_one = meta_mint,
         has_one = usdc_mint,
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        seeds = [dao.id.as_ref()],
         bump
     )]
     pub dao: Box<Account<'info, Dao>>,
@@ -28,6 +26,7 @@ pub struct CreateProposal<'info> {
         payer = proposer,
         space = 8 + Proposal::INIT_SPACE,
         seeds = [
+            dao.key().as_ref(),
             PROPOSAL_SEED_PREFIX,
             dao.proposal_count.to_le_bytes().as_ref(),
         ],
@@ -39,6 +38,7 @@ pub struct CreateProposal<'info> {
         payer = proposer,
         space = 8 + std::mem::size_of::<ProposalVault>(),
         seeds = [
+            dao.key().as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
@@ -106,6 +106,8 @@ pub fn handler(
 
     assert!(mint_cond_meta > 0);
     assert!(mint_cond_usdc >= dao.amm_initial_quote_liquidity_amount);
+
+    proposal.dao = dao.key();
 
     proposal.proposer = proposer.key();
     proposal.state = ProposalState::Initialize;

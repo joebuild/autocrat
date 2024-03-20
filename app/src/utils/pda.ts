@@ -5,17 +5,19 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token
 
 export const getDaoAddr = (
     programId: PublicKey,
+    daoId: PublicKey
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("WWCACOTMICMIBMHAFTTWYGHMB")],
+        [daoId.toBuffer()],
         programId,
     );
 };
 
 export const getDaoTreasuryAddr = (
     programId: PublicKey,
+    daoId: PublicKey
 ): [PublicKey, number] => {
-    let [dao] = getDaoAddr(programId)
+    let [dao] = getDaoAddr(programId, daoId)
     return PublicKey.findProgramAddressSync(
         [utils.bytes.utf8.encode("dao_treasury"), dao.toBuffer()],
         programId,
@@ -24,30 +26,33 @@ export const getDaoTreasuryAddr = (
 
 export const getProposalAddr = (
     programId: PublicKey,
+    dao: PublicKey,
     proposalNumber: number,
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("proposal__"), numToBytes64LE(proposalNumber)],
+        [dao.toBuffer(), utils.bytes.utf8.encode("proposal__"), numToBytes64LE(proposalNumber)],
         programId,
     );
 };
 
 export const getProposalInstructionsAddr = (
     programId: PublicKey,
+    dao: PublicKey,
     proposal: PublicKey,
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("proposal_instructions"), proposal.toBuffer()],
+        [dao.toBuffer(), utils.bytes.utf8.encode("proposal_instructions"), proposal.toBuffer()],
         programId,
     );
 };
 
 export const getProposalVaultAddr = (
     programId: PublicKey,
+    dao: PublicKey,
     proposal: PublicKey
 ): [PublicKey, number] => {
     return PublicKey.findProgramAddressSync(
-        [utils.bytes.utf8.encode("proposal_vault"), proposal.toBuffer()],
+        [dao.toBuffer(), utils.bytes.utf8.encode("proposal_vault"), proposal.toBuffer()],
         programId,
     );
 };

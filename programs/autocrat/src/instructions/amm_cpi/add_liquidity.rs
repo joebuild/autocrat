@@ -23,7 +23,9 @@ pub struct AddLiquidity<'info> {
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
+        has_one = proposal,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],

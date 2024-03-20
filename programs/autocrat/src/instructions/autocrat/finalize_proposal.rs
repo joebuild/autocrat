@@ -13,9 +13,11 @@ pub struct FinalizeProposal<'info> {
     pub user: Signer<'info>,
     #[account(
         mut,
+        has_one = dao,
         has_one = pass_market_amm,
         has_one = fail_market_amm,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
         ],
@@ -30,7 +32,7 @@ pub struct FinalizeProposal<'info> {
     pub proposal_instructions: Account<'info, ProposalInstructions>,
     #[account(
         mut,
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        seeds = [dao.id.as_ref()],
         bump
     )]
     pub dao: Box<Account<'info, Dao>>,

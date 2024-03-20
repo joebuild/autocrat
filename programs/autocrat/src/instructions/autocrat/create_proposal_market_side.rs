@@ -12,7 +12,6 @@ use amm::cpi::accounts::CreatePosition;
 use amm::instructions::create_amm::CreateAmmParams;
 use amm::program::Amm;
 
-use crate::error::ErrorCode;
 use crate::generate_proposal_vault_seeds;
 use crate::program::Autocrat;
 use crate::state::*;
@@ -25,7 +24,9 @@ pub struct CreateProposalMarketSide<'info> {
     #[account(
         mut,
         has_one = proposer,
+        has_one = dao,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref(),
         ],
@@ -34,7 +35,9 @@ pub struct CreateProposalMarketSide<'info> {
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         mut,
+        has_one = proposal,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
@@ -42,10 +45,9 @@ pub struct CreateProposalMarketSide<'info> {
     )]
     pub proposal_vault: Box<Account<'info, ProposalVault>>,
     #[account(
-        mut,
         has_one = meta_mint,
         has_one = usdc_mint,
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        seeds = [dao.id.as_ref()],
         bump
     )]
     pub dao: Box<Account<'info, Dao>>,
@@ -162,7 +164,7 @@ pub fn handler(
 
     // mint the proposer's conditional tokens
     let proposal_key = proposal.key();
-    let mint_seeds = generate_proposal_vault_seeds!(proposal_key, ctx.bumps.proposal_vault);
+    let mint_seeds = generate_proposal_vault_seeds!(proposal.dao, proposal_key, ctx.bumps.proposal_vault);
 
     token_mint_signed(
         proposal.proposer_inititial_conditional_meta_minted,

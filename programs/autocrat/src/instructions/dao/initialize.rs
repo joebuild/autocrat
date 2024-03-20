@@ -7,6 +7,7 @@ use anchor_spl::token::*;
 use crate::state::*;
 
 #[derive(Accounts)]
+#[instruction(id: Pubkey)]
 pub struct InitializeDao<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -14,10 +15,7 @@ pub struct InitializeDao<'info> {
         init,
         payer = payer,
         space = 8 + std::mem::size_of::<Dao>(),
-        // We will create a civilization of the Mind in Cyberspace. May it be
-        // more humane and fair than the world your governments have made before.
-        //  - John Perry Barlow, A Declaration of the Independence of Cyberspace
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        seeds = [id.as_ref()],
         bump
     )]
     pub dao: Account<'info, Dao>,
@@ -40,7 +38,7 @@ pub struct InitializeDao<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
+pub fn handler(ctx: Context<InitializeDao>, id: Pubkey) -> Result<()> {
     let InitializeDao {
         payer: _,
         dao,
@@ -54,6 +52,8 @@ pub fn handler(ctx: Context<InitializeDao>) -> Result<()> {
 
     dao_treasury.dao = dao.key();
     dao_treasury.bump = ctx.bumps.dao_treasury;
+
+    dao.id = id;
 
     dao.treasury_pda_bump = ctx.bumps.dao_treasury;
     dao.treasury_pda = dao_treasury.key();

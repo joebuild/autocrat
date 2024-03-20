@@ -10,7 +10,6 @@ use crate::program::Autocrat;
 use amm::cpi::accounts::UpdateLtwap;
 use amm::program::Amm;
 
-use crate::error::ErrorCode;
 use crate::state::*;
 use crate::utils::*;
 
@@ -21,7 +20,7 @@ pub struct SubmitProposal<'info> {
     #[account(
         mut,
         has_one = usdc_mint,
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        seeds = [dao.id.as_ref()],
         bump
     )]
     pub dao: Box<Account<'info, Dao>>,
@@ -32,19 +31,23 @@ pub struct SubmitProposal<'info> {
     pub dao_treasury: Account<'info, DaoTreasury>,
     #[account(
         mut,
+        has_one = dao,
         has_one = proposer,
         has_one = pass_market_amm,
         has_one = fail_market_amm,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
-        ],
+            ],
         bump
     )]
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         mut,
+        has_one = proposal,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],

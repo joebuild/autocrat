@@ -21,6 +21,7 @@ pub struct RedeemConditionalTokens<'info> {
         has_one = conditional_on_fail_meta_mint,
         has_one = conditional_on_fail_usdc_mint,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
         ],
@@ -32,6 +33,7 @@ pub struct RedeemConditionalTokens<'info> {
         has_one = meta_vault_ata,
         has_one = usdc_vault_ata,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
@@ -140,7 +142,7 @@ pub fn handler(ctx: Context<RedeemConditionalTokens>) -> Result<()> {
     );
 
     let proposal_key = proposal.key();
-    let seeds = generate_proposal_vault_seeds!(proposal_key, ctx.bumps.proposal_vault);
+    let seeds = generate_proposal_vault_seeds!(proposal.dao, proposal_key, ctx.bumps.proposal_vault);
 
     token_burn(
         c_pass_meta_user_balance,

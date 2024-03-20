@@ -2,21 +2,22 @@ import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
 import { getATA, getAmmAddr, getAmmAuthAddr, getAmmPositionAddr, getDaoAddr, getProposalAddr, getProposalVaultAddr } from '../../utils';
 import BN from "bn.js";
-import { Keypair, PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 
 export const createProposalMarketSideHandler = async (
     client: AutocratClient,
+    daoId: PublicKey,
     proposalNumber: number,
     isPassMarket: boolean,
     ammBaseAmountDeposit: BN,
     ammQuoteAmountDeposit: BN,
     ammProgram: PublicKey,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
-    let daoAddr = getDaoAddr(client.program.programId)[0]
+    let daoAddr = getDaoAddr(client.program.programId, daoId)[0]
     let dao = await client.program.account.dao.fetch(daoAddr)
 
-    let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
-    let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
+    let proposalAddr = getProposalAddr(client.program.programId, daoAddr, proposalNumber)[0]
+    let proposalVaultAddr = getProposalVaultAddr(client.program.programId, daoAddr, proposalAddr)[0]
 
     let conditionalMetaMintKeypair = Keypair.generate()
     let conditionalMetaMintAddr = conditionalMetaMintKeypair.publicKey

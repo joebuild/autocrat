@@ -7,16 +7,17 @@ import BN from "bn.js";
 
 export const createProposalHandler = async (
     client: AutocratClient,
+    daoId: PublicKey,
     proposalNumber: number,
     descriptionUrl: string,
     condMetaToMint: BN,
     condUsdcToMint: BN,
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
-    let daoAddr = getDaoAddr(client.program.programId)[0]
+    let daoAddr = getDaoAddr(client.program.programId, daoId)[0]
     let dao = await client.program.account.dao.fetch(daoAddr)
 
-    let proposalAddr = getProposalAddr(client.program.programId, proposalNumber)[0]
-    let proposalVaultAddr = getProposalVaultAddr(client.program.programId, proposalAddr)[0]
+    let proposalAddr = getProposalAddr(client.program.programId, daoAddr, proposalNumber)[0]
+    let proposalVaultAddr = getProposalVaultAddr(client.program.programId, daoAddr, proposalAddr)[0]
 
     let ix = await client.program.methods
         .createProposal(descriptionUrl, condMetaToMint, condUsdcToMint)

@@ -12,6 +12,8 @@ pub enum ProposalState {
 #[account]
 #[derive(InitSpace)]
 pub struct Proposal {
+    pub dao: Pubkey,
+    
     pub number: u64,
     pub proposer: Pubkey,
     #[max_len(100)]

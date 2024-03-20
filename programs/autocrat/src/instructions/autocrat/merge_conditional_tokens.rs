@@ -4,7 +4,6 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::*;
 
-use crate::error::ErrorCode;
 use crate::generate_proposal_vault_seeds;
 use crate::state::*;
 use crate::utils::token::*;
@@ -21,6 +20,7 @@ pub struct MergeConditionalTokens<'info> {
         has_one = conditional_on_fail_meta_mint,
         has_one = conditional_on_fail_usdc_mint,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
             proposal.number.to_le_bytes().as_ref()
         ],
@@ -29,9 +29,11 @@ pub struct MergeConditionalTokens<'info> {
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         mut,
+        has_one = proposal,
         has_one = meta_vault_ata,
         has_one = usdc_vault_ata,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
@@ -132,7 +134,7 @@ pub fn handler(
     } = ctx.accounts;
 
     let proposal_key = proposal.key();
-    let seeds = generate_proposal_vault_seeds!(proposal_key, ctx.bumps.proposal_vault);
+    let seeds = generate_proposal_vault_seeds!(proposal.dao, proposal_key, ctx.bumps.proposal_vault);
 
     if meta_amount > 0 {
         token_burn(

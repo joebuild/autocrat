@@ -25,6 +25,7 @@ pub struct Swap<'info> {
     #[account(
         mut,
         seeds = [
+            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],

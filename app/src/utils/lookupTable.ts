@@ -17,6 +17,7 @@ import { getDaoAddr, getDaoTreasuryAddr } from "./pda";
 
 export async function createLookupTable(
     client: AutocratClient,
+    daoId: PublicKey,
     print: boolean = false
 ): Promise<PublicKey> {
     const slot = await client.provider.connection.getSlot();
@@ -61,8 +62,8 @@ export async function createLookupTable(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         SYSVAR_RENT_PUBKEY,
         AUTOCRAT_PROGRAM_ID,
-        getDaoAddr(AUTOCRAT_PROGRAM_ID)[0],
-        getDaoTreasuryAddr(AUTOCRAT_PROGRAM_ID)[0],
+        getDaoAddr(AUTOCRAT_PROGRAM_ID, daoId)[0],
+        getDaoTreasuryAddr(AUTOCRAT_PROGRAM_ID, daoId)[0],
         META_MINT,
         USDC_MINT
     ])
