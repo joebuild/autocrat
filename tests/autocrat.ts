@@ -33,7 +33,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { AmmClient } from "../app/src/AmmClient";
 import { InstructionHandler } from "../app/src/InstructionHandler";
 import { BankrunProvider } from "anchor-bankrun";
-import { fastForward } from "./utils";
+import { expectFailure, fastForward } from "./utils";
 import { AMM_PROGRAM_ID } from "../app/src/constants";
 import { Dao } from "../app/src";
 
@@ -152,6 +152,18 @@ describe("autocrat", async function () {
         payer.publicKey,
         1_000_000 * 10 ** 6
       );
+    });
+
+    it("fails when reusing the ID", async function () {
+      let ixh = await autocratClient.initializeDao(daoId, META, USDC);
+      await expectFailure(ixh.bankrun(banksClient));
+    });
+
+    it("succeeds when using another ID", async function () {
+      const otherDaoId = Keypair.generate().publicKey;
+
+      let ixh = await autocratClient.initializeDao(otherDaoId, META, USDC);
+      await ixh.bankrun(banksClient);
     });
   });
 

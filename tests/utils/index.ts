@@ -1,3 +1,4 @@
+import { assert } from "chai";
 import { Clock, ProgramTestContext } from "solana-bankrun";
 
 export const fastForward = async (
@@ -14,4 +15,11 @@ export const fastForward = async (
       50n
     )
   );
+};
+
+export const expectFailure = async (action: Promise<any>) => {
+  try {
+    await action;
+    assert(false);
+  } catch (err) {}
 };
