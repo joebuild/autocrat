@@ -6,7 +6,7 @@ use crate::state::*;
 pub struct UpdateDao<'info> {
     #[account(
         mut,
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        seeds = [dao.id.as_ref()],
         bump
     )]
     pub dao: Account<'info, Dao>,

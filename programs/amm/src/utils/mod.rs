@@ -2,7 +2,6 @@ use crate::error::ErrorCode;
 use anchor_lang::prelude::*;
 
 pub use anchor_decimal::*;
-pub use seeds::*;
 pub use token::*;
 
 pub mod anchor_decimal;

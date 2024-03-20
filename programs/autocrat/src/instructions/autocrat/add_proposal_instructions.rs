@@ -13,6 +13,7 @@ pub struct AddProposalInstructions<'info> {
         has_one = proposer,
         seeds = [
             PROPOSAL_SEED_PREFIX,
+            proposal.dao.as_ref(),
             proposal.number.to_le_bytes().as_ref()
         ],
         bump

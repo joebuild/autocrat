@@ -12,7 +12,6 @@ use amm::cpi::accounts::CreatePosition;
 use amm::instructions::create_amm::CreateAmmParams;
 use amm::program::Amm;
 
-use crate::error::ErrorCode;
 use crate::generate_proposal_vault_seeds;
 use crate::program::Autocrat;
 use crate::state::*;
@@ -25,8 +24,10 @@ pub struct CreateProposalMarketSide<'info> {
     #[account(
         mut,
         has_one = proposer,
+        has_one = dao,
         seeds = [
             PROPOSAL_SEED_PREFIX,
+            proposal.dao.as_ref(),
             proposal.number.to_le_bytes().as_ref(),
         ],
         bump
@@ -34,6 +35,7 @@ pub struct CreateProposalMarketSide<'info> {
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         mut,
+        has_one = proposal,
         seeds = [
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
@@ -42,10 +44,9 @@ pub struct CreateProposalMarketSide<'info> {
     )]
     pub proposal_vault: Box<Account<'info, ProposalVault>>,
     #[account(
-        mut,
         has_one = meta_mint,
         has_one = usdc_mint,
-        seeds = [b"WWCACOTMICMIBMHAFTTWYGHMB"],
+        seeds = [dao.id.as_ref()],
         bump
     )]
     pub dao: Box<Account<'info, Dao>>,

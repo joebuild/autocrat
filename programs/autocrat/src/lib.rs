@@ -20,10 +20,8 @@ pub mod instructions;
 pub mod state;
 pub mod utils;
 
-use crate::error::*;
 use crate::instructions::*;
 use crate::state::*;
-use crate::utils::*;
 
 declare_id!("66629qDqH5vJuz4ZgaL1HVpeAC9kJXnzamMpvMJfr3kE");
 
@@ -32,8 +30,8 @@ pub mod autocrat {
     use super::*;
 
     // ==== dao
-    pub fn initialize_dao(ctx: Context<InitializeDao>) -> Result<()> {
-        instructions::dao::initialize::handler(ctx)
+    pub fn initialize_dao(ctx: Context<InitializeDao>, id: Pubkey) -> Result<()> {
+        instructions::dao::initialize::handler(ctx, id)
     }
 
     pub fn update_dao(ctx: Context<UpdateDao>, dao_params: UpdateDaoParams) -> Result<()> {

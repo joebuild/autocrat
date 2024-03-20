@@ -4,7 +4,6 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::*;
 
-use crate::error::ErrorCode;
 use crate::generate_proposal_vault_seeds;
 use crate::state::*;
 use crate::utils::token::*;
@@ -22,6 +21,7 @@ pub struct MintConditionalTokens<'info> {
         has_one = conditional_on_fail_usdc_mint,
         seeds = [
             PROPOSAL_SEED_PREFIX,
+            proposal.dao.as_ref(),
             proposal.number.to_le_bytes().as_ref()
         ],
         bump
@@ -29,6 +29,7 @@ pub struct MintConditionalTokens<'info> {
     pub proposal: Box<Account<'info, Proposal>>,
     #[account(
         mut,
+        has_one = proposal,
         has_one = meta_vault_ata,
         has_one = usdc_vault_ata,
         seeds = [

@@ -2,6 +2,8 @@ use anchor_lang::prelude::*;
 
 #[account]
 pub struct Dao {
+    pub id: Pubkey,
+
     // treasury needed even though DAO is PDA for this reason: https://solana.stackexchange.com/questions/7667/a-peculiar-problem-with-cpis
     pub treasury_pda_bump: u8,
     pub treasury_pda: Pubkey,
