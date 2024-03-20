@@ -24,7 +24,6 @@ export const createProposalInstructionsHandler = async (
 
   let proposalInstructionsAddr = getProposalInstructionsAddr(
     client.program.programId,
-    daoAddr,
     proposalAddr
   )[0];
 

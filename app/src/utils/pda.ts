@@ -1,6 +1,6 @@
-import { AccountMeta, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { utils } from "@coral-xyz/anchor";
-import { numToBytes32LE, numToBytes64LE } from "./numbers";
+import { numToBytes64LE } from "./numbers";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -31,8 +31,8 @@ export const getProposalAddr = (
 ): [PublicKey, number] => {
   return PublicKey.findProgramAddressSync(
     [
-      dao.toBuffer(),
       utils.bytes.utf8.encode("proposal__"),
+      dao.toBuffer(),
       numToBytes64LE(proposalNumber),
     ],
     programId
@@ -41,12 +41,10 @@ export const getProposalAddr = (
 
 export const getProposalInstructionsAddr = (
   programId: PublicKey,
-  dao: PublicKey,
   proposal: PublicKey
 ): [PublicKey, number] => {
   return PublicKey.findProgramAddressSync(
     [
-      dao.toBuffer(),
       utils.bytes.utf8.encode("proposal_instructions"),
       proposal.toBuffer(),
     ],
@@ -56,12 +54,10 @@ export const getProposalInstructionsAddr = (
 
 export const getProposalVaultAddr = (
   programId: PublicKey,
-  dao: PublicKey,
   proposal: PublicKey
 ): [PublicKey, number] => {
   return PublicKey.findProgramAddressSync(
     [
-      dao.toBuffer(),
       utils.bytes.utf8.encode("proposal_vault"),
       proposal.toBuffer(),
     ],

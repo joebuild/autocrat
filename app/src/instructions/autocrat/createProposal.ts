@@ -32,7 +32,6 @@ export const createProposalHandler = async (
   )[0];
   let proposalVaultAddr = getProposalVaultAddr(
     client.program.programId,
-    daoAddr,
     proposalAddr
   )[0];
 

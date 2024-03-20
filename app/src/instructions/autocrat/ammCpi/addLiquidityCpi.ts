@@ -1,18 +1,16 @@
-import { PublicKey, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { AutocratClient } from "../../../AutocratClient";
 import { InstructionHandler } from "../../../InstructionHandler";
 import {
   getATA,
   getAmmAuthAddr,
   getAmmPositionAddr,
-  getDaoAddr,
   getProposalVaultAddr,
 } from "../../../utils";
 import BN from "bn.js";
 
 export const addLiquidityCpiHandler = async (
   client: AutocratClient,
-  daoId: PublicKey,
   proposalAddr: PublicKey,
   ammAddr: PublicKey,
   maxBaseAmount: BN,
@@ -21,12 +19,9 @@ export const addLiquidityCpiHandler = async (
   minQuoteAmount: BN,
   ammProgram: PublicKey
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
-  const daoAddr = getDaoAddr(client.program.programId, daoId)[0];
-
   const proposal = await client.program.account.proposal.fetch(proposalAddr);
   let proposalVaultAddr = getProposalVaultAddr(
     client.program.programId,
-    daoAddr,
     proposalAddr
   )[0];
 

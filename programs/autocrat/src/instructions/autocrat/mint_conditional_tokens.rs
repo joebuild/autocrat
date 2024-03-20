@@ -20,8 +20,8 @@ pub struct MintConditionalTokens<'info> {
         has_one = conditional_on_fail_meta_mint,
         has_one = conditional_on_fail_usdc_mint,
         seeds = [
-            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
+            proposal.dao.as_ref(),
             proposal.number.to_le_bytes().as_ref()
         ],
         bump
@@ -33,7 +33,6 @@ pub struct MintConditionalTokens<'info> {
         has_one = meta_vault_ata,
         has_one = usdc_vault_ata,
         seeds = [
-            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
@@ -134,7 +133,7 @@ pub fn handler(
     } = ctx.accounts;
 
     let proposal_key = proposal.key();
-    let seeds = generate_proposal_vault_seeds!(proposal.dao, proposal_key, ctx.bumps.proposal_vault);
+    let seeds = generate_proposal_vault_seeds!(proposal_key, ctx.bumps.proposal_vault);
 
     if meta_amount > 0 {
         // transfer user meta to vault

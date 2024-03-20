@@ -36,8 +36,8 @@ pub struct SubmitProposal<'info> {
         has_one = pass_market_amm,
         has_one = fail_market_amm,
         seeds = [
-            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
+            proposal.dao.as_ref(),
             proposal.number.to_le_bytes().as_ref()
             ],
         bump
@@ -47,7 +47,6 @@ pub struct SubmitProposal<'info> {
         mut,
         has_one = proposal,
         seeds = [
-            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],

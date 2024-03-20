@@ -1,19 +1,16 @@
 import { PublicKey } from "@solana/web3.js";
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
-import { getATA, getDaoAddr, getProposalVaultAddr } from "../../utils";
+import { getATA, getProposalVaultAddr } from "../../utils";
 
 export const redeemConditionalTokensHandler = async (
   client: AutocratClient,
-  daoId: PublicKey,
   proposalAddr: PublicKey
 ): Promise<InstructionHandler<typeof client.program, AutocratClient>> => {
   const proposal = await client.program.account.proposal.fetch(proposalAddr);
 
-  let daoAddr = getDaoAddr(client.program.programId, daoId)[0];
   let proposalVaultAddr = getProposalVaultAddr(
     client.program.programId,
-    daoAddr,
     proposalAddr
   )[0];
 

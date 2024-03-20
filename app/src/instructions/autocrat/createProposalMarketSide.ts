@@ -31,7 +31,6 @@ export const createProposalMarketSideHandler = async (
   )[0];
   let proposalVaultAddr = getProposalVaultAddr(
     client.program.programId,
-    daoAddr,
     proposalAddr
   )[0];
 
@@ -50,6 +49,39 @@ export const createProposalMarketSideHandler = async (
   )[0];
   let ammAuthAddr = getAmmAuthAddr(client.program.programId)[0];
 
+  console.log(
+    {
+      proposer: client.provider.publicKey,
+      proposal: proposalAddr,
+      proposalVault: proposalVaultAddr,
+      dao: daoAddr,
+      amm: ammAddr,
+      ammPosition: getAmmPositionAddr(
+        ammProgram,
+        ammAddr,
+        client.provider.publicKey
+      )[0],
+      ammAuthPda: ammAuthAddr,
+      metaMint: dao.metaMint,
+      usdcMint: dao.usdcMint,
+      conditionalMetaMint: conditionalMetaMintAddr,
+      conditionalUsdcMint: conditionalUsdcMintAddr,
+      conditionalMetaProposerAta: getATA(
+        conditionalMetaMintAddr,
+        client.provider.publicKey
+      )[0],
+      conditionalUsdcProposerAta: getATA(
+        conditionalUsdcMintAddr,
+        client.provider.publicKey
+      )[0],
+      conditionalMetaAmmVaultAta: getATA(conditionalMetaMintAddr, ammAddr)[0],
+      conditionalUsdcAmmVaultAta: getATA(conditionalUsdcMintAddr, ammAddr)[0],
+      ammProgram,
+    },
+    isPassMarket,
+    ammBaseAmountDeposit,
+    ammQuoteAmountDeposit
+  );
   let ix = await client.program.methods
     .createProposalMarketSide(
       isPassMarket,

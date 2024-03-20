@@ -169,14 +169,12 @@ export class AutocratClient {
   }
 
   async mintConditionalTokens(
-    daoId: PublicKey,
     proposalAddr: PublicKey,
     metaAmount: BN,
     usdcAmount: BN
   ) {
     return ixs.mintConditionalTokensHandler(
       this,
-      daoId,
       proposalAddr,
       metaAmount,
       usdcAmount
@@ -184,14 +182,12 @@ export class AutocratClient {
   }
 
   async mergeConditionalTokens(
-    daoId: PublicKey,
     proposalAddr: PublicKey,
     metaAmount: BN,
     usdcAmount: BN
   ) {
     return ixs.mergeConditionalTokensHandler(
       this,
-      daoId,
       proposalAddr,
       metaAmount,
       usdcAmount
@@ -199,7 +195,7 @@ export class AutocratClient {
   }
 
   async redeemConditionalTokens(daoId: PublicKey, proposalAddr: PublicKey) {
-    return ixs.redeemConditionalTokensHandler(this, daoId, proposalAddr);
+    return ixs.redeemConditionalTokensHandler(this, proposalAddr);
   }
 
   // amm cpi functions
@@ -213,7 +209,6 @@ export class AutocratClient {
   }
 
   async addLiquidityCpi(
-    daoId: PublicKey,
     proposalAddr: PublicKey,
     ammAddr: PublicKey,
     maxBaseAmount: BN,
@@ -224,7 +219,6 @@ export class AutocratClient {
   ) {
     return ixs.addLiquidityCpiHandler(
       this,
-      daoId,
       proposalAddr,
       ammAddr,
       maxBaseAmount,
@@ -236,7 +230,6 @@ export class AutocratClient {
   }
 
   async removeLiquidityCpi(
-    daoId: PublicKey,
     proposalAddr: PublicKey,
     ammAddr: PublicKey,
     removeBps: BN,
@@ -244,7 +237,6 @@ export class AutocratClient {
   ) {
     return ixs.removeLiquidityCpiHandler(
       this,
-      daoId,
       proposalAddr,
       ammAddr,
       removeBps,
@@ -253,7 +245,6 @@ export class AutocratClient {
   }
 
   async swapCpi(
-    daoId: PublicKey,
     proposalAddr: PublicKey,
     ammAddr: PublicKey,
     isQuoteToBase: boolean,
@@ -263,7 +254,6 @@ export class AutocratClient {
   ) {
     return ixs.swapCpiHandler(
       this,
-      daoId,
       proposalAddr,
       ammAddr,
       isQuoteToBase,
@@ -287,8 +277,15 @@ export class AutocratClient {
     );
   }
 
-  async getAllProposals(): Promise<ProposalWrapper[]> {
-    return await this.program.account.proposal.all();
+  async getAllProposals(daoId: PublicKey): Promise<ProposalWrapper[]> {
+    return await this.program.account.proposal.all([
+      {
+        memcmp: {
+          offset: 8,
+          bytes: getDaoAddr(this.program.programId, daoId)[0].toBase58(),
+        },
+      },
+    ]);
   }
 
   async getProposalByNumber(

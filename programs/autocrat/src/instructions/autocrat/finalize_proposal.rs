@@ -17,8 +17,8 @@ pub struct FinalizeProposal<'info> {
         has_one = pass_market_amm,
         has_one = fail_market_amm,
         seeds = [
-            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
+            proposal.dao.as_ref(),
             proposal.number.to_le_bytes().as_ref()
         ],
         bump

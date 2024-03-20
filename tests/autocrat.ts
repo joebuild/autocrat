@@ -266,7 +266,6 @@ describe("autocrat", async function () {
 
       proposalInstructionsAddr = getProposalInstructionsAddr(
         autocratClient.program.programId,
-        daoAddr,
         proposalAddr
       )[0];
       const instructionsAcc =
@@ -467,7 +466,6 @@ describe("autocrat", async function () {
       ).amount;
 
       let ixh = await autocratClient.mintConditionalTokens(
-        daoId,
         proposalAddr,
         new BN(metaToMint),
         new BN(usdcToMint)
@@ -582,7 +580,6 @@ describe("autocrat", async function () {
       ).amount;
 
       let ixh = await autocratClient.mergeConditionalTokens(
-        daoId,
         proposalAddr,
         new BN(metaToMerge),
         new BN(usdcToMerge)
@@ -657,7 +654,6 @@ describe("autocrat", async function () {
       const passMarketAmmAddr = proposalAcc.passMarketAmm;
 
       let ixh = await autocratClient.addLiquidityCpi(
-        daoId,
         proposalAddr,
         passMarketAmmAddr,
         new BN(1 * 10 ** 9),
@@ -687,7 +683,6 @@ describe("autocrat", async function () {
       const failMarketAmmAddr = proposalAcc.failMarketAmm;
 
       let ixh = await autocratClient.addLiquidityCpi(
-        daoId,
         proposalAddr,
         failMarketAmmAddr,
         new BN(1 * 10 ** 9),
@@ -732,7 +727,6 @@ describe("autocrat", async function () {
       ).amount;
 
       let ixh = await autocratClient.swapCpi(
-        daoId,
         proposalAddr,
         passMarketAmmAddr,
         true,
@@ -778,7 +772,6 @@ describe("autocrat", async function () {
       ).amount;
 
       let ixh = await autocratClient.swapCpi(
-        daoId,
         proposalAddr,
         passMarketAmmAddr,
         false,
@@ -824,7 +817,6 @@ describe("autocrat", async function () {
       ).amount;
 
       let ixh = await autocratClient.swapCpi(
-        daoId,
         proposalAddr,
         failMarketAmmAddr,
         true,
@@ -870,7 +862,6 @@ describe("autocrat", async function () {
       ).amount;
 
       let ixh = await autocratClient.swapCpi(
-        daoId,
         proposalAddr,
         failMarketAmmAddr,
         false,
@@ -982,7 +973,6 @@ describe("autocrat", async function () {
       ).amount;
 
       let ixh = await autocratClient.removeLiquidityCpi(
-        daoId,
         proposalAddr,
         passMarketAmmAddr,
         new BN(10_000) // 10_000 removes all liquidity
@@ -1073,7 +1063,6 @@ describe("autocrat", async function () {
       ).amount;
 
       let ixh = await autocratClient.removeLiquidityCpi(
-        daoId,
         proposalAddr,
         failMarketAmmAddr,
         new BN(10_000) // 10_000 removes all liquidity

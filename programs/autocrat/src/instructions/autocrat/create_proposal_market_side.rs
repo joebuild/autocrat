@@ -26,8 +26,8 @@ pub struct CreateProposalMarketSide<'info> {
         has_one = proposer,
         has_one = dao,
         seeds = [
-            proposal.dao.as_ref(),
             PROPOSAL_SEED_PREFIX,
+            proposal.dao.as_ref(),
             proposal.number.to_le_bytes().as_ref(),
         ],
         bump
@@ -37,7 +37,6 @@ pub struct CreateProposalMarketSide<'info> {
         mut,
         has_one = proposal,
         seeds = [
-            proposal.dao.as_ref(),
             PROPOSAL_VAULT_SEED_PREFIX,
             proposal.key().as_ref(),
         ],
@@ -164,7 +163,7 @@ pub fn handler(
 
     // mint the proposer's conditional tokens
     let proposal_key = proposal.key();
-    let mint_seeds = generate_proposal_vault_seeds!(proposal.dao, proposal_key, ctx.bumps.proposal_vault);
+    let mint_seeds = generate_proposal_vault_seeds!(proposal_key, ctx.bumps.proposal_vault);
 
     token_mint_signed(
         proposal.proposer_inititial_conditional_meta_minted,

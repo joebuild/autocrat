@@ -1,4 +1,3 @@
-import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { AutocratClient } from "../../AutocratClient";
 import { InstructionHandler } from "../../InstructionHandler";
 import {
@@ -10,11 +9,7 @@ import {
   getProposalInstructionsAddr,
   getProposalVaultAddr,
 } from "../../utils";
-import {
-  Keypair,
-  PublicKey,
-  SYSVAR_INSTRUCTIONS_PUBKEY,
-} from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 
 export const submitProposalHandler = async (
   client: AutocratClient,
@@ -34,13 +29,11 @@ export const submitProposalHandler = async (
 
   let proposalInstructionsAddr = getProposalInstructionsAddr(
     client.program.programId,
-    daoAddr,
     proposalAddr
   )[0];
 
   let proposalVaultAddr = getProposalVaultAddr(
     client.program.programId,
-    daoAddr,
     proposalAddr
   )[0];
 
